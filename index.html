@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Командное Казино</title>
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root { --bg: #0f172a; --card: #1e293b; --acc: #3b82f6; --ok: #10b981; --err: #ef4444; --text: #e2e8f0; }
     body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); padding:20px; }
     .container { max-width:800px; margin:0 auto; }
-    .btn { background:var(--acc); color:#fff; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:500; }
+    .btn { background:var(--acc); color:#fff; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:500; transition:0.2s; }
     .btn:disabled { opacity:0.4; cursor:not-allowed; }
+    .btn:hover:not(:disabled) { filter: brightness(1.1); }
     .card { background:var(--card); padding:20px; border-radius:12px; margin-bottom:20px; }
     .tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
     .tab { background:#334155; padding:8px 16px; border-radius:20px; cursor:pointer; }
@@ -18,46 +19,56 @@
     .wheel-container { position:relative; width:200px; height:200px; margin:20px auto; }
     .wheel { width:100%; height:100%; border-radius:50%; background:conic-gradient(#3b82f6 0deg 36deg, #10b981 36deg 108deg, #f59e0b 108deg 180deg, #8b5cf6 180deg 252deg, #ef4444 252deg 324deg, #3b82f6 324deg 360deg); transition:transform 4s cubic-bezier(0.25,0.1,0.25,1); box-shadow:0 0 20px rgba(0,0,0,0.5); }
     .pointer { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent; border-top:20px solid #fff; z-index:2; }
-    .task { background:#334155; padding:10px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-direction:column; gap:8px; }
-    .status { font-size:12px; padding:4px 8px; border-radius:12px; }
+    .task { background:#334155; padding:12px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-direction:column; gap:8px; }
+    .status { font-size:12px; padding:4px 8px; border-radius:12px; font-weight:500; }
     .active { background:#f59e0b; color:#000; } .submitted { background:#3b82f6; } .completed { background:var(--ok); color:#000; } .rejected { background:var(--err); }
     input,textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #475569; background:#0f172a; color:#fff; margin:8px 0; box-sizing:border-box; }
-    #auth-screen { text-align:center; padding:50px 20px; }
-    .hidden { display:none; }
+    #auth-screen, #loading { text-align:center; padding:50px 20px; }
+    .hidden { display:none !important; }
     table { width:100%; border-collapse:collapse; } th,td { padding:10px; border-bottom:1px solid #475569; text-align:left; }
-    .diag-box { background:#334155; color:#f87171; padding:10px; border-radius:8px; margin-top:10px; display:none; font-size:14px; text-align:left; }
+    .diag { background:#334155; color:#f87171; padding:10px; border-radius:8px; margin-top:10px; display:none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="auth-screen">
+    <div id="loading">⏳ Загрузка системы...</div>
+    
+    <div id="auth-screen" class="hidden">
       <h1>🎰 Командное Казино</h1>
       <p>Введите email, чтобы войти</p>
       <input type="email" id="login-email" placeholder="name@company.ru" style="width:100%; max-width:300px; margin:10px 0; padding:10px; border-radius:8px; border:1px solid #475569; background:#0f172a; color:#fff;">
       <button class="btn" id="login-btn" onclick="login()">Отправить ссылку на почту</button>
-      <div id="diag-box" class="diag-box"></div>
-      <p id="login-msg" style="color:#94a3b8; font-size:14px; margin-top:10px;"></p>
+      <div id="diag" class="diag"></div>
+      <p id="login-msg" style="color:#94a3b8; margin-top:10px;"></p>
     </div>
 
     <div id="app" class="hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>👤 <span id="user-name">Загрузка...</span></h2>
+        <h2>👤 <span id="user-name">...</span></h2>
         <span style="background:#334155; padding:6px 12px; border-radius:12px;">💰 <span id="chips">0</span></span>
       </div>
+
       <div class="tabs">
         <div class="tab active" onclick="showTab('roulette')">🎡 Рулетка</div>
-        <div class="tab" onclick="showTab('tasks')">📋 Мои задания</div>
+        <div class="tab" onclick="showTab('tasks')">📋 Задания</div>
         <div class="tab" onclick="showTab('leaderboard')">🏆 Турнирка</div>
         <div class="tab hidden" id="admin-tab" onclick="showTab('admin')">⚙️ Админ</div>
       </div>
+
       <div id="roulette-tab" class="card">
         <h3>Крутите колесо</h3>
         <div class="wheel-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
         <p id="spin-status" style="text-align:center; color:#94a3b8;"></p>
         <button class="btn" id="spin-btn" style="display:block; margin:0 auto;" onclick="doSpin()">КРУТИТЬ</button>
       </div>
+
       <div id="tasks-tab" class="hidden card"><h3>Ваши задания</h3><div id="tasks-list"></div></div>
-      <div id="leaderboard-tab" class="hidden card"><h3>Турнирная таблица</h3><table><thead><tr><th>Место</th><th>Имя</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table></div>
+      
+      <div id="leaderboard-tab" class="hidden card">
+        <h3>Турнирная таблица</h3>
+        <table><thead><tr><th>Место</th><th>Имя</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table>
+      </div>
+
       <div id="admin-tab" class="hidden card">
         <h3>Панель админа</h3>
         <h4>Заявки на проверку</h4><div id="admin-queue"></div>
@@ -66,100 +77,105 @@
         <input type="text" id="admin-user-id" placeholder="ID пользователя (UUID)">
         <input type="number" id="admin-chips" placeholder="Кол-во фишек">
         <button class="btn" onclick="adminAddChips()">Начислить фишки</button>
-        <button class="btn" style="background:#f59e0b; margin-left:10px;" onclick="adminResetSpin()">Сбросить кулдаун спина</button>
+        <button class="btn" style="background:#f59e0b; margin-left:10px;" onclick="adminResetSpin()">Сбросить кулдаун</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 🔑 ВСТАВЬТЕ СВОИ ДАННЫЕ НИЖЕ (точно как в Supabase → Settings → API)
+    // 🔑 ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE (Settings → API)
     const SUPABASE_URL = 'https://hjjklimzsnkxljghkrdu.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqamtsaW16c25reGxqZ2hrcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzA2OTcsImV4cCI6MjA5MTE0NjY5N30.YJLJ_0S409DYD-mAS71AmCNy7klwR-cMZzXEgZU5-R0';
-
-    const diag = document.getElementById('diag-box');
-    function showDiag(msg) { diag.style.display='block'; diag.textContent = msg; }
-
-    if (!SUPABASE_URL.includes('supabase.co')) showDiag('❌ Ошибка: SUPABASE_URL не изменён. Найдите в коде строку 78 и вставьте ссылку из Supabase.');
-    if (SUPABASE_KEY === 'ВАШ_ANON_PUBLIC_KEY') showDiag('❌ Ошибка: SUPABASE_KEY не изменён. Найдите в коде строку 79 и вставьте анонимный ключ из Supabase.');
-
-    let supabaseClient = null;
-    if (typeof window.supabase !== 'undefined') {
-      try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        showDiag('✅ Библиотека загружена. Клиент создан.');
-      } catch(e) { showDiag('❌ Ошибка создания клиента: ' + e.message); }
-    } else {
-      showDiag('❌ Скрипт Supabase заблокирован. Отключите AdBlock/uBlock или откройте в режиме инкогнито.');
-    }
-
+    
+    let supabase = null;
     let currentUser = null;
+    let currentProfile = null;
 
-    if (supabaseClient) {
-      supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (session) {
-          currentUser = session.user;
-          document.getElementById('auth-screen').classList.add('hidden');
-          document.getElementById('app').classList.remove('hidden');
-          await loadProfile();
-        }
-      });
+    // Инициализация
+    if (typeof window.supabase !== 'undefined') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } else {
+      document.getElementById('diag').style.display='block';
+      document.getElementById('diag').textContent = '❌ Скрипт Supabase не загружен. Проверьте интернет или отключите AdBlock.';
     }
+
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      document.getElementById('loading').classList.add('hidden');
+      if (session) {
+        currentUser = session.user;
+        await loadProfile();
+      } else {
+        document.getElementById('auth-screen').classList.remove('hidden');
+      }
+    });
 
     async function loadProfile() {
-      if (!currentUser) return;
-      const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
-      document.getElementById('user-name').textContent = profile?.name || 'Участник';
-      document.getElementById('chips').textContent = profile?.chips || 0;
-      if (profile?.role === 'admin') document.getElementById('admin-tab').classList.remove('hidden');
-      updateSpinStatus(profile?.next_spin_at);
-      loadTasks(); loadLeaderboard();
-      if (profile?.role === 'admin') loadAdminQueue();
+      try {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (!profile) throw new Error('Профиль не найден');
+        currentProfile = profile;
+        
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('user-name').textContent = profile.name || 'Участник';
+        document.getElementById('chips').textContent = profile.chips || 0;
+        
+        // Показываем админку только если роль точно admin
+        if (profile.role?.trim().toLowerCase() === 'admin') {
+          document.getElementById('admin-tab').classList.remove('hidden');
+        } else {
+          document.getElementById('admin-tab').classList.add('hidden');
+        }
+        
+        updateSpinStatus(profile.next_spin_at);
+        loadTasks();
+        loadLeaderboard();
+        if (profile.role?.trim().toLowerCase() === 'admin') loadAdminQueue();
+      } catch (e) {
+        alert('Ошибка загрузки профиля: ' + e.message);
+      }
     }
 
     function updateSpinStatus(nextAt) {
       const now = new Date(), next = new Date(nextAt);
       const btn = document.getElementById('spin-btn');
       const status = document.getElementById('spin-status');
-      if (!nextAt || next <= now) { status.textContent = 'Рулетка доступна!'; btn.disabled = false; }
-      else { status.textContent = `Доступно через: ${Math.ceil((next - now)/3600000)} ч.`; btn.disabled = true; }
+      if (!nextAt || next <= now) { status.textContent = '✅ Рулетка доступна!'; btn.disabled = false; }
+      else { status.textContent = `⏳ Доступно через: ${Math.ceil((next - now)/3600000)} ч.`; btn.disabled = true; }
     }
 
-        async function doSpin() {
+    async function doSpin() {
+      if (!currentUser) { alert('⚠️ Сессия истекла. Перезагрузите страницу.'); return; }
       const btn = document.getElementById('spin-btn');
       btn.disabled = true;
       btn.textContent = '⏳ Крутим...';
 
       try {
-        const { data, error } = await supabaseClient.rpc('spin_wheel', { p_user_id: currentUser.id });
+        const { data, error } = await supabase.rpc('spin_wheel', { p_user_id: currentUser.id });
         
-        if (error || data?.error) {
-          const msg = data?.error || error?.message || 'Неизвестная ошибка БД';
-          alert('❌ Ошибка: ' + msg);
-          btn.disabled = false;
-          btn.textContent = 'КРУТИТЬ';
-          return;
-        }
+        if (error) throw new Error(error.message);
+        if (data?.error) throw new Error(data.error);
 
-        // Запускаем анимацию
         const wheel = document.getElementById('wheel');
         wheel.style.transform = `rotate(${1440 + (data.result / 100) * 360}deg)`;
         
         setTimeout(() => {
-          alert(`🎉 Выпало: ${data.result}!\n📋 Назначено заданий: ${data.tasks}`);
+          alert(`🎉 Выпало: ${data.result}\n📋 Назначено заданий: ${data.tasks}`);
           btn.textContent = 'КРУТИТЬ';
           loadProfile();
         }, 4100);
       } catch (e) {
-        alert('❌ Сетевая ошибка: ' + e.message);
+        alert('❌ Ошибка спина: ' + e.message);
         btn.disabled = false;
         btn.textContent = 'КРУТИТЬ';
       }
     }
 
     async function loadTasks() {
-      const { data } = await supabaseClient.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).order('created_at', {ascending:false});
-      const list = document.getElementById('tasks-list'); list.innerHTML = '';
-      if (!data?.length) { list.innerHTML = '<p style="color:#94a3b8">Нет заданий. Крутите колесо!</p>'; return; }
+      const { data, error } = await supabase.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).order('created_at', {ascending:false});
+      const list = document.getElementById('tasks-list');
+      list.innerHTML = '';
+      if (error || !data?.length) { list.innerHTML = '<p style="color:#94a3b8">Нет заданий. Крутите колесо!</p>'; return; }
       data.forEach(t => {
         list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool?.title||'Задание'}</strong><br><small>${t.tasks_pool?.description||''}</small></div><span class="status ${t.status}">${t.status}</span></div>`;
         if(t.status==='active') list.innerHTML += `<textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">Отправить</button><hr>`;
@@ -167,14 +183,15 @@
     }
 
     async function submitTask(id) {
-      const ans = document.getElementById(`ans-${id}`).value;
-      await supabaseClient.from('user_tasks').update({ status:'submitted', answer:ans }).eq('id',id);
+      const ans = document.getElementById(`ans-${id}`).value.trim();
+      if(!ans) { alert('Введите ответ'); return; }
+      await supabase.from('user_tasks').update({ status:'submitted', answer:ans }).eq('id',id);
       loadTasks();
     }
 
     async function loadLeaderboard() {
-      const { data: tasks } = await supabaseClient.from('user_tasks').select('user_id, status').eq('status','completed');
-      const { data: profiles } = await supabaseClient.from('profiles').select('id, name');
+      const {  tasks } = await supabase.from('user_tasks').select('user_id').eq('status','completed');
+      const {  profiles } = await supabase.from('profiles').select('id, name');
       if(!profiles) return;
       const counts = profiles.map(p => ({ id:p.id, name:p.name, completed: tasks?.filter(d=>d.user_id===p.id).length||0 }))
                               .sort((a,b)=>b.completed-a.completed);
@@ -183,30 +200,30 @@
     }
 
     async function loadAdminQueue() {
-      const { data } = await supabaseClient.from('user_tasks').select('*, profiles(name)').eq('status','submitted');
+      const { data } = await supabase.from('user_tasks').select('*, profiles(name)').eq('status','submitted');
       const q = document.getElementById('admin-queue'); q.innerHTML='';
       if(!data?.length) { q.innerHTML='<p style="color:#94a3b8">Нет заявок</p>'; return; }
-      data.forEach(t => q.innerHTML += `<div class="task"><div><strong>${t.profiles?.name||'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div><button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button><button class="btn" style="background:var(--err); margin-left:5px;" onclick="rejectTask('${t.id}')">❌</button></div>`);
+      data.forEach(t => q.innerHTML += `<div class="task"><div><strong>${t.profiles?.name||'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="rejectTask('${t.id}')">❌</button></div></div>`);
     }
 
     async function approveTask(id) {
-      const { data: task } = await supabaseClient.from('user_tasks').select('user_id').eq('id',id).single();
-      await supabaseClient.from('user_tasks').update({status:'completed'}).eq('id',id);
-      await supabaseClient.rpc('increment_chips', { p_user_id: task.user_id, p_amount: 100 });
+      const {  task } = await supabase.from('user_tasks').select('user_id').eq('id',id).single();
+      await supabase.from('user_tasks').update({status:'completed'}).eq('id',id);
+      await supabase.rpc('increment_chips', { p_user_id: task.user_id, p_amount: 100 });
       loadAdminQueue(); loadProfile();
     }
     async function rejectTask(id) {
-      await supabaseClient.from('user_tasks').update({status:'active'}).eq('id',id);
+      await supabase.from('user_tasks').update({status:'active'}).eq('id',id);
       loadAdminQueue();
     }
     async function adminAddChips() {
       const uid = document.getElementById('admin-user-id').value.trim();
       const amt = parseInt(document.getElementById('admin-chips').value);
-      if(uid && amt) await supabaseClient.rpc('increment_chips', { p_user_id: uid, p_amount: amt });
+      if(uid && amt) await supabase.rpc('increment_chips', { p_user_id: uid, p_amount: amt });
     }
     async function adminResetSpin() {
       const uid = document.getElementById('admin-user-id').value.trim();
-      if(uid) await supabaseClient.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
+      if(uid) await supabase.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
     }
 
     function showTab(name) {
@@ -219,20 +236,14 @@
     async function login() {
       const email = document.getElementById('login-email').value.trim();
       const msg = document.getElementById('login-msg');
-      diag.style.display='none'; msg.textContent='';
-      
-      if(!supabaseClient) { diag.style.display='block'; diag.textContent='❌ Клиент не создан. Проверьте консоль (F12) или отключите блокировщик рекламы.'; return; }
-      if(!email.includes('@')) { diag.style.display='block'; diag.textContent='❌ Введите корректный email.'; return; }
-      
+      document.getElementById('diag').style.display='none';
+      if(!email.includes('@')) { msg.textContent='Введите корректный email'; return; }
       msg.textContent = '⏳ Отправляем...';
       try {
-        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+        const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
         if(error) throw error;
         msg.textContent = '✅ Ссылка отправлена! Проверьте почту и папку "Спам".';
-      } catch(e) {
-        diag.style.display='block'; diag.textContent='❌ Ошибка входа: ' + e.message;
-        msg.textContent = '';
-      }
+      } catch(e) { msg.textContent = '❌ Ошибка: ' + e.message; }
     }
   </script>
 </body>
