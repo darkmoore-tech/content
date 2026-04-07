@@ -14,7 +14,7 @@
     .btn:hover:not(:disabled) { filter: brightness(1.1); }
     .card { background:var(--card); padding:20px; border-radius:12px; margin-bottom:20px; }
     .tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-    .tab { background:#334155; padding:8px 16px; border-radius:20px; cursor:pointer; }
+    .tab { background:#334155; padding:8px 16px; border-radius:20px; cursor:pointer; user-select: none; }
     .tab.active { background:var(--acc); }
     .wheel-container { position:relative; width:200px; height:200px; margin:20px auto; }
     .wheel { width:100%; height:100%; border-radius:50%; background:conic-gradient(#3b82f6 0deg 36deg, #10b981 36deg 108deg, #f59e0b 108deg 180deg, #8b5cf6 180deg 252deg, #ef4444 252deg 324deg, #3b82f6 324deg 360deg); transition:transform 4s cubic-bezier(0.25,0.1,0.25,1); box-shadow:0 0 20px rgba(0,0,0,0.5); }
@@ -39,7 +39,6 @@
       <input type="password" id="login-pass" placeholder="Пароль">
       <button class="btn" id="login-btn" onclick="handleLogin()">Войти</button>
       <div id="error-box" class="error-msg"></div>
-      <button class="btn" style="background:#475569; margin-top:15px;" onclick="logout()">🚪 Выйти</button>
     </div>
 
     <div id="app" class="hidden">
@@ -48,12 +47,16 @@
         <span style="background:#334155; padding:6px 12px; border-radius:12px;">💰 <span id="chips">0</span></span>
         <button class="btn" style="background:#475569; padding:6px 12px; font-size:14px;" onclick="logout()">🚪 Выйти</button>
       </div>
+      
+      <!-- НАВИГАЦИЯ -->
       <div class="tabs">
-        <div class="tab active" onclick="switchTab('roulette')">🎡 Рулетка</div>
-        <div class="tab" onclick="switchTab('tasks')">📋 Задания</div>
-        <div class="tab" onclick="switchTab('leaderboard')">🏆 Турнирка</div>
-        <div class="tab hidden" id="admin-tab" onclick="switchTab('admin')">⚙️ Админ</div>
+        <div class="tab active" onclick="switchTab('roulette', this)">🎡 Рулетка</div>
+        <div class="tab" onclick="switchTab('tasks', this)">📋 Задания</div>
+        <div class="tab" onclick="switchTab('leaderboard', this)">🏆 Турнирка</div>
+        <div class="tab hidden" id="nav-admin-btn" onclick="switchTab('admin', this)">⚙️ Админ</div>
       </div>
+
+      <!-- КОНТЕНТ -->
       <div id="roulette-tab" class="card">
         <h3>Крутите колесо</h3>
         <div class="wheel-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
@@ -104,13 +107,14 @@
         document.getElementById('chips').textContent = p.chips || 0;
         
         const role = (p.role || '').trim().toLowerCase();
-        if (role === 'admin') document.getElementById('admin-tab').classList.remove('hidden');
-        else document.getElementById('admin-tab').classList.add('hidden');
+        if (role === 'admin') document.getElementById('nav-admin-btn').classList.remove('hidden');
+        else document.getElementById('nav-admin-btn').classList.add('hidden');
 
         updateSpinUI(p.next_spin_at);
-        loadTasks(); loadLeaderboard();
-        if (role === 'admin') loadAdminQueue();
         showScreen('app');
+        // Загружаем данные для открытой по умолчанию вкладки
+        loadTasks(); 
+        if (role === 'admin') loadAdminQueue();
       } catch(e) { showError('❌ ' + e.message); }
     }
 
@@ -120,6 +124,22 @@
       const txt = document.getElementById('spin-status');
       if (!nextAt || next <= now) { txt.textContent = '✅ Рулетка доступна!'; btn.disabled = false; }
       else { txt.textContent = `⏳ Доступно через: ${Math.ceil((next - now)/3600000)} ч.`; btn.disabled = true; }
+    }
+
+    // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК
+    function switchTab(name, btnElement) {
+      // Скрываем все панели
+      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
+      // Показываем нужную
+      document.getElementById(name + '-tab').classList.remove('hidden');
+      // Обновляем активную кнопку
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      if (btnElement) btnElement.classList.add('active');
+
+      // Загружаем данные при переключении
+      if (name === 'tasks') loadTasks();
+      if (name === 'leaderboard') loadLeaderboard();
+      if (name === 'admin') loadAdminQueue();
     }
 
     async function handleSpin() {
@@ -156,8 +176,8 @@
     }
 
     async function loadLeaderboard() {
-      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const {  profiles } = await db.from('profiles').select('id, name');
+      const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const { data: profiles } = await db.from('profiles').select('id, name');
       if(!profiles) return;
       const counts = profiles.map(p => ({ name:p.name, done: (tasks||[]).filter(t=>t.user_id===p.id).length }))
                               .sort((a,b)=>b.done-a.done);
@@ -166,10 +186,30 @@
     }
 
     async function loadAdminQueue() {
-      const { data } = await db.from('user_tasks').select('*, profiles(name)').eq('status','submitted');
-      const q = document.getElementById('admin-queue'); q.innerHTML='';
-      if(!data?.length) { q.innerHTML='<p style="color:#94a3b8">Нет заявок</p>'; return; }
-      data.forEach(t => q.innerHTML += `<div class="task"><div><strong>${t.profiles?.name||'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="rejectTask('${t.id}')">❌</button></div></div>`);
+      try {
+        // Безопасный запрос: сначала получаем задачи, потом подтягиваем имена
+        const { data: tasks } = await db.from('user_tasks').select('*').eq('status','submitted');
+        const q = document.getElementById('admin-queue'); q.innerHTML='';
+        if(!tasks?.length) { q.innerHTML='<p style="color:#94a3b8">Нет заявок</p>'; return; }
+        
+        // Получаем имена пользователей одной запроской
+        const userIds = [...new Set(tasks.map(t => t.user_id))];
+        const {  users } = await db.from('profiles').select('id, name').in('id', userIds);
+        const namesMap = {}; users?.forEach(u => namesMap[u.id] = u.name || 'Пользователь');
+
+        tasks.forEach(t => {
+          q.innerHTML += `
+            <div class="task">
+              <div><strong>${namesMap[t.user_id] || 'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button>
+                <button class="btn" style="background:var(--err)" onclick="rejectTask('${t.id}')">❌</button>
+              </div>
+            </div>`;
+        });
+      } catch(e) {
+        document.getElementById('admin-queue').innerHTML = '<p style="color:#ef4444">Ошибка загрузки очереди: ' + e.message + '</p>';
+      }
     }
 
     async function approveTask(id) {
@@ -192,13 +232,6 @@
       if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
     }
 
-    function switchTab(name) {
-      document.querySelectorAll('[id$="-tab"]').forEach(el=>el.classList.add('hidden'));
-      document.getElementById(name+'-tab').classList.remove('hidden');
-      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-      event.target.classList.add('active');
-    }
-
     async function handleLogin() {
       const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
@@ -209,7 +242,6 @@
       try {
         const { error } = await db.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
-        // После успешного входа сработает onAuthStateChange
       } catch(e) { alert('❌ Ошибка: ' + e.message); btn.disabled = false; btn.textContent = 'Войти'; }
     }
 
@@ -222,7 +254,6 @@
         db = window.supabase.createClient(SB_URL, SB_KEY);
       } catch(e) { showError('❌ ' + e.message); return; }
 
-      // Слушатель событий авторизации
       db.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           currentUser = session.user;
@@ -235,7 +266,6 @@
         }
       });
 
-      // Проверка сессии при загрузке страницы
       const {  session } = await db.auth.getSession();
       if (session) {
         currentUser = session.user;
