@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Командное Казино</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <style>
     :root { --bg: #0f172a; --card: #1e293b; --acc: #3b82f6; --ok: #10b981; --err: #ef4444; --text: #e2e8f0; }
     body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); padding:20px; }
     .container { max-width:800px; margin:0 auto; }
-    .btn { background:var(--acc); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:16px; }
-    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn { background:var(--acc); color:#fff; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:500; }
+    .btn:disabled { opacity:0.4; cursor:not-allowed; }
     .card { background:var(--card); padding:20px; border-radius:12px; margin-bottom:20px; }
     .tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
     .tab { background:#334155; padding:8px 16px; border-radius:20px; cursor:pointer; }
@@ -25,59 +25,42 @@
     #auth-screen { text-align:center; padding:50px 20px; }
     .hidden { display:none; }
     table { width:100%; border-collapse:collapse; } th,td { padding:10px; border-bottom:1px solid #475569; text-align:left; }
-    .error-box { background:var(--err); color:#fff; padding:10px; border-radius:8px; margin-top:10px; display:none; }
+    .diag-box { background:#334155; color:#f87171; padding:10px; border-radius:8px; margin-top:10px; display:none; font-size:14px; text-align:left; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Экран входа -->
     <div id="auth-screen">
       <h1>🎰 Командное Казино</h1>
       <p>Введите email, чтобы войти</p>
       <input type="email" id="login-email" placeholder="name@company.ru" style="width:100%; max-width:300px; margin:10px 0; padding:10px; border-radius:8px; border:1px solid #475569; background:#0f172a; color:#fff;">
       <button class="btn" id="login-btn" onclick="login()">Отправить ссылку на почту</button>
-      <div id="error-box" class="error-box"></div>
+      <div id="diag-box" class="diag-box"></div>
       <p id="login-msg" style="color:#94a3b8; font-size:14px; margin-top:10px;"></p>
     </div>
 
-    <!-- Основное приложение -->
     <div id="app" class="hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <h2>👤 <span id="user-name">Загрузка...</span></h2>
         <span style="background:#334155; padding:6px 12px; border-radius:12px;">💰 <span id="chips">0</span></span>
       </div>
-
       <div class="tabs">
         <div class="tab active" onclick="showTab('roulette')">🎡 Рулетка</div>
         <div class="tab" onclick="showTab('tasks')">📋 Мои задания</div>
         <div class="tab" onclick="showTab('leaderboard')">🏆 Турнирка</div>
         <div class="tab hidden" id="admin-tab" onclick="showTab('admin')">⚙️ Админ</div>
       </div>
-
       <div id="roulette-tab" class="card">
         <h3>Крутите колесо</h3>
-        <div class="wheel-container">
-          <div class="pointer"></div>
-          <div class="wheel" id="wheel"></div>
-        </div>
+        <div class="wheel-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
         <p id="spin-status" style="text-align:center; color:#94a3b8;"></p>
         <button class="btn" id="spin-btn" style="display:block; margin:0 auto;" onclick="doSpin()">КРУТИТЬ</button>
       </div>
-
-      <div id="tasks-tab" class="hidden card">
-        <h3>Ваши задания</h3>
-        <div id="tasks-list"></div>
-      </div>
-
-      <div id="leaderboard-tab" class="hidden card">
-        <h3>Турнирная таблица</h3>
-        <table><thead><tr><th>Место</th><th>Имя</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table>
-      </div>
-
+      <div id="tasks-tab" class="hidden card"><h3>Ваши задания</h3><div id="tasks-list"></div></div>
+      <div id="leaderboard-tab" class="hidden card"><h3>Турнирная таблица</h3><table><thead><tr><th>Место</th><th>Имя</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table></div>
       <div id="admin-tab" class="hidden card">
         <h3>Панель админа</h3>
-        <h4>Заявки на проверку</h4>
-        <div id="admin-queue"></div>
+        <h4>Заявки на проверку</h4><div id="admin-queue"></div>
         <hr style="border-color:#334155; margin:20px 0;">
         <h4>Ручное управление</h4>
         <input type="text" id="admin-user-id" placeholder="ID пользователя (UUID)">
@@ -89,176 +72,142 @@
   </div>
 
   <script>
-    // ⬇️ ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE (Settings → API)
-    const SUPABASE_URL = 'https://hjjklimzsnkxljghkrdu.supabase.co';
+    // 🔑 ВСТАВЬТЕ СВОИ ДАННЫЕ НИЖЕ (точно как в Supabase → Settings → API)
+    const SUPABASE_URL = 'https://hjjklimzsnkxljghkrdu.supabase.com';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqamtsaW16c25reGxqZ2hrcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzA2OTcsImV4cCI6MjA5MTE0NjY5N30.YJLJ_0S409DYD-mAS71AmCNy7klwR-cMZzXEgZU5-R0';
-    
-    if (!SUPABASE_URL.includes('supabase') || SUPABASE_KEY === 'ВАШ_ANON_PUBLIC_KEY') {
-      document.getElementById('error-box').style.display = 'block';
-      document.getElementById('error-box').textContent = '⚠️ Ошибка: не вставлены SUPABASE_URL или SUPABASE_KEY в код!';
+
+    const diag = document.getElementById('diag-box');
+    function showDiag(msg) { diag.style.display='block'; diag.textContent = msg; }
+
+    if (!SUPABASE_URL.includes('supabase.co')) showDiag('❌ Ошибка: SUPABASE_URL не изменён. Найдите в коде строку 78 и вставьте ссылку из Supabase.');
+    if (SUPABASE_KEY === 'ВАШ_ANON_PUBLIC_KEY') showDiag('❌ Ошибка: SUPABASE_KEY не изменён. Найдите в коде строку 79 и вставьте анонимный ключ из Supabase.');
+
+    let supabaseClient = null;
+    if (typeof window.supabase !== 'undefined') {
+      try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        showDiag('✅ Библиотека загружена. Клиент создан.');
+      } catch(e) { showDiag('❌ Ошибка создания клиента: ' + e.message); }
+    } else {
+      showDiag('❌ Скрипт Supabase заблокирован. Отключите AdBlock/uBlock или откройте в режиме инкогнито.');
     }
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null;
 
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        currentUser = session.user;
-        document.getElementById('auth-screen').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        await loadProfile();
-      }
-    });
+    if (supabaseClient) {
+      supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (session) {
+          currentUser = session.user;
+          document.getElementById('auth-screen').classList.add('hidden');
+          document.getElementById('app').classList.remove('hidden');
+          await loadProfile();
+        }
+      });
+    }
 
     async function loadProfile() {
-      try {
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-        document.getElementById('user-name').textContent = profile?.name || 'Участник';
-        document.getElementById('chips').textContent = profile?.chips || 0;
-        if (profile?.role === 'admin') document.getElementById('admin-tab').classList.remove('hidden');
-        updateSpinStatus(profile?.next_spin_at);
-        loadTasks();
-        loadLeaderboard();
-        if (profile?.role === 'admin') loadAdminQueue();
-      } catch (e) { console.error('Load profile error:', e); }
+      if (!currentUser) return;
+      const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+      document.getElementById('user-name').textContent = profile?.name || 'Участник';
+      document.getElementById('chips').textContent = profile?.chips || 0;
+      if (profile?.role === 'admin') document.getElementById('admin-tab').classList.remove('hidden');
+      updateSpinStatus(profile?.next_spin_at);
+      loadTasks(); loadLeaderboard();
+      if (profile?.role === 'admin') loadAdminQueue();
     }
 
     function updateSpinStatus(nextAt) {
       const now = new Date(), next = new Date(nextAt);
       const btn = document.getElementById('spin-btn');
       const status = document.getElementById('spin-status');
-      if (!nextAt || next <= now) {
-        status.textContent = 'Рулетка доступна!';
-        btn.disabled = false;
-      } else {
-        const hours = Math.ceil((next - now)/3600000);
-        status.textContent = `Доступно через: ${hours} ч.`;
-        btn.disabled = true;
-      }
+      if (!nextAt || next <= now) { status.textContent = 'Рулетка доступна!'; btn.disabled = false; }
+      else { status.textContent = `Доступно через: ${Math.ceil((next - now)/3600000)} ч.`; btn.disabled = true; }
     }
 
     async function doSpin() {
-      const btn = document.getElementById('spin-btn');
-      btn.disabled = true;
-      try {
-        const { data, error } = await supabase.rpc('spin_wheel', { p_user_id: currentUser.id });
-        if (error || data?.error) { alert(data?.error || error.message); btn.disabled = false; return; }
-        
-        const wheel = document.getElementById('wheel');
-        const deg = 1440 + (data.result / 100) * 360;
-        wheel.style.transform = `rotate(${deg}deg)`;
-        
-        setTimeout(() => {
-          alert(`Выпало: ${data.result}!\nНазначено заданий: ${data.tasks}`);
-          loadProfile();
-        }, 4100);
-      } catch (e) { alert('Ошибка сети'); btn.disabled = false; }
+      const btn = document.getElementById('spin-btn'); btn.disabled = true;
+      const { data, error } = await supabaseClient.rpc('spin_wheel', { p_user_id: currentUser.id });
+      if (error || data?.error) { alert(data?.error || error.message); btn.disabled = false; return; }
+      const wheel = document.getElementById('wheel');
+      wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
+      setTimeout(() => { alert(`Выпало: ${data.result}!\nНазначено заданий: ${data.tasks}`); loadProfile(); }, 4100);
     }
 
     async function loadTasks() {
-      const { data } = await supabase.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).order('created_at', {ascending:false});
-      const list = document.getElementById('tasks-list');
-      list.innerHTML = '';
-      if (!data || data.length === 0) { list.innerHTML = '<p style="color:#94a3b8">Нет заданий. Крутите колесо!</p>'; return; }
+      const { data } = await supabaseClient.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).order('created_at', {ascending:false});
+      const list = document.getElementById('tasks-list'); list.innerHTML = '';
+      if (!data?.length) { list.innerHTML = '<p style="color:#94a3b8">Нет заданий. Крутите колесо!</p>'; return; }
       data.forEach(t => {
-        list.innerHTML += `
-          <div class="task">
-            <div><strong>${t.tasks_pool?.title || 'Задание'}</strong><br><small>${t.tasks_pool?.description || ''}</small></div>
-            <span class="status ${t.status}">${t.status}</span>
-          </div>
-          ${t.status === 'active' ? `<textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">Отправить</button><hr>` : ''}
-        `;
+        list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool?.title||'Задание'}</strong><br><small>${t.tasks_pool?.description||''}</small></div><span class="status ${t.status}">${t.status}</span></div>`;
+        if(t.status==='active') list.innerHTML += `<textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">Отправить</button><hr>`;
       });
     }
 
     async function submitTask(id) {
       const ans = document.getElementById(`ans-${id}`).value;
-      await supabase.from('user_tasks').update({ status: 'submitted', answer: ans }).eq('id', id);
+      await supabaseClient.from('user_tasks').update({ status:'submitted', answer:ans }).eq('id',id);
       loadTasks();
     }
 
     async function loadLeaderboard() {
-      const { data: tasks } = await supabase.from('user_tasks').select('user_id, status').eq('status', 'completed');
-      const { data: profiles } = await supabase.from('profiles').select('id, name');
-      if (!profiles) return;
-      const counts = profiles.map(p => ({
-        id: p.id, name: p.name, 
-        completed: tasks?.filter(d => d.user_id === p.id).length || 0
-      })).sort((a,b) => b.completed - a.completed);
-
-      const tb = document.getElementById('lb-body');
-      tb.innerHTML = '';
-      counts.forEach((u, i) => { tb.innerHTML += `<tr><td>${i+1}</td><td>${u.name}</td><td>${u.completed}</td></tr>`; });
+      const { data: tasks } = await supabaseClient.from('user_tasks').select('user_id, status').eq('status','completed');
+      const { data: profiles } = await supabaseClient.from('profiles').select('id, name');
+      if(!profiles) return;
+      const counts = profiles.map(p => ({ id:p.id, name:p.name, completed: tasks?.filter(d=>d.user_id===p.id).length||0 }))
+                              .sort((a,b)=>b.completed-a.completed);
+      const tb = document.getElementById('lb-body'); tb.innerHTML='';
+      counts.forEach((u,i) => tb.innerHTML += `<tr><td>${i+1}</td><td>${u.name}</td><td>${u.completed}</td></tr>`);
     }
 
     async function loadAdminQueue() {
-      const { data } = await supabase.from('user_tasks').select('*, profiles(name)').eq('status', 'submitted');
-      const q = document.getElementById('admin-queue');
-      q.innerHTML = '';
-      if (!data || data.length === 0) { q.innerHTML = '<p style="color:#94a3b8">Нет заявок</p>'; return; }
-      data.forEach(t => {
-        q.innerHTML += `
-          <div class="task">
-            <div><strong>${t.profiles?.name || 'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div>
-            <div>
-              <button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button>
-              <button class="btn" style="background:var(--err); margin-left:5px;" onclick="rejectTask('${t.id}')">❌</button>
-            </div>
-          </div>`;
-      });
+      const { data } = await supabaseClient.from('user_tasks').select('*, profiles(name)').eq('status','submitted');
+      const q = document.getElementById('admin-queue'); q.innerHTML='';
+      if(!data?.length) { q.innerHTML='<p style="color:#94a3b8">Нет заявок</p>'; return; }
+      data.forEach(t => q.innerHTML += `<div class="task"><div><strong>${t.profiles?.name||'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div><button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button><button class="btn" style="background:var(--err); margin-left:5px;" onclick="rejectTask('${t.id}')">❌</button></div>`);
     }
 
     async function approveTask(id) {
-      const {  task } = await supabase.from('user_tasks').select('user_id').eq('id', id).single();
-      await supabase.from('user_tasks').update({ status: 'completed' }).eq('id', id);
-      await supabase.rpc('increment_chips', { p_user_id: task.user_id, p_amount: 100 });
+      const { data: task } = await supabaseClient.from('user_tasks').select('user_id').eq('id',id).single();
+      await supabaseClient.from('user_tasks').update({status:'completed'}).eq('id',id);
+      await supabaseClient.rpc('increment_chips', { p_user_id: task.user_id, p_amount: 100 });
       loadAdminQueue(); loadProfile();
     }
     async function rejectTask(id) {
-      await supabase.from('user_tasks').update({ status: 'active' }).eq('id', id);
+      await supabaseClient.from('user_tasks').update({status:'active'}).eq('id',id);
       loadAdminQueue();
     }
     async function adminAddChips() {
       const uid = document.getElementById('admin-user-id').value.trim();
       const amt = parseInt(document.getElementById('admin-chips').value);
-      if(!uid || !amt) return;
-      await supabase.rpc('increment_chips', { p_user_id: uid, p_amount: amt });
-      alert('Начислено!');
+      if(uid && amt) await supabaseClient.rpc('increment_chips', { p_user_id: uid, p_amount: amt });
     }
     async function adminResetSpin() {
       const uid = document.getElementById('admin-user-id').value.trim();
-      if(!uid) return;
-      await supabase.from('profiles').update({ next_spin_at: new Date(0).toISOString() }).eq('id', uid);
-      alert('Кулдаун сброшен!');
+      if(uid) await supabaseClient.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
     }
 
     function showTab(name) {
-      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id$="-tab"]').forEach(el=>el.classList.add('hidden'));
       document.getElementById(name+'-tab').classList.remove('hidden');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
       event.target.classList.add('active');
     }
 
     async function login() {
       const email = document.getElementById('login-email').value.trim();
       const msg = document.getElementById('login-msg');
-      const errBox = document.getElementById('error-box');
-      errBox.style.display = 'none';
-      msg.textContent = '';
-
-      if (!email.includes('@')) { errBox.style.display='block'; errBox.textContent='Введите корректный email'; return; }
-      msg.textContent = '⏳ Отправляем ссылку...';
+      diag.style.display='none'; msg.textContent='';
       
+      if(!supabaseClient) { diag.style.display='block'; diag.textContent='❌ Клиент не создан. Проверьте консоль (F12) или отключите блокировщик рекламы.'; return; }
+      if(!email.includes('@')) { diag.style.display='block'; diag.textContent='❌ Введите корректный email.'; return; }
+      
+      msg.textContent = '⏳ Отправляем...';
       try {
-        const { error } = await supabase.auth.signInWithOtp({ 
-          email: email,
-          options: { emailRedirectTo: window.location.origin + window.location.pathname }
-        });
-        if (error) throw error;
-        msg.textContent = '✅ Ссылка отправлена! Проверьте почту (и папку Спам).';
-      } catch (e) {
-        errBox.style.display = 'block';
-        errBox.textContent = '❌ Ошибка: ' + e.message;
+        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+        if(error) throw error;
+        msg.textContent = '✅ Ссылка отправлена! Проверьте почту и папку "Спам".';
+      } catch(e) {
+        diag.style.display='block'; diag.textContent='❌ Ошибка входа: ' + e.message;
         msg.textContent = '';
       }
     }
