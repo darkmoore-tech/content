@@ -124,13 +124,36 @@
       else { status.textContent = `Доступно через: ${Math.ceil((next - now)/3600000)} ч.`; btn.disabled = true; }
     }
 
-    async function doSpin() {
-      const btn = document.getElementById('spin-btn'); btn.disabled = true;
-      const { data, error } = await supabaseClient.rpc('spin_wheel', { p_user_id: currentUser.id });
-      if (error || data?.error) { alert(data?.error || error.message); btn.disabled = false; return; }
-      const wheel = document.getElementById('wheel');
-      wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
-      setTimeout(() => { alert(`Выпало: ${data.result}!\nНазначено заданий: ${data.tasks}`); loadProfile(); }, 4100);
+        async function doSpin() {
+      const btn = document.getElementById('spin-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Крутим...';
+
+      try {
+        const { data, error } = await supabaseClient.rpc('spin_wheel', { p_user_id: currentUser.id });
+        
+        if (error || data?.error) {
+          const msg = data?.error || error?.message || 'Неизвестная ошибка БД';
+          alert('❌ Ошибка: ' + msg);
+          btn.disabled = false;
+          btn.textContent = 'КРУТИТЬ';
+          return;
+        }
+
+        // Запускаем анимацию
+        const wheel = document.getElementById('wheel');
+        wheel.style.transform = `rotate(${1440 + (data.result / 100) * 360}deg)`;
+        
+        setTimeout(() => {
+          alert(`🎉 Выпало: ${data.result}!\n📋 Назначено заданий: ${data.tasks}`);
+          btn.textContent = 'КРУТИТЬ';
+          loadProfile();
+        }, 4100);
+      } catch (e) {
+        alert('❌ Сетевая ошибка: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'КРУТИТЬ';
+      }
     }
 
     async function loadTasks() {
