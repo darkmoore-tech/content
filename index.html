@@ -48,7 +48,6 @@
         <button class="btn" style="background:#475569; padding:6px 12px; font-size:14px;" onclick="logout()">🚪 Выйти</button>
       </div>
       
-      <!-- НАВИГАЦИЯ -->
       <div class="tabs">
         <div class="tab active" onclick="switchTab('roulette', this)">🎡 Рулетка</div>
         <div class="tab" onclick="switchTab('tasks', this)">📋 Задания</div>
@@ -56,7 +55,6 @@
         <div class="tab hidden" id="nav-admin-btn" onclick="switchTab('admin', this)">⚙️ Админ</div>
       </div>
 
-      <!-- КОНТЕНТ -->
       <div id="roulette-tab" class="card">
         <h3>Крутите колесо</h3>
         <div class="wheel-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
@@ -97,10 +95,30 @@
       document.getElementById('error-box').style.display = 'block';
     }
 
+    // ✅ ИСПРАВЛЕНО: Проверяем и задания, и таймер
+    function updateSpinUI(nextAt, activeTasksCount) {
+      const now = new Date();
+      const next = nextAt ? new Date(nextAt) : new Date(0);
+      const btn = document.getElementById('spin-btn');
+      const txt = document.getElementById('spin-status');
+      
+      // Разрешаем спин, если заданий 0 ИЛИ прошло 24ч
+      const canSpin = (activeTasksCount === 0) || (nextAt && next <= now);
+      
+      if (canSpin) {
+        txt.textContent = '✅ Рулетка доступна!';
+        btn.disabled = false;
+      } else {
+        const hours = Math.ceil((next - now) / 3600000);
+        txt.textContent = `⏳ Доступно через: ${hours} ч. или сдайте все задания`;
+        btn.disabled = true;
+      }
+    }
+
     async function loadProfile() {
       try {
         const { data: p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        if (error || !p) throw new Error('Профиль не найден. Убедитесь, что строка в таблице profiles создана с вашим ID.');
+        if (error || !p) throw new Error('Профиль не найден.');
         
         profileData = p;
         document.getElementById('user-name').textContent = p.name || 'Участник';
@@ -110,36 +128,15 @@
         if (role === 'admin') document.getElementById('nav-admin-btn').classList.remove('hidden');
         else document.getElementById('nav-admin-btn').classList.add('hidden');
 
-        updateSpinUI(p.next_spin_at);
+        // Считаем активные/отправленные задания
+        const { data: activeTasks } = await db.from('user_tasks').select('id')
+          .eq('user_id', currentUser.id).in('status', ['active', 'submitted']);
+        
+        updateSpinUI(p.next_spin_at, activeTasks?.length || 0);
         showScreen('app');
-        // Загружаем данные для открытой по умолчанию вкладки
         loadTasks(); 
         if (role === 'admin') loadAdminQueue();
       } catch(e) { showError('❌ ' + e.message); }
-    }
-
-    function updateSpinUI(nextAt) {
-      const now = new Date(), next = new Date(nextAt);
-      const btn = document.getElementById('spin-btn');
-      const txt = document.getElementById('spin-status');
-      if (!nextAt || next <= now) { txt.textContent = '✅ Рулетка доступна!'; btn.disabled = false; }
-      else { txt.textContent = `⏳ Доступно через: ${Math.ceil((next - now)/3600000)} ч.`; btn.disabled = true; }
-    }
-
-    // ✅ ИСПРАВЛЕННАЯ ФУНКЦИЯ ПЕРЕКЛЮЧЕНИЯ ВКЛАДОК
-    function switchTab(name, btnElement) {
-      // Скрываем все панели
-      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
-      // Показываем нужную
-      document.getElementById(name + '-tab').classList.remove('hidden');
-      // Обновляем активную кнопку
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      if (btnElement) btnElement.classList.add('active');
-
-      // Загружаем данные при переключении
-      if (name === 'tasks') loadTasks();
-      if (name === 'leaderboard') loadLeaderboard();
-      if (name === 'admin') loadAdminQueue();
     }
 
     async function handleSpin() {
@@ -172,12 +169,13 @@
       const ans = document.getElementById(`ans-${id}`).value.trim();
       if(!ans) { alert('Введите ответ'); return; }
       await db.from('user_tasks').update({ status:'submitted', answer:ans }).eq('id',id);
+      loadProfile(); // Перезагружаем, чтобы обновить статус кнопки спина
       loadTasks();
     }
 
     async function loadLeaderboard() {
-      const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const { data: profiles } = await db.from('profiles').select('id, name');
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const {  profiles } = await db.from('profiles').select('id, name');
       if(!profiles) return;
       const counts = profiles.map(p => ({ name:p.name, done: (tasks||[]).filter(t=>t.user_id===p.id).length }))
                               .sort((a,b)=>b.done-a.done);
@@ -187,40 +185,35 @@
 
     async function loadAdminQueue() {
       try {
-        // Безопасный запрос: сначала получаем задачи, потом подтягиваем имена
-        const { data: tasks } = await db.from('user_tasks').select('*').eq('status','submitted');
+        const {  tasks } = await db.from('user_tasks').select('*').eq('status','submitted');
         const q = document.getElementById('admin-queue'); q.innerHTML='';
         if(!tasks?.length) { q.innerHTML='<p style="color:#94a3b8">Нет заявок</p>'; return; }
         
-        // Получаем имена пользователей одной запроской
         const userIds = [...new Set(tasks.map(t => t.user_id))];
         const {  users } = await db.from('profiles').select('id, name').in('id', userIds);
         const namesMap = {}; users?.forEach(u => namesMap[u.id] = u.name || 'Пользователь');
 
         tasks.forEach(t => {
-          q.innerHTML += `
-            <div class="task">
-              <div><strong>${namesMap[t.user_id] || 'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div>
-              <div style="display:flex;gap:8px;">
-                <button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button>
-                <button class="btn" style="background:var(--err)" onclick="rejectTask('${t.id}')">❌</button>
-              </div>
-            </div>`;
+          q.innerHTML += `<div class="task"><div><strong>${namesMap[t.user_id]||'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="rejectTask('${t.id}')">❌</button></div></div>`;
         });
-      } catch(e) {
-        document.getElementById('admin-queue').innerHTML = '<p style="color:#ef4444">Ошибка загрузки очереди: ' + e.message + '</p>';
-      }
+      } catch(e) { document.getElementById('admin-queue').innerHTML = '<p style="color:#ef4444">Ошибка: '+e.message+'</p>'; }
     }
 
+    // ✅ ИСПРАВЛЕНО: Явная обработка ошибок и уведомление об успехе
     async function approveTask(id) {
-      const {  t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
-      await db.from('user_tasks').update({status:'completed'}).eq('id',id);
-      await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100 });
-      loadAdminQueue(); loadProfile();
+      try {
+        const { data: t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
+        await db.from('user_tasks').update({status:'completed'}).eq('id',id);
+        const { error } = await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100 });
+        if (error) throw error;
+        alert('✅ Задание одобрено, +100 фишек начислено!');
+        loadAdminQueue(); 
+        loadProfile(); // Обновит баланс и разблокирует рулетку
+      } catch(e) { alert('❌ Ошибка начисления: ' + e.message); }
     }
     async function rejectTask(id) {
       await db.from('user_tasks').update({status:'active'}).eq('id',id);
-      loadAdminQueue();
+      loadAdminQueue(); loadProfile();
     }
     async function handleAddChips() {
       const uid = document.getElementById('admin-uid').value.trim();
@@ -232,12 +225,22 @@
       if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
     }
 
+    function switchTab(name, btnElement) {
+      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById(name + '-tab').classList.remove('hidden');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      if (btnElement) btnElement.classList.add('active');
+
+      if (name === 'tasks') loadTasks();
+      if (name === 'leaderboard') loadLeaderboard();
+      if (name === 'admin') loadAdminQueue();
+    }
+
     async function handleLogin() {
       const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
       const pass = document.getElementById('login-pass').value;
       if(!email || !pass) { alert('Введите email и пароль'); return; }
-      
       btn.disabled = true; btn.textContent = '⏳ Вход...';
       try {
         const { error } = await db.auth.signInWithPassword({ email, password: pass });
@@ -255,24 +258,13 @@
       } catch(e) { showError('❌ ' + e.message); return; }
 
       db.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          currentUser = session.user;
-          loadProfile();
-        } else if (event === 'SIGNED_OUT') {
-          currentUser = null;
-          document.getElementById('login-btn').disabled = false;
-          document.getElementById('login-btn').textContent = 'Войти';
-          showScreen('auth-screen');
-        }
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') { currentUser = session.user; loadProfile(); }
+        else if (event === 'SIGNED_OUT') { currentUser = null; document.getElementById('login-btn').disabled = false; document.getElementById('login-btn').textContent = 'Войти'; showScreen('auth-screen'); }
       });
 
       const {  session } = await db.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        await loadProfile();
-      } else {
-        showScreen('auth-screen');
-      }
+      if (session) { currentUser = session.user; await loadProfile(); }
+      else { showScreen('auth-screen'); }
     }
 
     init();
