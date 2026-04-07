@@ -213,17 +213,26 @@
       event.target.classList.add('active');
     }
 
-    async function handleLogin() {
+        async function handleLogin() {
+      const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
       const msg = document.getElementById('login-msg');
       document.getElementById('error-box').style.display='none';
+      
       if(!email.includes('@')) { msg.textContent='Введите корректный email'; return; }
+      
       msg.textContent = '⏳ Отправляем...';
+      btn.disabled = true; btn.style.opacity = '0.5';
+      
       try {
         const { error } = await db.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
         if(error) throw error;
         msg.textContent = '✅ Ссылка отправлена! Проверьте почту и папку "Спам".';
-      } catch(e) { msg.textContent = '❌ Ошибка: ' + e.message; }
+        setTimeout(() => { btn.disabled = false; btn.style.opacity = '1'; }, 60000);
+      } catch(e) { 
+        msg.textContent = '❌ Ошибка: ' + e.message; 
+        btn.disabled = false; btn.style.opacity = '1';
+      }
     }
 
     function showError(txt) {
