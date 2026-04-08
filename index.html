@@ -28,7 +28,7 @@
     .badge { background:var(--acc-light); color:var(--acc); padding:6px 12px; border-radius:20px; font-weight:600; font-size:14px; }
     .btn { background:var(--acc); color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
     .btn:hover:not(:disabled) { background:var(--acc-hover); transform:translateY(-1px); }
-    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
     .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-sec); }
     .btn-outline:hover { border-color:var(--acc); color:var(--acc); background:var(--acc-light); }
     .card { background:var(--bg-card); padding:20px; border-radius:var(--radius); margin-bottom:20px; box-shadow:var(--shadow); border:1px solid var(--border); }
@@ -157,18 +157,27 @@
       document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
     }
 
+    function resetLoginUI() {
+      const btn = document.getElementById('login-btn');
+      if(btn) { btn.disabled = false; btn.textContent = 'Войти'; }
+    }
+
     function showScreen(name) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('app').classList.add('hidden');
-      if (name === 'auth') document.getElementById('auth-screen').classList.remove('hidden');
-      else document.getElementById('app').classList.remove('hidden');
+      if (name === 'auth') {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        resetLoginUI(); // ✅ Гарантированно разблокирует кнопку
+      } else {
+        document.getElementById('app').classList.remove('hidden');
+      }
     }
 
     async function loadProfile() {
       try {
         const {  p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        if (error || !p) throw new Error('Профиль не найден.');
+        if (error || !p) throw new Error('Профиль не найден. Обратитесь к админу для активации аккаунта.');
         profile = p;
         document.getElementById('chips').textContent = p.chips || 0;
         document.getElementById('profile-name').textContent = p.name || 'Сотрудник';
@@ -229,15 +238,14 @@
       } catch(e) { console.warn(e); }
     }
 
-    // ✅ ИСПРАВЛЕНО: Явная загрузка истории с обработкой ошибок
     async function loadTxHistory() {
       try {
-        const { data: tx, error } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(20);
+        const {  tx, error } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(20);
         const box = document.getElementById('tx-history'); box.innerHTML='';
         if (error) throw error;
         if (!tx?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет операций</p>'; return; }
         tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.description || t.type} • ${new Date(t.created_at).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span><span class="hist-plus">+${t.amount}</span></div>`);
-      } catch(e) { document.getElementById('tx-history').innerHTML = `<p style="color:var(--err)">Ошибка загрузки: ${e.message}</p>`; }
+      } catch(e) { document.getElementById('tx-history').innerHTML = `<p style="color:var(--err)">Ошибка: ${e.message}</p>`; }
     }
 
     async function loadTaskHistory() {
@@ -281,7 +289,7 @@
 
     async function approve(id) {
       try {
-        const { data: t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
+        const {  t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
         await db.from('user_tasks').update({status:'completed'}).eq('id',id);
         await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100, p_desc: 'Выполнение задания' });
         await db.rpc('update_daily_streak', { p_user_id: t.user_id });
