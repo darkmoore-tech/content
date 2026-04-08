@@ -26,9 +26,9 @@
     .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
     .logo { font-size:24px; font-weight:800; background:linear-gradient(135deg, var(--acc), #8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     .badge { background:var(--acc-light); color:var(--acc); padding:6px 12px; border-radius:20px; font-weight:600; font-size:14px; }
-    .btn { background:var(--acc); color:#fff; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
+    .btn { background:var(--acc); color:#fff; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
     .btn:hover:not(:disabled) { background:var(--acc-hover); transform:translateY(-1px); }
-    .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
     .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-sec); }
     .btn-outline:hover { border-color:var(--acc); color:var(--acc); background:var(--acc-light); }
     .card { background:var(--bg-card); padding:20px; border-radius:var(--radius); margin-bottom:20px; box-shadow:var(--shadow); border:1px solid var(--border); }
@@ -53,21 +53,18 @@
     .progress-bar { height:6px; background:var(--bg-hover); border-radius:3px; margin-top:10px; overflow:hidden; }
     .progress-fill { height:100%; background:linear-gradient(90deg, var(--acc), #8b5cf6); transition:width 0.5s ease; }
     .rank-badge { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#000; padding:6px 12px; border-radius:12px; font-weight:700; }
-    .hist-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+    .hist-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; align-items:center; }
     .hist-row:last-child { border:none; }
     .hist-plus { color:var(--ok); font-weight:600; }
-    #theme-toggle { background:none; border:none; font-size:22px; cursor:pointer; padding:6px; border-radius:8px; }
+    #theme-toggle { background:none; border:none; font-size:20px; cursor:pointer; padding:6px; border-radius:8px; }
     #theme-toggle:hover { background:var(--bg-hover); }
     .loading { display:flex; flex-direction:column; justify-content:center; align-items:center; height:60vh; color:var(--text-sec); gap:10px; }
-    #error-msg { color:var(--err); background:var(--err-bg); padding:10px; border-radius:10px; margin-top:10px; display:none; }
+    #error-msg { color:var(--err); background:var(--err-bg); padding:10px; border-radius:10px; margin-top:10px; display:none; font-size:14px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="loading" class="loading">
-      <div style="font-size:32px;">🎰</div>
-      <div>Загрузка системы...</div>
-    </div>
+    <div id="loading" class="loading"><div style="font-size:32px;">🎰</div><div>Загрузка системы...</div></div>
     
     <div id="auth-screen" class="hidden card" style="text-align:center; padding:40px;">
       <div class="logo" style="font-size:32px; margin-bottom:10px;">🎰 Командное Казино</div>
@@ -81,17 +78,17 @@
     <div id="app" class="hidden">
       <div class="header">
         <div><div class="logo">🎰 Casino</div><small style="color:var(--text-sec)">Внутренняя система мотивации</small></div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <span class="badge">💰 <span id="chips">0</span> фишек</span>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span class="badge">💰 <span id="chips">0</span></span>
+          <button class="btn btn-outline" onclick="switchTab('profile')">👤 Кабинет</button>
           <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
-          <button class="btn btn-outline" onclick="logout()">Выйти</button>
+          <button class="btn btn-outline" onclick="logout()">🚪 Выйти</button>
         </div>
       </div>
 
       <div class="tabs">
         <div class="tab active" onclick="switchTab('roulette', this)">🎡 Рулетка</div>
         <div class="tab" onclick="switchTab('tasks', this)">📋 Задания</div>
-        <div class="tab" onclick="switchTab('profile', this)">👤 Кабинет</div>
         <div class="tab" onclick="switchTab('leaderboard', this)">🏆 Турнирка</div>
         <div class="tab hidden" id="nav-admin" onclick="switchTab('admin', this)">⚙️ Админ</div>
       </div>
@@ -103,17 +100,13 @@
         <button class="btn" id="spin-btn" style="display:block; margin:0 auto;" onclick="handleSpin()">КРУТИТЬ</button>
       </div>
 
-      <div id="tasks-tab" class="hidden card">
-        <h3 style="margin-top:0">Мои активные задания</h3>
-        <div id="tasks-list"></div>
-      </div>
+      <div id="tasks-tab" class="hidden card"><h3 style="margin-top:0">Мои активные задания</h3><div id="tasks-list"></div></div>
 
       <div id="profile-tab" class="hidden card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
           <h3 style="margin:0">👋 Привет, <span id="profile-name">...</span></h3>
           <div class="rank-badge">🏆 <span id="rank-pos">...</span> место</div>
         </div>
-        
         <div class="card" style="padding:15px; margin:15px 0;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>🔥 Ежедневный стрик</strong>
@@ -123,10 +116,8 @@
           <div class="progress-bar"><div class="progress-fill" id="streak-prog" style="width:0%"></div></div>
           <p style="font-size:13px; color:var(--text-sec); margin:8px 0 0;" id="streak-hint">Крутите колесо или сдавайте задания каждый день!</p>
         </div>
-
         <h4>📊 История начислений</h4>
-        <div id="tx-history" style="max-height:200px; overflow-y:auto;"></div>
-
+        <div id="tx-history" style="max-height:250px; overflow-y:auto;"></div>
         <h4 style="margin-top:20px">📂 История заданий</h4>
         <div id="task-history" style="max-height:200px; overflow-y:auto;"></div>
       </div>
@@ -152,13 +143,10 @@
   </div>
 
   <script>
-    // ✅ Ваши ключи уже вставлены
     const SB_URL = 'https://hjjklimzsnkxljghkrdu.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqamtsaW16c25reGxqZ2hrcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzA2OTcsImV4cCI6MjA5MTE0NjY5N30.YJLJ_0S409DYD-mAS71AmCNy7klwR-cMZzXEgZU5-R0';
-
     let db = null, currentUser = null, profile = null;
 
-    // Тема
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
@@ -179,23 +167,21 @@
 
     async function loadProfile() {
       try {
-        const { data: p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        if (error || !p) throw new Error('Профиль не найден. Обратитесь к админу.');
-        
+        const {  p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (error || !p) throw new Error('Профиль не найден.');
         profile = p;
         document.getElementById('chips').textContent = p.chips || 0;
         document.getElementById('profile-name').textContent = p.name || 'Сотрудник';
         document.getElementById('nav-admin').classList.toggle('hidden', (p.role||'').trim().toLowerCase() !== 'admin');
         
         renderStreak(p.daily_streak || 0);
-        loadRank(); loadTxHistory(); loadTaskHistory();
+        await Promise.all([loadRank(), loadTxHistory(), loadTaskHistory()]);
         updateSpinUI(p.next_spin_at);
         showScreen('app');
         loadTasks();
         if ((p.role||'').trim().toLowerCase() === 'admin') loadAdminQueue();
       } catch(e) {
-        console.error(e);
-        document.getElementById('error-msg').textContent = '❌ Ошибка загрузки: ' + e.message;
+        document.getElementById('error-msg').textContent = '❌ ' + e.message;
         document.getElementById('error-msg').style.display = 'block';
         showScreen('auth');
       }
@@ -210,76 +196,62 @@
     }
 
     async function handleSpin() {
-      const btn = document.getElementById('spin-btn'); 
-      btn.disabled = true; btn.textContent = '⏳ Крутим...';
-      const wheel = document.getElementById('wheel'); 
-      wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
-      
+      const btn = document.getElementById('spin-btn'); btn.disabled = true; btn.textContent = '⏳ Крутим...';
+      const wheel = document.getElementById('wheel'); wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
       setTimeout(async () => {
         try {
           const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id });
-          if (error) throw error;
-          if (data?.error) throw new Error(data.error);
-          
+          if (error) throw error; if (data?.error) throw new Error(data.error);
           wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
           wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
-          
-          setTimeout(() => {
-            alert(`🎉 Выпало: ${data.result}\n📋 Назначено: ${data.tasks}`);
-            btn.textContent = 'КРУТИТЬ';
-            loadProfile();
-          }, 4100);
-        } catch(e) {
-          alert('❌ Ошибка: ' + e.message);
-          btn.disabled = false; btn.textContent = 'КРУТИТЬ';
-        }
+          setTimeout(() => { alert(`🎉 Выпало: ${data.result}\n📋 Назначено: ${data.tasks}`); btn.textContent = 'КРУТИТЬ'; loadProfile(); }, 4100);
+        } catch(e) { alert('❌ ' + e.message); btn.disabled = false; btn.textContent = 'КРУТИТЬ'; }
       }, 50);
     }
 
     function renderStreak(streak) {
       const grid = document.getElementById('streak-grid'); grid.innerHTML='';
-      const todayPos = streak % 7 === 0 ? 7 : streak % 7;
-      for(let i=1; i<=7; i++) {
-        grid.innerHTML += `<div class="streak-day ${i <= todayPos ? 'done' : ''}"><div>День ${i}</div><div class="reward">+${i*100}</div></div>`;
-      }
+      const todayPos = streak % 7 === 0 && streak > 0 ? 7 : streak % 7;
+      for(let i=1; i<=7; i++) grid.innerHTML += `<div class="streak-day ${i <= todayPos ? 'done' : ''}"><div>День ${i}</div><div class="reward">+${i*100}</div></div>`;
       document.getElementById('streak-badge').textContent = streak + ' дней';
       document.getElementById('streak-prog').style.width = (todayPos/7*100) + '%';
-      const nextReward = (todayPos % 7 + 1) * 100;
-      document.getElementById('streak-hint').textContent = streak===0 ? 'Сделайте первое действие для получения +100 фишек!' : `Следующая награда: +${nextReward} фишек.`;
+      const next = (todayPos % 7 + 1) * 100;
+      document.getElementById('streak-hint').textContent = streak===0 ? 'Сделайте первое действие для +100 фишек!' : `Следующая награда: +${next} фишек.`;
     }
 
     async function loadRank() {
       try {
-        const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-        const { data: all } = await db.from('profiles').select('id');
+        const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+        const {  all } = await db.from('profiles').select('id');
         const myDone = (tasks||[]).filter(t=>t.user_id===currentUser.id).length;
         const above = (all||[]).filter(a => (tasks||[]).filter(t=>t.user_id===a.id).length > myDone).length;
         document.getElementById('rank-pos').textContent = `#${above+1}`;
-      } catch(e) { console.warn('Rank load err', e); }
+      } catch(e) { console.warn(e); }
     }
 
+    // ✅ ИСПРАВЛЕНО: Явная загрузка истории с обработкой ошибок
     async function loadTxHistory() {
-      const { data: tx } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
-      const box = document.getElementById('tx-history'); box.innerHTML='';
-      if(!tx?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет операций</p>'; return; }
-      tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.type} • ${new Date(t.created_at).toLocaleDateString()}</span><span class="hist-plus">+${t.amount}</span></div>`);
+      try {
+        const { data: tx, error } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(20);
+        const box = document.getElementById('tx-history'); box.innerHTML='';
+        if (error) throw error;
+        if (!tx?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет операций</p>'; return; }
+        tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.description || t.type} • ${new Date(t.created_at).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span><span class="hist-plus">+${t.amount}</span></div>`);
+      } catch(e) { document.getElementById('tx-history').innerHTML = `<p style="color:var(--err)">Ошибка загрузки: ${e.message}</p>`; }
     }
 
     async function loadTaskHistory() {
-      const { data: tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
+      const {  tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
       const box = document.getElementById('task-history'); box.innerHTML='';
       if(!tasks?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет заданий</p>'; return; }
-      tasks.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.tasks_pool?.title||'Задание'} <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${t.status}</span></span><small style="color:var(--text-sec)">${new Date(t.created_at).toLocaleDateString()}</small></div>`);
+      tasks.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.tasks_pool?.title||'Задание'} <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${t.status}</span></span><small style="color:var(--text-sec)">${new Date(t.created_at).toLocaleDateString('ru-RU')}</small></div>`);
     }
 
     async function loadTasks() {
       const { data } = await db.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).eq('status','active').order('created_at',{ascending:false});
       const list = document.getElementById('tasks-list'); list.innerHTML='';
       if(!data?.length) { list.innerHTML='<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>'; return; }
-      data.forEach(t => {
-        list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool.title}</strong><br><small>${t.tasks_pool.description}</small></div><span class="status active">В работе</span></div>
-        <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button><hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">`;
-      });
+      data.forEach(t => list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool.title}</strong><br><small>${t.tasks_pool.description}</small></div><span class="status active">В работе</span></div><textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button><hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">`);
     }
 
     async function submitTask(id) {
@@ -290,8 +262,8 @@
     }
 
     async function loadLeaderboard() {
-      const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const { data: profiles } = await db.from('profiles').select('id, name');
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const {  profiles } = await db.from('profiles').select('id, name');
       if(!profiles) return;
       const res = profiles.map(p => ({ name:p.name, done:(tasks||[]).filter(t=>t.user_id===p.id).length })).sort((a,b)=>b.done-a.done);
       document.getElementById('lb-body').innerHTML = res.map((u,i) => `<tr><td><strong>${i+1}</strong></td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
@@ -302,23 +274,25 @@
       const q = document.getElementById('admin-queue'); q.innerHTML='';
       if(!data?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок</p>'; return; }
       const ids = [...new Set(data.map(t=>t.user_id))];
-      const { data: users } = await db.from('profiles').select('id, name').in('id', ids);
+      const {  users } = await db.from('profiles').select('id, name').in('id', ids);
       const names = {}; users?.forEach(u=>names[u.id]=u.name);
       q.innerHTML = data.map(t => `<div class="task"><div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>${t.answer}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button></div></div>`).join('');
     }
 
     async function approve(id) {
-      const { data: t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
-      await db.from('user_tasks').update({status:'completed'}).eq('id',id);
-      await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100 });
-      await db.rpc('update_daily_streak', { p_user_id: t.user_id });
-      loadAdminQueue(); loadProfile();
+      try {
+        const { data: t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
+        await db.from('user_tasks').update({status:'completed'}).eq('id',id);
+        await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100, p_desc: 'Выполнение задания' });
+        await db.rpc('update_daily_streak', { p_user_id: t.user_id });
+        loadAdminQueue(); loadProfile();
+      } catch(e) { alert('❌ ' + e.message); }
     }
     async function reject(id) {
       await db.from('user_tasks').update({status:'active'}).eq('id',id);
       loadAdminQueue(); loadProfile();
     }
-    async function handleAddChips() { const uid = document.getElementById('admin-uid').value.trim(); const amt = parseInt(document.getElementById('admin-amount').value); if(uid&&amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt }); }
+    async function handleAddChips() { const uid = document.getElementById('admin-uid').value.trim(); const amt = parseInt(document.getElementById('admin-amount').value); if(uid&&amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt, p_desc: 'Ручное начисление' }); }
     async function handleResetSpin() { const uid = document.getElementById('admin-uid').value.trim(); if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid); }
 
     function switchTab(name, el) {
@@ -349,7 +323,7 @@
         if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } 
         else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } 
       });
-      const { data: session } = await db.auth.getSession();
+      const {  session } = await db.auth.getSession();
       if(session?.user) { currentUser=session.user; await loadProfile(); } 
       else showScreen('auth');
     }
