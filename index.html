@@ -69,7 +69,7 @@
     <div id="auth-screen" class="hidden card" style="text-align:center; padding:40px;">
       <div class="logo" style="font-size:32px; margin-bottom:10px;">🎰 Командное Казино</div>
       <p style="color:var(--text-sec); margin-bottom:20px;">Вход для сотрудников</p>
-      <input type="email" id="login-email" placeholder="Email" style="max-width:300px; margin:0 auto 10px; display:block;">
+      <input type="email" id="login-email" placeholder="Email" value="i@darkmoore.ru" style="max-width:300px; margin:0 auto 10px; display:block;">
       <input type="password" id="login-pass" placeholder="Пароль" style="max-width:300px; margin:0 auto 10px; display:block;">
       <button class="btn" id="login-btn" onclick="handleLogin()" style="max-width:300px; margin:10px auto 0; display:block; width:100%;">Войти</button>
       <div id="error-msg"></div>
@@ -168,7 +168,7 @@
       document.getElementById('app').classList.add('hidden');
       if (name === 'auth') {
         document.getElementById('auth-screen').classList.remove('hidden');
-        resetLoginUI(); // ✅ Гарантированно разблокирует кнопку
+        resetLoginUI(); 
       } else {
         document.getElementById('app').classList.remove('hidden');
       }
@@ -177,7 +177,7 @@
     async function loadProfile() {
       try {
         const {  p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        if (error || !p) throw new Error('Профиль не найден. Обратитесь к админу для активации аккаунта.');
+        if (error || !p) throw new Error('Профиль не найден. Выполните Шаг 1 (SQL), чтобы создать профиль.');
         profile = p;
         document.getElementById('chips').textContent = p.chips || 0;
         document.getElementById('profile-name').textContent = p.name || 'Сотрудник';
@@ -190,6 +190,7 @@
         loadTasks();
         if ((p.role||'').trim().toLowerCase() === 'admin') loadAdminQueue();
       } catch(e) {
+        console.error('LoadProfile Error:', e);
         document.getElementById('error-msg').textContent = '❌ ' + e.message;
         document.getElementById('error-msg').style.display = 'block';
         showScreen('auth');
@@ -317,20 +318,30 @@
       const email = document.getElementById('login-email').value.trim();
       const pass = document.getElementById('login-pass').value;
       if(!email||!pass) return alert('Введите email и пароль');
+      
       btn.disabled = true; btn.textContent = '⏳...';
       document.getElementById('error-msg').style.display = 'none';
-      const { error } = await db.auth.signInWithPassword({ email, password: pass });
-      if(error) { alert('❌ '+error.message); btn.disabled=false; btn.textContent='Войти'; }
+      
+      try {
+        const { error } = await db.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+      } catch(e) { 
+        alert('❌ ' + e.message); 
+        resetLoginUI();
+      }
     }
+
     function logout() { db.auth.signOut(); }
 
     async function init() {
       if(!window.supabase) return alert('Скрипт не загрузился. Проверьте интернет.');
       db = window.supabase.createClient(SB_URL, SB_KEY);
+      
       db.auth.onAuthStateChange((e, s) => { 
         if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } 
         else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } 
       });
+
       const {  session } = await db.auth.getSession();
       if(session?.user) { currentUser=session.user; await loadProfile(); } 
       else showScreen('auth');
