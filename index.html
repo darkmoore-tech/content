@@ -1,82 +1,155 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Командное Казино</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { --bg: #0f172a; --card: #1e293b; --acc: #3b82f6; --ok: #10b981; --err: #ef4444; --text: #e2e8f0; }
-    body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); padding:20px; }
-    .container { max-width:800px; margin:0 auto; }
-    .btn { background:var(--acc); color:#fff; border:none; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:16px; font-weight:500; transition:0.2s; }
-    .btn:disabled { opacity:0.4; cursor:not-allowed; }
-    .btn:hover:not(:disabled) { filter: brightness(1.1); }
-    .card { background:var(--card); padding:20px; border-radius:12px; margin-bottom:20px; }
-    .tabs { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
-    .tab { background:#334155; padding:8px 16px; border-radius:20px; cursor:pointer; user-select: none; }
-    .tab.active { background:var(--acc); }
-    .wheel-container { position:relative; width:200px; height:200px; margin:20px auto; }
-    .wheel { width:100%; height:100%; border-radius:50%; background:conic-gradient(#3b82f6 0deg 36deg, #10b981 36deg 108deg, #f59e0b 108deg 180deg, #8b5cf6 180deg 252deg, #ef4444 252deg 324deg, #3b82f6 324deg 360deg); transition:transform 4s cubic-bezier(0.25,0.1,0.25,1); box-shadow:0 0 20px rgba(0,0,0,0.5); }
-    .pointer { position:absolute; top:-10px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:15px solid transparent; border-right:15px solid transparent; border-top:20px solid #fff; z-index:2; }
-    .task { background:#334155; padding:12px; margin:8px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; flex-direction:column; gap:8px; }
-    .status { font-size:12px; padding:4px 8px; border-radius:12px; font-weight:500; }
-    .active { background:#f59e0b; color:#000; } .submitted { background:#3b82f6; } .completed { background:var(--ok); color:#000; } .rejected { background:var(--err); }
-    input { width:100%; padding:10px; border-radius:8px; border:1px solid #475569; background:#0f172a; color:#fff; margin:8px 0; box-sizing:border-box; }
+    :root {
+      --bg: #f8fafc; --bg-card: #ffffff; --bg-hover: #f1f5f9;
+      --acc: #3b82f6; --acc-hover: #2563eb; --acc-light: #dbeafe;
+      --text: #0f172a; --text-sec: #64748b; --border: #e2e8f0;
+      --ok: #10b981; --ok-bg: #d1fae5; --err: #ef4444; --err-bg: #fee2e2;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+    [data-theme="dark"] {
+      --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+      --acc: #60a5fa; --acc-hover: #3b82f6; --acc-light: #1e3a8a;
+      --text: #e2e8f0; --text-sec: #94a3b8; --border: #334155;
+      --ok: #34d399; --ok-bg: #064e3b; --err: #f87171; --err-bg: #7f1d1d;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:20px; }
+    .container { max-width:900px; margin:0 auto; }
+    .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+    .logo { font-size:24px; font-weight:800; background:linear-gradient(135deg, var(--acc), #8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .badge { background:var(--acc-light); color:var(--acc); padding:6px 12px; border-radius:20px; font-weight:600; font-size:14px; }
+    .btn { background:var(--acc); color:#fff; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px; }
+    .btn:hover:not(:disabled) { background:var(--acc-hover); transform:translateY(-1px); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-sec); }
+    .btn-outline:hover { border-color:var(--acc); color:var(--acc); background:var(--acc-light); }
+    .card { background:var(--bg-card); padding:20px; border-radius:var(--radius); margin-bottom:20px; box-shadow:var(--shadow); border:1px solid var(--border); }
+    .tabs { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+    .tab { padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:500; background:var(--bg-hover); color:var(--text-sec); }
+    .tab.active { background:var(--acc); color:#fff; }
+    .wheel-wrap { position:relative; width:220px; height:220px; margin:20px auto; }
+    .wheel { width:100%; height:100%; border-radius:50%; background:conic-gradient(#3b82f6 0deg 36deg, #10b981 36deg 108deg, #f59e0b 108deg 180deg, #8b5cf6 180deg 252deg, #ef4444 252deg 324deg, #3b82f6 324deg 360deg); transition:transform 4s cubic-bezier(0.25,0.1,0.25,1); box-shadow:0 0 30px rgba(0,0,0,0.3); border:4px solid var(--bg-card); }
+    .pointer { position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent; border-top:18px solid var(--text); z-index:2; }
+    .task { background:var(--bg-hover); padding:14px; margin:10px 0; border-radius:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    .status { font-size:12px; padding:4px 10px; border-radius:12px; font-weight:600; }
+    .active { background:#f59e0b; color:#000; } .submitted { background:var(--acc-light); color:var(--acc); } .completed { background:var(--ok-bg); color:var(--ok); } .rejected { background:var(--err-bg); color:var(--err); }
+    input, textarea { width:100%; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); margin:6px 0; }
+    textarea { min-height:60px; resize:vertical; }
     .hidden { display:none !important; }
-    table { width:100%; border-collapse:collapse; } th,td { padding:10px; border-bottom:1px solid #475569; text-align:left; }
-    .error-msg { background:#ef4444; color:#fff; padding:10px; border-radius:8px; margin-top:10px; display:none; text-align:left; font-size:14px; }
-    .refresh-btn { background:transparent; border:1px solid #475569; color:#94a3b8; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:10px; }
-    .refresh-btn:hover { border-color:#94a3b8; color:#e2e8f0; }
+    table { width:100%; border-collapse:collapse; } th,td { padding:10px; border-bottom:1px solid var(--border); text-align:left; font-size:14px; }
+    th { color:var(--text-sec); font-weight:600; }
+    .streak-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin:15px 0; }
+    .streak-day { background:var(--bg-hover); border:2px solid var(--border); border-radius:10px; padding:8px 4px; text-align:center; font-size:12px; position:relative; }
+    .streak-day.done { background:var(--acc); border-color:var(--acc); color:#fff; }
+    .streak-day.today { border-color:var(--acc); box-shadow:0 0 0 2px var(--acc-light); }
+    .streak-day .reward { font-weight:700; font-size:14px; margin-top:4px; }
+    .progress-bar { height:6px; background:var(--bg-hover); border-radius:3px; margin-top:10px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg, var(--acc), #8b5cf6); transition:width 0.5s ease; }
+    .rank-badge { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#000; padding:6px 12px; border-radius:12px; font-weight:700; margin-top:8px; }
+    .hist-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+    .hist-row:last-child { border:none; }
+    .hist-amt { font-weight:600; } .hist-plus { color:var(--ok); } .hist-minus { color:var(--err); }
+    #theme-toggle { background:none; border:none; font-size:22px; cursor:pointer; padding:6px; border-radius:8px; }
+    #theme-toggle:hover { background:var(--bg-hover); }
+    .loading { display:flex; justify-content:center; align-items:center; height:200px; color:var(--text-sec); }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="loading" style="text-align:center; padding:50px;">⏳ Загрузка системы...</div>
+    <div id="loading" class="loading">⏳ Загрузка...</div>
     
-    <div id="auth-screen" class="hidden" style="text-align:center; padding:50px;">
-      <h1>🎰 Командное Казино</h1>
-      <p>Введите логин и пароль</p>
-      <input type="email" id="login-email" placeholder="Email">
-      <input type="password" id="login-pass" placeholder="Пароль">
-      <button class="btn" id="login-btn" onclick="handleLogin()">Войти</button>
-      <div id="error-box" class="error-msg"></div>
+    <div id="auth-screen" class="hidden card" style="text-align:center; padding:40px;">
+      <div class="logo" style="font-size:32px; margin-bottom:10px;">🎰 Командное Казино</div>
+      <p style="color:var(--text-sec); margin-bottom:20px;">Вход для сотрудников</p>
+      <input type="email" id="login-email" placeholder="Email" style="max-width:300px; margin:0 auto 10px; display:block;">
+      <input type="password" id="login-pass" placeholder="Пароль" style="max-width:300px; margin:0 auto 10px; display:block;">
+      <button class="btn" id="login-btn" onclick="handleLogin()" style="max-width:300px; margin:10px auto 0; display:block; width:100%;">Войти</button>
+      <div id="error-box" class="hidden" style="background:var(--err-bg); color:var(--err); padding:10px; border-radius:10px; margin-top:15px; font-size:14px;"></div>
     </div>
 
     <div id="app" class="hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>👤 <span id="user-name">...</span></h2>
-        <span style="background:#334155; padding:6px 12px; border-radius:12px;">💰 <span id="chips">0</span></span>
-        <button class="btn" style="background:#475569; padding:6px 12px; font-size:14px;" onclick="logout()">🚪 Выйти</button>
+      <div class="header">
+        <div><div class="logo">🎰 Casino</div><small style="color:var(--text-sec)">Внутренняя система мотивации</small></div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span class="badge">💰 <span id="chips">0</span> фишек</span>
+          <button id="theme-toggle" onclick="toggleTheme()">🌙</button>
+          <button class="btn btn-outline" onclick="logout()">Выйти</button>
+        </div>
       </div>
-      
+
       <div class="tabs">
         <div class="tab active" onclick="switchTab('roulette', this)">🎡 Рулетка</div>
         <div class="tab" onclick="switchTab('tasks', this)">📋 Задания</div>
+        <div class="tab" onclick="switchTab('profile', this)">👤 Кабинет</div>
         <div class="tab" onclick="switchTab('leaderboard', this)">🏆 Турнирка</div>
-        <div class="tab hidden" id="nav-admin-btn" onclick="switchTab('admin', this)">⚙️ Админ</div>
+        <div class="tab hidden" id="nav-admin" onclick="switchTab('admin', this)">⚙️ Админ</div>
       </div>
 
+      <!-- РУЛЕТКА -->
       <div id="roulette-tab" class="card">
-        <h3>Крутите колесо</h3>
-        <div class="wheel-container"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
-        <p id="spin-status" style="color:#94a3b8;"></p>
+        <h3 style="margin-top:0">Крутите колесо удачи</h3>
+        <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
+        <p id="spin-status" style="text-align:center; color:var(--text-sec);"></p>
         <button class="btn" id="spin-btn" style="display:block; margin:0 auto;" onclick="handleSpin()">КРУТИТЬ</button>
       </div>
-      <div id="tasks-tab" class="hidden card"><h3>Ваши задания</h3><div id="tasks-list"></div></div>
-      <div id="leaderboard-tab" class="hidden card">
-        <h3>Турнирная таблица <button class="refresh-btn" onclick="loadLeaderboard()">🔄 Обновить</button></h3>
-        <table><thead><tr><th>Место</th><th>Имя</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table>
+
+      <!-- ЗАДАНИЯ -->
+      <div id="tasks-tab" class="hidden card">
+        <h3 style="margin-top:0">Мои задания</h3>
+        <div id="tasks-list"></div>
       </div>
+
+      <!-- КАБИНЕТ -->
+      <div id="profile-tab" class="hidden card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
+          <h3 style="margin:0">👋 Привет, <span id="profile-name">...</span></h3>
+          <div class="rank-badge">🥇 <span id="rank-pos">...</span> место</div>
+        </div>
+        
+        <div class="card" style="padding:15px; margin:15px 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>🔥 Ежедневный стрик</strong>
+            <span class="badge" id="streak-badge">0 дней</span>
+          </div>
+          <div class="streak-grid" id="streak-grid"></div>
+          <div class="progress-bar"><div class="progress-fill" id="streak-prog" style="width:0%"></div></div>
+          <p style="font-size:13px; color:var(--text-sec); margin:8px 0 0;" id="streak-hint">Крутите колесо или сдавайте задания каждый день!</p>
+        </div>
+
+        <h4>📊 История начислений</h4>
+        <div id="tx-history" style="max-height:200px; overflow-y:auto;"></div>
+
+        <h4 style="margin-top:20px">📂 История заданий</h4>
+        <div id="task-history" style="max-height:200px; overflow-y:auto;"></div>
+      </div>
+
+      <!-- ТУРНИРКА -->
+      <div id="leaderboard-tab" class="hidden card">
+        <h3 style="margin-top:0">🏆 Турнирная таблица</h3>
+        <table><thead><tr><th>Место</th><th>Сотрудник</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table>
+      </div>
+
+      <!-- АДМИН -->
       <div id="admin-tab" class="hidden card">
-        <h3>Панель админа <button class="refresh-btn" onclick="loadAdminQueue()">🔄 Обновить очередь</button></h3>
-        <h4>Заявки на проверку</h4><div id="admin-queue"></div>
-        <hr style="border-color:#334155; margin:20px 0;">
+        <h3 style="margin-top:0">⚙️ Панель админа</h3>
+        <div id="admin-queue"></div>
+        <hr style="border-color:var(--border); margin:20px 0;">
         <h4>Ручное управление</h4>
-        <input type="text" id="admin-uid" placeholder="ID пользователя (UUID)">
-        <input type="number" id="admin-amount" placeholder="Кол-во фишек">
-        <button class="btn" onclick="handleAddChips()">Начислить фишки</button>
-        <button class="btn" style="background:#f59e0b; margin-left:10px;" onclick="handleResetSpin()">Сбросить кулдаун</button>
+        <div style="display:grid; gap:10px; grid-template-columns: 2fr 1fr auto;">
+          <input type="text" id="admin-uid" placeholder="UUID пользователя">
+          <input type="number" id="admin-amount" placeholder="Фишки">
+          <button class="btn" onclick="handleAddChips()">➕ Начислить</button>
+        </div>
+        <button class="btn" style="background:#f59e0b; margin-top:10px; width:100%;" onclick="handleResetSpin()">🔄 Сбросить кулдаун</button>
       </div>
     </div>
   </div>
@@ -84,165 +157,170 @@
   <script>
     const SB_URL = 'https://hjjklimzsnkxljghkrdu.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqamtsaW16c25reGxqZ2hrcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzA2OTcsImV4cCI6MjA5MTE0NjY5N30.YJLJ_0S409DYD-mAS71AmCNy7klwR-cMZzXEgZU5-R0';
-    let db = null, currentUser = null;
+    let db = null, currentUser = null, profile = null;
 
-    function showScreen(id) {
-      ['loading','auth-screen','app'].forEach(s => document.getElementById(s).classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
+    // Тема
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
     }
 
-    function showError(txt) { showScreen('auth-screen'); const b=document.getElementById('error-box'); b.textContent=txt; b.style.display='block'; }
-
-    function updateSpinUI(nextAt, activeCount) {
-      const btn = document.getElementById('spin-btn'), txt = document.getElementById('spin-status');
-      const now = new Date(), next = nextAt ? new Date(nextAt) : new Date(0);
-      const canSpin = (activeCount === 0) || (next <= now);
-      txt.textContent = canSpin ? '✅ Рулетка доступна!' : `⏳ Доступно через: ${Math.ceil((next-now)/3600000)} ч. или сдайте задания`;
-      btn.disabled = !canSpin;
-    }
+    function show(id) { ['loading','auth-screen','app'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
+    function errBox(msg) { const b=document.getElementById('error-box'); b.textContent=msg; b.classList.remove('hidden'); }
+    function showScreen(name) { if(name==='auth') { show('auth-screen'); document.getElementById('error-box').classList.add('hidden'); } else { show('app'); } }
 
     async function loadProfile() {
       try {
-        const { data: p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        const {  p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
         if (error || !p) throw new Error('Профиль не найден.');
-        document.getElementById('user-name').textContent = p.name || 'Участник';
+        profile = p;
         document.getElementById('chips').textContent = p.chips || 0;
-        const role = (p.role||'').trim().toLowerCase();
-        document.getElementById('nav-admin-btn').classList.toggle('hidden', role !== 'admin');
+        document.getElementById('profile-name').textContent = p.name || 'Сотрудник';
+        document.getElementById('nav-admin').classList.toggle('hidden', (p.role||'').trim().toLowerCase() !== 'admin');
         
-        const { data: active } = await db.from('user_tasks').select('id').eq('user_id', currentUser.id).in('status', ['active','submitted']);
-        updateSpinUI(p.next_spin_at, active?.length || 0);
+        renderStreak(p.daily_streak || 0);
+        loadRank(); loadTxHistory(); loadTaskHistory();
+        updateSpinUI(p.next_spin_at);
         showScreen('app');
         loadTasks();
-        if (role === 'admin') loadAdminQueue();
-      } catch(e) { showError('❌ ' + e.message); }
+        if ((p.role||'').trim().toLowerCase() === 'admin') loadAdminQueue();
+      } catch(e) { errBox('❌ ' + e.message); showScreen('auth'); }
+    }
+
+    function updateSpinUI(nextAt) {
+      const now = new Date(), next = nextAt ? new Date(nextAt) : new Date(0);
+      const btn = document.getElementById('spin-btn'), txt = document.getElementById('spin-status');
+      const can = next <= now;
+      txt.textContent = can ? '✅ Рулетка готова! Крутите, чтобы получить задания.' : `⏳ Следующий спин через ${Math.ceil((next-now)/3600000)} ч. или после сдачи заданий.`;
+      btn.disabled = !can;
     }
 
     async function handleSpin() {
-      const btn = document.getElementById('spin-btn');
-      btn.disabled = true; btn.textContent = '⏳ Крутим...';
-      try {
-        const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        document.getElementById('wheel').style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
-        setTimeout(() => {
-          alert(`🎉 Выпало: ${data.result}\n📋 Назначено заданий: ${data.tasks}`);
-          btn.textContent = 'КРУТИТЬ';
-          loadProfile();
-        }, 4100);
-      } catch(e) { alert('❌ Ошибка: ' + e.message); btn.disabled = false; btn.textContent = 'КРУТИТЬ'; }
+      const btn = document.getElementById('spin-btn'); btn.disabled = true; btn.textContent = '⏳ Крутим...';
+      const wheel = document.getElementById('wheel'); wheel.style.transform = `rotate(0deg)`;
+      setTimeout(async () => {
+        try {
+          const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id });
+          if (error) throw error; if (data?.error) throw new Error(data.error);
+          wheel.style.transition = 'none'; wheel.style.transform = `rotate(0deg)`;
+          requestAnimationFrame(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)'; wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`; });
+          setTimeout(() => { alert(`🎉 Выпало: ${data.result}\n📋 Назначено: ${data.tasks}`); btn.textContent = 'КРУТИТЬ'; loadProfile(); }, 4200);
+        } catch(e) { alert('❌ ' + e.message); btn.textContent = 'КРУТИТЬ'; updateSpinUI(profile.next_spin_at); }
+      }, 50);
+    }
+
+    function renderStreak(streak) {
+      const grid = document.getElementById('streak-grid'); grid.innerHTML='';
+      const todayStreak = streak % 7 === 0 && streak > 0 ? 7 : streak % 7;
+      for(let i=1; i<=7; i++) {
+        const cls = i <= todayStreak ? 'done' : '';
+        grid.innerHTML += `<div class="streak-day ${cls} ${i===todayStreak+1?'today':''}"><div>День ${i}</div><div class="reward">+${i*100}</div></div>`;
+      }
+      document.getElementById('streak-badge').textContent = streak + ' дней';
+      document.getElementById('streak-prog').style.width = (todayStreak/7*100) + '%';
+      const hint = document.getElementById('streak-hint');
+      hint.textContent = streak===0 ? 'Сделайте первое действие, чтобы получить +100 фишек!' : `Следующая награда: +${(todayStreak%7+1)*100} фишек. Продолжайте активность!`;
+    }
+
+    async function loadRank() {
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const {  all } = await db.from('profiles').select('id');
+      const myDone = (tasks||[]).filter(t=>t.user_id===currentUser.id).length;
+      const above = all.filter(a => (tasks||[]).filter(t=>t.user_id===a.id).length > myDone).length;
+      document.getElementById('rank-pos').textContent = `#${above+1}`;
+    }
+
+    async function loadTxHistory() {
+      const {  tx } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
+      const box = document.getElementById('tx-history'); box.innerHTML='';
+      if(!tx?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет операций</p>'; return; }
+      tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.type} • ${new Date(t.created_at).toLocaleDateString()}</span><span class="hist-amt hist-plus">+${t.amount}</span></div>`);
+    }
+
+    async function loadTaskHistory() {
+      const {  tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
+      const box = document.getElementById('task-history'); box.innerHTML='';
+      if(!tasks?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет заданий</p>'; return; }
+      tasks.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.tasks_pool?.title||'Задание'} • <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${t.status}</span></span><small style="color:var(--text-sec)">${new Date(t.created_at).toLocaleDateString()}</small></div>`);
     }
 
     async function loadTasks() {
-      const { data, error } = await db.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).order('created_at', {ascending:false});
-      const list = document.getElementById('tasks-list'); list.innerHTML = '';
-      if (error) { list.innerHTML = `<p style="color:var(--err)">Ошибка: ${error.message}</p>`; return; }
-      if (!data?.length) { list.innerHTML = '<p style="color:#94a3b8">Нет заданий. Крутите колесо!</p>'; return; }
-      data.forEach(t => {
-        list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool?.title||'Задание'}</strong><br><small>${t.tasks_pool?.description||''}</small></div><span class="status ${t.status}">${t.status}</span></div>`;
-        if(t.status==='active') list.innerHTML += `<textarea id="ans-${t.id}" style="width:100%;padding:8px;margin:8px 0;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#fff;" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">Отправить</button><hr>`;
-      });
+      const { data } = await db.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).eq('status','active').order('created_at',{ascending:false});
+      const list = document.getElementById('tasks-list'); list.innerHTML='';
+      if(!data?.length) { list.innerHTML='<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>'; return; }
+      data.forEach(t => list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool.title}</strong><br><small>${t.tasks_pool.description}</small></div><span class="status active">В работе</span></div><textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button><hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">`);
     }
 
     async function submitTask(id) {
       const ans = document.getElementById(`ans-${id}`).value.trim();
-      if(!ans) { alert('Введите ответ'); return; }
+      if(!ans) return alert('Введите ответ');
       await db.from('user_tasks').update({ status:'submitted', answer:ans }).eq('id',id);
-      loadProfile(); loadTasks();
+      loadTasks(); loadProfile();
     }
 
     async function loadLeaderboard() {
-      const { data: tasks, error: tErr } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const { data: profiles, error: pErr } = await db.from('profiles').select('id, name');
-      const tb = document.getElementById('lb-body');
-      if (tErr || pErr) { tb.innerHTML = `<tr><td colspan="3" style="color:var(--err)">Ошибка загрузки: ${tErr?.message || pErr?.message}</td></tr>`; return; }
-      if (!profiles?.length) { tb.innerHTML = '<tr><td colspan="3">Нет пользователей</td></tr>'; return; }
-      
-      const counts = profiles.map(p => ({ name:p.name, done: (tasks||[]).filter(t=>t.user_id===p.id).length }))
-                             .sort((a,b)=>b.done-a.done);
-      tb.innerHTML = counts.map((u,i) => `<tr><td>${i+1}</td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const {  profiles } = await db.from('profiles').select('id, name');
+      if(!profiles) return;
+      const res = profiles.map(p => ({ name:p.name, done:(tasks||[]).filter(t=>t.user_id===p.id).length })).sort((a,b)=>b.done-a.done);
+      document.getElementById('lb-body').innerHTML = res.map((u,i) => `<tr><td><strong>${i+1}</strong></td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
     }
 
     async function loadAdminQueue() {
-      const { data: tasks, error } = await db.from('user_tasks').select('*').eq('status','submitted').order('created_at', {ascending:false});
-      const q = document.getElementById('admin-queue');
-      if (error) { q.innerHTML = `<p style="color:var(--err)">Ошибка: ${error.message}</p>`; return; }
-      if (!tasks?.length) { q.innerHTML = '<p style="color:#94a3b8">Нет заявок</p>'; return; }
-      
-      const userIds = [...new Set(tasks.map(t => t.user_id))];
-      const { data: users } = await db.from('profiles').select('id, name').in('id', userIds);
-      const names = {}; users?.forEach(u => names[u.id] = u.name || 'Пользователь');
-
-      q.innerHTML = tasks.map(t => `
-        <div class="task">
-          <div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>Ответ: ${t.answer}</small></div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" style="background:var(--ok)" onclick="approveTask('${t.id}')">✅</button>
-            <button class="btn" style="background:var(--err)" onclick="rejectTask('${t.id}')">❌</button>
-          </div>
-        </div>`).join('');
+      const { data } = await db.from('user_tasks').select('*').eq('status','submitted').order('created_at',{ascending:false});
+      const q = document.getElementById('admin-queue'); q.innerHTML='';
+      if(!data?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок</p>'; return; }
+      const ids = [...new Set(data.map(t=>t.user_id))];
+      const {  users } = await db.from('profiles').select('id, name').in('id', ids);
+      const names = {}; users?.forEach(u=>names[u.id]=u.name);
+      q.innerHTML = data.map(t => `<div class="task"><div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>${t.answer}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button></div></div>`).join('');
     }
 
-    async function approveTask(id) {
-      try {
-        const { data: t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
-        await db.from('user_tasks').update({status:'completed'}).eq('id',id);
-        const { error } = await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100 });
-        if (error) throw error;
-        alert('✅ Одобрено! +100 фишек.');
-        loadAdminQueue(); loadProfile();
-      } catch(e) { alert('❌ Ошибка: ' + e.message); }
+    async function approve(id) {
+      const {  t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
+      await db.from('user_tasks').update({status:'completed'}).eq('id',id);
+      await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100 });
+      await db.rpc('update_daily_streak', { p_user_id: t.user_id });
+      loadAdminQueue(); loadProfile();
     }
-    async function rejectTask(id) {
+    async function reject(id) {
       await db.from('user_tasks').update({status:'active'}).eq('id',id);
       loadAdminQueue(); loadProfile();
     }
-    async function handleAddChips() {
-      const uid = document.getElementById('admin-uid').value.trim();
-      const amt = parseInt(document.getElementById('admin-amount').value);
-      if(uid && amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt });
-    }
-    async function handleResetSpin() {
-      const uid = document.getElementById('admin-uid').value.trim();
-      if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
-    }
+    async function handleAddChips() { const uid = document.getElementById('admin-uid').value.trim(); const amt = parseInt(document.getElementById('admin-amount').value); if(uid&&amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt }); }
+    async function handleResetSpin() { const uid = document.getElementById('admin-uid').value.trim(); if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid); }
 
-    function switchTab(name, btn) {
-      document.querySelectorAll('[id$="-tab"]').forEach(el => el.classList.add('hidden'));
-      document.getElementById(name + '-tab').classList.remove('hidden');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      if (name === 'tasks') loadTasks();
-      if (name === 'leaderboard') loadLeaderboard();
-      if (name === 'admin') loadAdminQueue();
+    function switchTab(name, el) {
+      document.querySelectorAll('[id$="-tab"]').forEach(e=>e.classList.add('hidden'));
+      document.getElementById(name+'-tab').classList.remove('hidden');
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      if(el) el.classList.add('active');
+      if(name==='leaderboard') loadLeaderboard();
+      if(name==='admin') loadAdminQueue();
     }
 
     async function handleLogin() {
       const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
       const pass = document.getElementById('login-pass').value;
-      if(!email || !pass) { alert('Введите email и пароль'); return; }
-      btn.disabled = true; btn.textContent = '⏳ Вход...';
+      if(!email||!pass) return errBox('Введите email и пароль');
+      btn.disabled = true; btn.textContent = '⏳...';
       const { error } = await db.auth.signInWithPassword({ email, password: pass });
-      if (error) { alert('❌ ' + error.message); btn.disabled = false; btn.textContent = 'Войти'; }
+      if(error) { errBox('❌ '+error.message); btn.disabled=false; btn.textContent='Войти'; }
     }
-
     function logout() { db.auth.signOut(); }
 
     async function init() {
-      if (SB_URL.includes('ВАШ_ПРОЕКТ') || SB_KEY === 'ВАШ_ANON_PUBLIC_KEY') { showError('❌ Не вставлены ключи Supabase (строки 8-9)'); return; }
-      if (!window.supabase) { showError('❌ Скрипт не загрузился. Отключите AdBlock.'); return; }
+      if(!window.supabase) return errBox('Скрипт не загрузился');
       db = window.supabase.createClient(SB_URL, SB_KEY);
-
-      db.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') { currentUser = session.user; loadProfile(); }
-        else if (event === 'SIGNED_OUT') { currentUser = null; document.getElementById('login-btn').disabled = false; document.getElementById('login-btn').textContent = 'Войти'; showScreen('auth-screen'); }
-      });
-
-      const { data: session } = await db.auth.getSession();
-      if (session) { currentUser = session.user; await loadProfile(); }
-      else { showScreen('auth-screen'); }
+      db.auth.onAuthStateChange((e, s) => { if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } });
+      const {  session } = await db.auth.getSession();
+      if(session) { currentUser=session.user; await loadProfile(); } else showScreen('auth');
     }
     init();
   </script>
