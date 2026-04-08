@@ -11,8 +11,7 @@
       --acc: #3b82f6; --acc-hover: #2563eb; --acc-light: #dbeafe;
       --text: #0f172a; --text-sec: #64748b; --border: #e2e8f0;
       --ok: #10b981; --ok-bg: #d1fae5; --err: #ef4444; --err-bg: #fee2e2;
-      --shadow: 0 4px 12px rgba(0,0,0,0.08);
-      --radius: 14px;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08); --radius: 14px;
     }
     [data-theme="dark"] {
       --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
@@ -21,7 +20,7 @@
       --ok: #34d399; --ok-bg: #064e3b; --err: #f87171; --err-bg: #7f1d1d;
       --shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
-    * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+    * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border-color 0.3s; }
     body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:20px; }
     .container { max-width:900px; margin:0 auto; }
     .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
@@ -48,24 +47,27 @@
     table { width:100%; border-collapse:collapse; } th,td { padding:10px; border-bottom:1px solid var(--border); text-align:left; font-size:14px; }
     th { color:var(--text-sec); font-weight:600; }
     .streak-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin:15px 0; }
-    .streak-day { background:var(--bg-hover); border:2px solid var(--border); border-radius:10px; padding:8px 4px; text-align:center; font-size:12px; position:relative; }
+    .streak-day { background:var(--bg-hover); border:2px solid var(--border); border-radius:10px; padding:8px 4px; text-align:center; font-size:12px; }
     .streak-day.done { background:var(--acc); border-color:var(--acc); color:#fff; }
-    .streak-day.today { border-color:var(--acc); box-shadow:0 0 0 2px var(--acc-light); }
     .streak-day .reward { font-weight:700; font-size:14px; margin-top:4px; }
     .progress-bar { height:6px; background:var(--bg-hover); border-radius:3px; margin-top:10px; overflow:hidden; }
     .progress-fill { height:100%; background:linear-gradient(90deg, var(--acc), #8b5cf6); transition:width 0.5s ease; }
-    .rank-badge { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#000; padding:6px 12px; border-radius:12px; font-weight:700; margin-top:8px; }
+    .rank-badge { display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#000; padding:6px 12px; border-radius:12px; font-weight:700; }
     .hist-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
     .hist-row:last-child { border:none; }
-    .hist-amt { font-weight:600; } .hist-plus { color:var(--ok); } .hist-minus { color:var(--err); }
+    .hist-plus { color:var(--ok); font-weight:600; }
     #theme-toggle { background:none; border:none; font-size:22px; cursor:pointer; padding:6px; border-radius:8px; }
     #theme-toggle:hover { background:var(--bg-hover); }
-    .loading { display:flex; justify-content:center; align-items:center; height:200px; color:var(--text-sec); }
+    .loading { display:flex; flex-direction:column; justify-content:center; align-items:center; height:60vh; color:var(--text-sec); gap:10px; }
+    #error-msg { color:var(--err); background:var(--err-bg); padding:10px; border-radius:10px; margin-top:10px; display:none; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="loading" class="loading">⏳ Загрузка...</div>
+    <div id="loading" class="loading">
+      <div style="font-size:32px;">🎰</div>
+      <div>Загрузка системы...</div>
+    </div>
     
     <div id="auth-screen" class="hidden card" style="text-align:center; padding:40px;">
       <div class="logo" style="font-size:32px; margin-bottom:10px;">🎰 Командное Казино</div>
@@ -73,7 +75,7 @@
       <input type="email" id="login-email" placeholder="Email" style="max-width:300px; margin:0 auto 10px; display:block;">
       <input type="password" id="login-pass" placeholder="Пароль" style="max-width:300px; margin:0 auto 10px; display:block;">
       <button class="btn" id="login-btn" onclick="handleLogin()" style="max-width:300px; margin:10px auto 0; display:block; width:100%;">Войти</button>
-      <div id="error-box" class="hidden" style="background:var(--err-bg); color:var(--err); padding:10px; border-radius:10px; margin-top:15px; font-size:14px;"></div>
+      <div id="error-msg"></div>
     </div>
 
     <div id="app" class="hidden">
@@ -94,7 +96,6 @@
         <div class="tab hidden" id="nav-admin" onclick="switchTab('admin', this)">⚙️ Админ</div>
       </div>
 
-      <!-- РУЛЕТКА -->
       <div id="roulette-tab" class="card">
         <h3 style="margin-top:0">Крутите колесо удачи</h3>
         <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="wheel"></div></div>
@@ -102,17 +103,15 @@
         <button class="btn" id="spin-btn" style="display:block; margin:0 auto;" onclick="handleSpin()">КРУТИТЬ</button>
       </div>
 
-      <!-- ЗАДАНИЯ -->
       <div id="tasks-tab" class="hidden card">
-        <h3 style="margin-top:0">Мои задания</h3>
+        <h3 style="margin-top:0">Мои активные задания</h3>
         <div id="tasks-list"></div>
       </div>
 
-      <!-- КАБИНЕТ -->
       <div id="profile-tab" class="hidden card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:15px;">
           <h3 style="margin:0">👋 Привет, <span id="profile-name">...</span></h3>
-          <div class="rank-badge">🥇 <span id="rank-pos">...</span> место</div>
+          <div class="rank-badge">🏆 <span id="rank-pos">...</span> место</div>
         </div>
         
         <div class="card" style="padding:15px; margin:15px 0;">
@@ -132,13 +131,11 @@
         <div id="task-history" style="max-height:200px; overflow-y:auto;"></div>
       </div>
 
-      <!-- ТУРНИРКА -->
       <div id="leaderboard-tab" class="hidden card">
         <h3 style="margin-top:0">🏆 Турнирная таблица</h3>
         <table><thead><tr><th>Место</th><th>Сотрудник</th><th>Выполнено</th></tr></thead><tbody id="lb-body"></tbody></table>
       </div>
 
-      <!-- АДМИН -->
       <div id="admin-tab" class="hidden card">
         <h3 style="margin-top:0">⚙️ Панель админа</h3>
         <div id="admin-queue"></div>
@@ -155,8 +152,10 @@
   </div>
 
   <script>
+    // ✅ Ваши ключи уже вставлены
     const SB_URL = 'https://hjjklimzsnkxljghkrdu.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhqamtsaW16c25reGxqZ2hrcmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NzA2OTcsImV4cCI6MjA5MTE0NjY5N30.YJLJ_0S409DYD-mAS71AmCNy7klwR-cMZzXEgZU5-R0';
+
     let db = null, currentUser = null, profile = null;
 
     // Тема
@@ -170,14 +169,19 @@
       document.getElementById('theme-toggle').textContent = next === 'dark' ? '🌙' : '☀️';
     }
 
-    function show(id) { ['loading','auth-screen','app'].forEach(s => document.getElementById(s).classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); }
-    function errBox(msg) { const b=document.getElementById('error-box'); b.textContent=msg; b.classList.remove('hidden'); }
-    function showScreen(name) { if(name==='auth') { show('auth-screen'); document.getElementById('error-box').classList.add('hidden'); } else { show('app'); } }
+    function showScreen(name) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('app').classList.add('hidden');
+      if (name === 'auth') document.getElementById('auth-screen').classList.remove('hidden');
+      else document.getElementById('app').classList.remove('hidden');
+    }
 
     async function loadProfile() {
       try {
-        const {  p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        if (error || !p) throw new Error('Профиль не найден.');
+        const { data: p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (error || !p) throw new Error('Профиль не найден. Обратитесь к админу.');
+        
         profile = p;
         document.getElementById('chips').textContent = p.chips || 0;
         document.getElementById('profile-name').textContent = p.name || 'Сотрудник';
@@ -189,7 +193,12 @@
         showScreen('app');
         loadTasks();
         if ((p.role||'').trim().toLowerCase() === 'admin') loadAdminQueue();
-      } catch(e) { errBox('❌ ' + e.message); showScreen('auth'); }
+      } catch(e) {
+        console.error(e);
+        document.getElementById('error-msg').textContent = '❌ Ошибка загрузки: ' + e.message;
+        document.getElementById('error-msg').style.display = 'block';
+        showScreen('auth');
+      }
     }
 
     function updateSpinUI(nextAt) {
@@ -201,59 +210,76 @@
     }
 
     async function handleSpin() {
-      const btn = document.getElementById('spin-btn'); btn.disabled = true; btn.textContent = '⏳ Крутим...';
-      const wheel = document.getElementById('wheel'); wheel.style.transform = `rotate(0deg)`;
+      const btn = document.getElementById('spin-btn'); 
+      btn.disabled = true; btn.textContent = '⏳ Крутим...';
+      const wheel = document.getElementById('wheel'); 
+      wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
+      
       setTimeout(async () => {
         try {
           const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id });
-          if (error) throw error; if (data?.error) throw new Error(data.error);
-          wheel.style.transition = 'none'; wheel.style.transform = `rotate(0deg)`;
-          requestAnimationFrame(() => { wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)'; wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`; });
-          setTimeout(() => { alert(`🎉 Выпало: ${data.result}\n📋 Назначено: ${data.tasks}`); btn.textContent = 'КРУТИТЬ'; loadProfile(); }, 4200);
-        } catch(e) { alert('❌ ' + e.message); btn.textContent = 'КРУТИТЬ'; updateSpinUI(profile.next_spin_at); }
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          
+          wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
+          wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
+          
+          setTimeout(() => {
+            alert(`🎉 Выпало: ${data.result}\n📋 Назначено: ${data.tasks}`);
+            btn.textContent = 'КРУТИТЬ';
+            loadProfile();
+          }, 4100);
+        } catch(e) {
+          alert('❌ Ошибка: ' + e.message);
+          btn.disabled = false; btn.textContent = 'КРУТИТЬ';
+        }
       }, 50);
     }
 
     function renderStreak(streak) {
       const grid = document.getElementById('streak-grid'); grid.innerHTML='';
-      const todayStreak = streak % 7 === 0 && streak > 0 ? 7 : streak % 7;
+      const todayPos = streak % 7 === 0 ? 7 : streak % 7;
       for(let i=1; i<=7; i++) {
-        const cls = i <= todayStreak ? 'done' : '';
-        grid.innerHTML += `<div class="streak-day ${cls} ${i===todayStreak+1?'today':''}"><div>День ${i}</div><div class="reward">+${i*100}</div></div>`;
+        grid.innerHTML += `<div class="streak-day ${i <= todayPos ? 'done' : ''}"><div>День ${i}</div><div class="reward">+${i*100}</div></div>`;
       }
       document.getElementById('streak-badge').textContent = streak + ' дней';
-      document.getElementById('streak-prog').style.width = (todayStreak/7*100) + '%';
-      const hint = document.getElementById('streak-hint');
-      hint.textContent = streak===0 ? 'Сделайте первое действие, чтобы получить +100 фишек!' : `Следующая награда: +${(todayStreak%7+1)*100} фишек. Продолжайте активность!`;
+      document.getElementById('streak-prog').style.width = (todayPos/7*100) + '%';
+      const nextReward = (todayPos % 7 + 1) * 100;
+      document.getElementById('streak-hint').textContent = streak===0 ? 'Сделайте первое действие для получения +100 фишек!' : `Следующая награда: +${nextReward} фишек.`;
     }
 
     async function loadRank() {
-      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const {  all } = await db.from('profiles').select('id');
-      const myDone = (tasks||[]).filter(t=>t.user_id===currentUser.id).length;
-      const above = all.filter(a => (tasks||[]).filter(t=>t.user_id===a.id).length > myDone).length;
-      document.getElementById('rank-pos').textContent = `#${above+1}`;
+      try {
+        const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+        const { data: all } = await db.from('profiles').select('id');
+        const myDone = (tasks||[]).filter(t=>t.user_id===currentUser.id).length;
+        const above = (all||[]).filter(a => (tasks||[]).filter(t=>t.user_id===a.id).length > myDone).length;
+        document.getElementById('rank-pos').textContent = `#${above+1}`;
+      } catch(e) { console.warn('Rank load err', e); }
     }
 
     async function loadTxHistory() {
-      const {  tx } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
+      const { data: tx } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
       const box = document.getElementById('tx-history'); box.innerHTML='';
       if(!tx?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет операций</p>'; return; }
-      tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.type} • ${new Date(t.created_at).toLocaleDateString()}</span><span class="hist-amt hist-plus">+${t.amount}</span></div>`);
+      tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.type} • ${new Date(t.created_at).toLocaleDateString()}</span><span class="hist-plus">+${t.amount}</span></div>`);
     }
 
     async function loadTaskHistory() {
-      const {  tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
+      const { data: tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(10);
       const box = document.getElementById('task-history'); box.innerHTML='';
       if(!tasks?.length) { box.innerHTML='<p style="color:var(--text-sec);font-size:14px">Нет заданий</p>'; return; }
-      tasks.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.tasks_pool?.title||'Задание'} • <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${t.status}</span></span><small style="color:var(--text-sec)">${new Date(t.created_at).toLocaleDateString()}</small></div>`);
+      tasks.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.tasks_pool?.title||'Задание'} <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${t.status}</span></span><small style="color:var(--text-sec)">${new Date(t.created_at).toLocaleDateString()}</small></div>`);
     }
 
     async function loadTasks() {
       const { data } = await db.from('user_tasks').select('*, tasks_pool(title, description)').eq('user_id', currentUser.id).eq('status','active').order('created_at',{ascending:false});
       const list = document.getElementById('tasks-list'); list.innerHTML='';
       if(!data?.length) { list.innerHTML='<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>'; return; }
-      data.forEach(t => list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool.title}</strong><br><small>${t.tasks_pool.description}</small></div><span class="status active">В работе</span></div><textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button><hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">`);
+      data.forEach(t => {
+        list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool.title}</strong><br><small>${t.tasks_pool.description}</small></div><span class="status active">В работе</span></div>
+        <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button><hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">`;
+      });
     }
 
     async function submitTask(id) {
@@ -264,8 +290,8 @@
     }
 
     async function loadLeaderboard() {
-      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const {  profiles } = await db.from('profiles').select('id, name');
+      const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const { data: profiles } = await db.from('profiles').select('id, name');
       if(!profiles) return;
       const res = profiles.map(p => ({ name:p.name, done:(tasks||[]).filter(t=>t.user_id===p.id).length })).sort((a,b)=>b.done-a.done);
       document.getElementById('lb-body').innerHTML = res.map((u,i) => `<tr><td><strong>${i+1}</strong></td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
@@ -276,13 +302,13 @@
       const q = document.getElementById('admin-queue'); q.innerHTML='';
       if(!data?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок</p>'; return; }
       const ids = [...new Set(data.map(t=>t.user_id))];
-      const {  users } = await db.from('profiles').select('id, name').in('id', ids);
+      const { data: users } = await db.from('profiles').select('id, name').in('id', ids);
       const names = {}; users?.forEach(u=>names[u.id]=u.name);
       q.innerHTML = data.map(t => `<div class="task"><div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>${t.answer}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button></div></div>`).join('');
     }
 
     async function approve(id) {
-      const {  t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
+      const { data: t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
       await db.from('user_tasks').update({status:'completed'}).eq('id',id);
       await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100 });
       await db.rpc('update_daily_streak', { p_user_id: t.user_id });
@@ -308,19 +334,24 @@
       const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
       const pass = document.getElementById('login-pass').value;
-      if(!email||!pass) return errBox('Введите email и пароль');
+      if(!email||!pass) return alert('Введите email и пароль');
       btn.disabled = true; btn.textContent = '⏳...';
+      document.getElementById('error-msg').style.display = 'none';
       const { error } = await db.auth.signInWithPassword({ email, password: pass });
-      if(error) { errBox('❌ '+error.message); btn.disabled=false; btn.textContent='Войти'; }
+      if(error) { alert('❌ '+error.message); btn.disabled=false; btn.textContent='Войти'; }
     }
     function logout() { db.auth.signOut(); }
 
     async function init() {
-      if(!window.supabase) return errBox('Скрипт не загрузился');
+      if(!window.supabase) return alert('Скрипт не загрузился. Проверьте интернет.');
       db = window.supabase.createClient(SB_URL, SB_KEY);
-      db.auth.onAuthStateChange((e, s) => { if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } });
-      const {  session } = await db.auth.getSession();
-      if(session) { currentUser=session.user; await loadProfile(); } else showScreen('auth');
+      db.auth.onAuthStateChange((e, s) => { 
+        if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } 
+        else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } 
+      });
+      const { data: session } = await db.auth.getSession();
+      if(session?.user) { currentUser=session.user; await loadProfile(); } 
+      else showScreen('auth');
     }
     init();
   </script>
