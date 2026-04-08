@@ -59,7 +59,8 @@
     #theme-toggle { background:none; border:none; font-size:20px; cursor:pointer; padding:6px; border-radius:8px; }
     #theme-toggle:hover { background:var(--bg-hover); }
     .loading { display:flex; flex-direction:column; justify-content:center; align-items:center; height:60vh; color:var(--text-sec); gap:10px; }
-    #error-msg { color:var(--err); background:var(--err-bg); padding:10px; border-radius:10px; margin-top:10px; display:none; font-size:14px; }
+    #error-msg { color:var(--err); background:var(--err-bg); padding:10px; border-radius:10px; margin-top:10px; display:none; font-size:14px; white-space: pre-wrap; }
+    #debug-info { background:var(--bg-hover); padding:10px; border-radius:10px; margin-top:10px; font-size:12px; font-family: monospace; display:none; }
   </style>
 </head>
 <body>
@@ -73,6 +74,7 @@
       <input type="password" id="login-pass" placeholder="Пароль" style="max-width:300px; margin:0 auto 10px; display:block;">
       <button class="btn" id="login-btn" onclick="handleLogin()" style="max-width:300px; margin:10px auto 0; display:block; width:100%;">Войти</button>
       <div id="error-msg"></div>
+      <div id="debug-info"></div>
     </div>
 
     <div id="app" class="hidden">
@@ -176,8 +178,27 @@
 
     async function loadProfile() {
       try {
-        const {  p, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        if (error || !p) throw new Error('Профиль не найден. Выполните Шаг 1 (SQL), чтобы создать профиль.');
+        const sessionId = currentUser?.id;
+        console.log('🔍 Session User ID:', sessionId);
+        
+        // Пробуем получить профиль
+        let {  p, error } = await db.from('profiles').select('*').eq('id', sessionId).single();
+        
+        console.log(' DB Response:', { p, error, sessionId });
+        
+        // Если профиль не найден, покажем подробную диагностику
+        if (error || !p) {
+          const debugMsg = `❌ Профиль не найден\n\nID из сессии: ${sessionId}\nОшибка БД: ${error?.message || 'null'}\nДанные: ${JSON.stringify(p)}\n\nПопробуйте выполнить SQL из Шага 1`;
+          console.error(debugMsg);
+          
+          const debugEl = document.getElementById('debug-info');
+          debugEl.textContent = debugMsg;
+          debugEl.style.display = 'block';
+          
+          throw new Error('Профиль не найден. Выполните SQL-скрипт диагностики.');
+        }
+        
+        // Всё ок, загружаем интерфейс
         profile = p;
         document.getElementById('chips').textContent = p.chips || 0;
         document.getElementById('profile-name').textContent = p.name || 'Сотрудник';
@@ -321,6 +342,7 @@
       
       btn.disabled = true; btn.textContent = '⏳...';
       document.getElementById('error-msg').style.display = 'none';
+      document.getElementById('debug-info').style.display = 'none';
       
       try {
         const { error } = await db.auth.signInWithPassword({ email, password: pass });
