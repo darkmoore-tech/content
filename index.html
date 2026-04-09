@@ -183,7 +183,7 @@
       try {
         if (!currentUser || !currentUser.id) throw new Error('No user');
         
-        const {  data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
         if (error || !data) throw new Error('Профиль не найден');
         
         profile = data;
@@ -231,11 +231,12 @@
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
           
+          const resultValue = data?.result || 0;
           wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
-          wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
+          wheel.style.transform = `rotate(${1440 + (resultValue/100)*360}deg)`;
           
           setTimeout(() => {
-            alert(`🎉 Выпало: ${data.result}\n📋 Заданий: ${data.tasks}`);
+            alert(`🎉 Выпало: ${resultValue}\n📋 Заданий: ${data?.tasks || 0}`);
             btn.textContent = 'КРУТИТЬ';
             loadProfile();
           }, 4100);
@@ -280,11 +281,17 @@
 
     async function loadTasks() {
       // Игрок видит только свои активные
-      const {  data } = await db.from('user_tasks')
+      const { data, error } = await db.from('user_tasks')
         .select('*, tasks_pool(title, description)')
         .eq('user_id', currentUser.id)
         .eq('status', 'active')
         .order('assigned_at', { ascending: false });
+      
+      if (error) {
+        console.error('Ошибка загрузки заданий:', error);
+        document.getElementById('tasks-list').innerHTML = '<p style="color:var(--err)">Ошибка загрузки заданий</p>';
+        return;
+      }
       
       const list = document.getElementById('tasks-list'); list.innerHTML='';
       if (!data?.length) { list.innerHTML='<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>'; return; }
@@ -294,12 +301,16 @@
 
     async function loadRank() {
   try {
-    const {  completedTasks } = await db
+    const { data: completedTasks, error: tasksError } = await db
       .from('user_tasks')
       .select('user_id')
       .eq('status', 'completed');
 
-    const {  allProfiles } = await db.from('profiles').select('id');
+    if (tasksError) throw tasksError;
+
+    const { data: allProfiles, error: profilesError } = await db.from('profiles').select('id');
+
+    if (profilesError) throw profilesError;
 
     const myDone = (completedTasks || []).filter(t => t.user_id === currentUser.id).length;
     const above = (allProfiles || []).filter(a => {
@@ -314,21 +325,23 @@
 }
 
     async function loadTxHistory() {
-      const {  tx } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(20);
+      const { data: tx, error } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(20);
       const box = document.getElementById('tx-history'); box.innerHTML='';
-      if(!tx?.length) { box.innerHTML='<p style="color:var(--text-sec)">Нет операций</p>'; return; }
+      if (error || !tx?.length) { box.innerHTML='<p style="color:var(--text-sec)">Нет операций</p>'; return; }
       tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.description||t.type} • ${new Date(t.created_at).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span><span class="hist-plus">+${t.amount}</span></div>`);
     }
 
     // ✅ ИСТОРИЯ ЗАДАНИЙ (Показывает все статусы: active, submitted, completed)
     async function loadTaskHistory() {
   try {
-    const {  tasks } = await db
+    const { data: tasks, error } = await db
       .from('user_tasks')
       .select('*, tasks_pool(title)')
       .eq('user_id', currentUser.id)
       .order('assigned_at', { ascending: false })
       .limit(15);
+
+    if (error) throw error;
 
     const box = document.getElementById('task-history');
     box.innerHTML = '';
@@ -359,8 +372,12 @@
 }
 
     async function loadLeaderboard() {
-      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
-      const {  profiles } = await db.from('profiles').select('id, name');
+      const { data: tasks, error: tasksError } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      if (tasksError) { console.error('Ошибка лидерборда:', tasksError); return; }
+      
+      const { data: profiles, error: profilesError } = await db.from('profiles').select('id, name');
+      if (profilesError) { console.error('Ошибка профилей:', profilesError); return; }
+      
       if(!profiles) return;
       const res = profiles.map(p => ({ name:p.name, done:(tasks||[]).filter(t=>t.user_id===p.id).length })).sort((a,b)=>b.done-a.done);
       document.getElementById('lb-body').innerHTML = res.map((u,i) => `<tr><td><strong>${i+1}</strong></td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
@@ -375,7 +392,7 @@
   try {
     // 1. Загружаем ВСЕ задачи со статусом submitted
     console.log('📥 Запрос к user_tasks...');
-    const {  data: tasks, error: tasksError } = await db
+    const { data: tasks, error: tasksError } = await db
       .from('user_tasks')
       .select('*')
       .eq('status', 'submitted')
@@ -396,7 +413,7 @@
     const ids = [...new Set(tasks.map(t => t.user_id))];
     console.log('👥 [Admin] User IDs:', ids);
     
-    const {  users, error: usersError } = await db
+    const { data: users, error: usersError } = await db
       .from('profiles')
       .select('id, name')
       .in('id', ids);
@@ -437,7 +454,7 @@
     console.log('✅ Одобряем задание:', id);
     
     // 1. Находим user_id задания
-    const {  data: t, error: findError } = await db
+    const { data: t, error: findError } = await db
       .from('user_tasks')
       .select('user_id')
       .eq('id', id)
@@ -457,14 +474,23 @@
     if (updateError) throw updateError;
     
     // 3. Начисляем фишки
-    await db.rpc('increment_chips', { 
+    const { error: chipsError } = await db.rpc('increment_chips', { 
       p_user_id: t.user_id, 
       p_amount: 100, 
       p_desc: 'Выполнение задания' 
     });
     
+    if (chipsError) {
+      console.error('Ошибка начисления фишек:', chipsError);
+      throw chipsError;
+    }
+    
     // 4. Обновляем стрик
-    await db.rpc('update_daily_streak', { p_user_id: t.user_id });
+    const { error: streakError } = await db.rpc('update_daily_streak', { p_user_id: t.user_id });
+    
+    if (streakError) {
+      console.error('Ошибка обновления стрика:', streakError);
+    }
     
     console.log('✅ Задание одобрено!');
     loadAdminQueue(); 
@@ -497,8 +523,24 @@ window.reject = async function(id) {
   }
 };
 
-    window.handleAddChips = async function() { const uid = document.getElementById('admin-uid').value.trim(); const amt = parseInt(document.getElementById('admin-amount').value); if(uid&&amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt, p_desc: 'Ручное начисление' }); };
-    window.handleResetSpin = async function() { const uid = document.getElementById('admin-uid').value.trim(); if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid); };
+    window.handleAddChips = async function() { 
+      const uid = document.getElementById('admin-uid').value.trim(); 
+      const amt = parseInt(document.getElementById('admin-amount').value); 
+      if(uid && amt) {
+        const { error } = await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt, p_desc: 'Ручное начисление' });
+        if (error) alert('❌ Ошибка: ' + error.message);
+        else alert('✅ Начислено!');
+      }
+    };
+    
+    window.handleResetSpin = async function() { 
+      const uid = document.getElementById('admin-uid').value.trim(); 
+      if(uid) {
+        const { error } = await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid);
+        if (error) alert('❌ Ошибка: ' + error.message);
+        else alert('✅ Кулдаун сброшен!');
+      }
+    };
 
     window.switchTab = function(name, el) {
       document.querySelectorAll('[id$="-tab"]').forEach(e=>e.classList.add('hidden'));
@@ -509,6 +551,40 @@ window.reject = async function(id) {
       if(name==='admin') loadAdminQueue();
     };
 
+    async function init() {
+      if(!window.supabase) return alert('Ошибка: скрипт Supabase не загружен');
+      try {
+        db = window.supabase.createClient(SB_URL, SB_KEY);
+        
+        // Экспортируем функции в глобальную область видимости
+        window.logout = function() { db.auth.signOut(); };
+        window.handleLogin = handleLogin;
+        window.handleSpin = handleSpin;
+        
+        db.auth.onAuthStateChange((e, s) => { 
+          if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { 
+            currentUser=s?.user; 
+            if(currentUser) loadProfile(); 
+          } else if(e==='SIGNED_OUT') { 
+            currentUser=null; 
+            showScreen('auth'); 
+          } 
+        });
+        const { data: sessionData, error } = await db.auth.getSession();
+        if(error) throw error;
+        if(sessionData?.session?.user) { 
+          currentUser=sessionData.session.user; 
+          await loadProfile(); 
+        } else {
+          showScreen('auth');
+        }
+      } catch(e) {
+        console.error('Ошибка инициализации:', e);
+        alert('❌ Ошибка подключения: ' + e.message);
+        showScreen('auth');
+      }
+    }
+    
     async function handleLogin() {
       const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
@@ -517,18 +593,41 @@ window.reject = async function(id) {
       btn.disabled = true; btn.textContent = '⏳...';
       document.getElementById('error-msg').style.display = 'none';
       try {
-        const { error } = await db.auth.signInWithPassword({ email, password: pass });
+        const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
-      } catch(e) { alert('❌ '+e.message); resetLoginUI(); }
+        if (!data.user) throw new Error('Пользователь не найден');
+      } catch(e) { 
+        alert('❌ '+e.message); 
+        resetLoginUI(); 
+      }
     }
-    window.logout = function() { db.auth.signOut(); };
-
-    async function init() {
-      if(!window.supabase) return alert('Script not loaded');
-      db = window.supabase.createClient(SB_URL, SB_KEY);
-      db.auth.onAuthStateChange((e, s) => { if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } });
-      const {  session } = await db.auth.getSession();
-      if(session?.user) { currentUser=session.user; await loadProfile(); } else showScreen('auth');
+    
+    async function handleSpin() {
+      const btn = document.getElementById('spin-btn');
+      btn.disabled = true; btn.textContent = '⏳ Крутим...';
+      const wheel = document.getElementById('wheel');
+      wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
+      
+      setTimeout(async () => {
+        try {
+          const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          
+          const resultValue = data?.result || 0;
+          wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
+          wheel.style.transform = `rotate(${1440 + (resultValue/100)*360}deg)`;
+          
+          setTimeout(() => {
+            alert(`🎉 Выпало: ${resultValue}\n📋 Заданий: ${data?.tasks || 0}`);
+            btn.textContent = 'КРУТИТЬ';
+            loadProfile();
+          }, 4100);
+        } catch(e) {
+          alert('❌ ' + e.message);
+          btn.disabled = false; btn.textContent = 'КРУТИТЬ';
+        }
+      }, 50);
     }
     init();
   </script>
