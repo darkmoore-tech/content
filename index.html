@@ -398,19 +398,69 @@
 }
 
     window.approve = async function(id) {
-      try {
-        const {  t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
-        await db.from('user_tasks').update({status:'completed'}).eq('id',id);
-        await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100, p_desc: 'Выполнение задания' });
-        await db.rpc('update_daily_streak', { p_user_id: t.user_id });
-        loadAdminQueue(); loadProfile();
-      } catch(e) { alert('❌ ' + e.message); }
-    };
+  try {
+    console.log('✅ Одобряем задание:', id);
     
-    window.reject = async function(id) {
-      await db.from('user_tasks').update({status:'active'}).eq('id',id);
-      loadAdminQueue(); loadProfile();
-    };
+    // 1. Находим user_id задания
+    const {  data: t, error: findError } = await db
+      .from('user_tasks')
+      .select('user_id')
+      .eq('id', id)
+      .single();
+    
+    console.log('📦 Найдено:', t);
+    
+    if (findError) throw findError;
+    if (!t) throw new Error('Задание не найдено');
+    
+    // 2. Меняем статус на completed
+    const { error: updateError } = await db
+      .from('user_tasks')
+      .update({ status: 'completed' })
+      .eq('id', id);
+    
+    if (updateError) throw updateError;
+    
+    // 3. Начисляем фишки
+    await db.rpc('increment_chips', { 
+      p_user_id: t.user_id, 
+      p_amount: 100, 
+      p_desc: 'Выполнение задания' 
+    });
+    
+    // 4. Обновляем стрик
+    await db.rpc('update_daily_streak', { p_user_id: t.user_id });
+    
+    console.log('✅ Задание одобрено!');
+    loadAdminQueue(); 
+    loadProfile();
+    
+  } catch(e) { 
+    console.error('❌ Ошибка одобрения:', e);
+    alert('❌ Ошибка: ' + e.message); 
+  }
+};
+
+window.reject = async function(id) {
+  try {
+    console.log('❌ Отклоняем задание:', id);
+    
+    const { error } = await db
+      .from('user_tasks')
+      .update({ status: 'active' })
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    console.log('✅ Задание отклонено');
+    loadAdminQueue(); 
+    loadProfile();
+    
+  } catch(e) {
+    console.error('❌ Ошибка отклонения:', e);
+    alert('❌ Ошибка: ' + e.message);
+  }
+};
 
     window.handleAddChips = async function() { const uid = document.getElementById('admin-uid').value.trim(); const amt = parseInt(document.getElementById('admin-amount').value); if(uid&&amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt, p_desc: 'Ручное начисление' }); };
     window.handleResetSpin = async function() { const uid = document.getElementById('admin-uid').value.trim(); if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid); };
