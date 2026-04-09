@@ -333,28 +333,69 @@
 
     // ✅ АДМИНКА: Загружает ВСЕ задачи со статусом submitted
     async function loadAdminQueue() {
-      const q = document.getElementById('admin-queue'); 
-      q.innerHTML='<p style="color:var(--text-sec)">Загрузка заявок...</p>';
-      try {
-        // Благодаря новой политике, админ увидит задачи ВСЕХ пользователей
-        const {  tasks } = await db.from('user_tasks')
-          .select('*')
-          .eq('status','submitted')
-          .order('assigned_at',{ascending:false});
-        
-        if(!tasks?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок на проверку</p>'; return; }
-        
-        // Подтягиваем имена
-        const ids = [...new Set(tasks.map(t=>t.user_id))];
-        const {  users } = await db.from('profiles').select('id, name').in('id', ids);
-        const names = {}; users?.forEach(u=>names[u.id]=u.name);
-
-        // Рендер
-        q.innerHTML = tasks.map(t => `<div class="task"><div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>Ответ: ${t.answer||'нет'}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button></div></div>`).join('');
-      } catch(e) {
-        q.innerHTML = `<p style="color:var(--err)">Ошибка: ${e.message}</p>`;
-      }
+  console.log('🔍 [Admin] Начинаю загрузку очереди...');
+  const q = document.getElementById('admin-queue'); 
+  q.innerHTML = '<p style="color:var(--text-sec)">Загрузка...</p>';
+  
+  try {
+    // 1. Загружаем ВСЕ задачи со статусом submitted
+    console.log('📥 Запрос к user_tasks...');
+    const {  tasks, error: tasksError } = await db
+      .from('user_tasks')
+      .select('*')
+      .eq('status', 'submitted')
+      .order('assigned_at', { ascending: false });
+    
+    console.log('📦 [Admin] Ответ задач:', { tasks, tasksError });
+    
+    if (tasksError) throw tasksError;
+    if (!tasks || tasks.length === 0) { 
+      q.innerHTML = '<p style="color:var(--text-sec)">Нет заявок на проверку</p>'; 
+      console.log('⚠️ [Admin] Заявок нет');
+      return; 
     }
+    
+    console.log(`✅ [Admin] Найдено заявок: ${tasks.length}`);
+    
+    // 2. Загружаем имена пользователей
+    const ids = [...new Set(tasks.map(t => t.user_id))];
+    console.log('👥 [Admin] User IDs:', ids);
+    
+    const {  users, error: usersError } = await db
+      .from('profiles')
+      .select('id, name')
+      .in('id', ids);
+    
+    console.log('📇 [Admin] Пользователи:', { users, usersError });
+    
+    if (usersError) throw usersError;
+    
+    const names = {}; 
+    users?.forEach(u => { names[u.id] = u.name; });
+    console.log('📝 [Admin] Словарь имен:', names);
+
+    // 3. Рендерим
+    q.innerHTML = tasks.map(t => `
+      <div class="task">
+        <div>
+          <strong>${names[t.user_id] || 'Пользователь'}</strong>
+          <br><small>Ответ: ${t.answer || 'нет'}</small>
+          <br><small>ID: ${t.id.substring(0,8)}...</small>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button>
+          <button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button>
+        </div>
+      </div>
+    `).join('');
+    
+    console.log('✅ [Admin] Очередь отображена!');
+    
+  } catch(e) {
+    console.error('❌ [Admin] Критическая ошибка:', e);
+    q.innerHTML = `<p style="color:var(--err)">Ошибка: ${e.message}</p>`;
+  }
+}
 
     window.approve = async function(id) {
       try {
