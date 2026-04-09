@@ -143,7 +143,7 @@
   </div>
 
   <script>
-    // ✅ НОВЫЕ КЛЮЧИ
+    // ✅ КЛЮЧИ ВСТАВЛЕНЫ
     const SB_URL = 'https://lnyhvimmlyashhgudiok.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxueWh2aW1tbHlhc2hoZ3VkaW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODQ0MjcsImV4cCI6MjA5MTI2MDQyN30.Tkzi9nAga_TIteHrvDGGaZ06DlyMQCJL_Hm9oRZ5hd8';
     
@@ -180,71 +180,34 @@
       }
     }
 
-    // ✅ ИСПРАВЛЕНО: Правильная загрузка профиля
     async function loadProfile() {
       try {
-        if (!currentUser || !currentUser.id) {
-          throw new Error('currentUser не инициализирован');
-        }
+        if (!currentUser || !currentUser.id) throw new Error('No user');
         
-        const userId = currentUser.id;
-        console.log('🔍 Загрузка профиля для ID:', userId);
+        const {  data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (error || !data) throw new Error('Профиль не найден');
         
-        // ✅ ИСПРАВЛЕНО: Правильное деструктурирование (data вместо p)
-        const {  data, error } = await db
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single();
-        
-        console.log('📦 Ответ от БД:', { data, error, userId });
-        
-        if (error) {
-          console.error('❌ Ошибка БД:', error);
-          throw new Error('Ошибка базы: ' + error.message);
-        }
-        
-        if (!data) {
-          console.error('❌ Профиль не найден в БД');
-          throw new Error('Профиль не найден. Обратитесь к администратору.');
-        }
-        
-        // Успех!
         profile = data;
-        console.log('✅ Профиль загружен:', profile);
-        
-        // Обновляем интерфейс
         document.getElementById('chips').textContent = data.chips || 0;
         document.getElementById('profile-name').textContent = data.name || 'Сотрудник';
         
-        // Показываем админку если нужно
-        const userRole = (data.role || '').trim().toLowerCase();
-        const adminTab = document.getElementById('nav-admin');
-        if (userRole === 'admin') {
-          adminTab.classList.remove('hidden');
-        } else {
-          adminTab.classList.add('hidden');
-        }
-        
-        // Загружаем дополнительные данные
+        // Админка
+        const role = (data.role || '').trim().toLowerCase();
+        if (role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
+        else document.getElementById('nav-admin').classList.add('hidden');
+
+        // Инициализация
         renderStreak(data.daily_streak || 0);
         updateSpinUI(data.next_spin_at);
-        
-        // Показываем приложение
         showScreen('app');
-        
-        // Загружаем контент вкладок
         loadTasks();
         loadRank();
         loadTxHistory();
         loadTaskHistory();
-        
-        if (userRole === 'admin') {
-          loadAdminQueue();
-        }
-        
-      } catch (e) {
-        console.error('❌ LoadProfile ошибка:', e);
+        if (role === 'admin') loadAdminQueue();
+
+      } catch(e) {
+        console.error(e);
         document.getElementById('error-msg').textContent = '❌ ' + e.message;
         document.getElementById('error-msg').style.display = 'block';
         showScreen('auth');
@@ -252,31 +215,22 @@
     }
 
     function updateSpinUI(nextAt) {
-      const now = new Date();
-      const next = nextAt ? new Date(nextAt) : new Date(0);
-      const btn = document.getElementById('spin-btn');
-      const txt = document.getElementById('spin-status');
-      
-      const canSpin = next <= now;
-      txt.textContent = canSpin 
-        ? '✅ Рулетка готова! Крутите, чтобы получить задания.' 
-        : `⏳ Следующий спин через ${Math.ceil((next-now)/3600000)} ч.`;
-      btn.disabled = !canSpin;
+      const now = new Date(), next = nextAt ? new Date(nextAt) : new Date(0);
+      const btn = document.getElementById('spin-btn'), txt = document.getElementById('spin-status');
+      const can = next <= now;
+      txt.textContent = can ? '✅ Рулетка готова!' : `⏳ Следующий спин через ${Math.ceil((next-now)/3600000)} ч.`;
+      btn.disabled = !can;
     }
 
     async function handleSpin() {
       const btn = document.getElementById('spin-btn');
-      btn.disabled = true;
-      btn.textContent = '⏳ Крутим...';
-      
+      btn.disabled = true; btn.textContent = '⏳ Крутим...';
       const wheel = document.getElementById('wheel');
-      wheel.style.transition = 'none';
-      wheel.style.transform = 'rotate(0deg)';
+      wheel.style.transition = 'none'; wheel.style.transform = 'rotate(0deg)';
       
       setTimeout(async () => {
         try {
           const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id });
-          
           if (error) throw error;
           if (data?.error) throw new Error(data.error);
           
@@ -284,429 +238,164 @@
           wheel.style.transform = `rotate(${1440 + (data.result/100)*360}deg)`;
           
           setTimeout(() => {
-            alert(`🎉 Выпало: ${data.result}\n📋 Назначено заданий: ${data.tasks}`);
+            alert(`🎉 Выпало: ${data.result}\n📋 Заданий: ${data.tasks}`);
             btn.textContent = 'КРУТИТЬ';
             loadProfile();
           }, 4100);
-          
-        } catch (e) {
-          alert('❌ Ошибка: ' + e.message);
-          btn.disabled = false;
-          btn.textContent = 'КРУТИТЬ';
+        } catch(e) {
+          alert('❌ ' + e.message);
+          btn.disabled = false; btn.textContent = 'КРУТИТЬ';
         }
       }, 50);
     }
 
     function renderStreak(streak) {
-      const grid = document.getElementById('streak-grid');
-      grid.innerHTML = '';
-      
+      const grid = document.getElementById('streak-grid'); grid.innerHTML='';
       const todayPos = (streak % 7 === 0 && streak > 0) ? 7 : (streak % 7);
-      
-      for (let i = 1; i <= 7; i++) {
-        const isDone = i <= todayPos;
-        grid.innerHTML += `
-          <div class="streak-day ${isDone ? 'done' : ''}">
-            <div>День ${i}</div>
-            <div class="reward">+${i*100}</div>
-          </div>
-        `;
+      for(let i=1; i<=7; i++) {
+        grid.innerHTML += `<div class="streak-day ${i <= todayPos ? 'done' : ''}"><div>День ${i}</div><div class="reward">+${i*100}</div></div>`;
       }
-      
       document.getElementById('streak-badge').textContent = streak + ' дней';
       document.getElementById('streak-prog').style.width = (todayPos/7*100) + '%';
-      
-      const nextReward = ((todayPos % 7) + 1) * 100;
-      document.getElementById('streak-hint').textContent = streak === 0 
-        ? 'Сделайте первое действие для +100 фишек!' 
-        : `Следующая награда: +${nextReward} фишек.`;
+      const next = ((todayPos % 7) + 1) * 100;
+      document.getElementById('streak-hint').textContent = streak===0 ? 'Сделайте первое действие!' : `Награда: +${next} фишек.`;
     }
 
+    // ✅ ИСПРАВЛЕНА ФУНКЦИЯ ОТПРАВКИ ЗАДАНИЙ
+    window.submitTask = async function(id) {
+      const ans = document.getElementById(`ans-${id}`).value.trim();
+      if (!ans) return alert('❌ Введите ответ!');
+      
+      try {
+        const { error } = await db.from('user_tasks').update({ 
+          status: 'submitted', 
+          answer: ans 
+        }).eq('id', id);
+        
+        if (error) throw error;
+        alert('✅ Отправлено!');
+        loadTasks();
+        loadProfile();
+      } catch(e) {
+        alert('❌ Ошибка: ' + e.message);
+      }
+    };
+
     async function loadTasks() {
-      const {  data } = await db
-        .from('user_tasks')
+      const {  data } = await db.from('user_tasks')
         .select('*, tasks_pool(title, description)')
         .eq('user_id', currentUser.id)
         .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .order('assigned_at', { ascending: false });
       
-      const list = document.getElementById('tasks-list');
-      list.innerHTML = '';
+      const list = document.getElementById('tasks-list'); list.innerHTML='';
+      if (!data?.length) { list.innerHTML='<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>'; return; }
       
-      if (!data || data.length === 0) {
-        list.innerHTML = '<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>';
-        return;
-      }
-      
-      data.forEach(t => {
-        list.innerHTML += `
-          <div class="task">
-            <div>
-              <strong>${t.tasks_pool?.title || 'Задание'}</strong>
-              <br><small>${t.tasks_pool?.description || ''}</small>
-            </div>
-            <span class="status active">В работе</span>
-          </div>
-          <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea>
-          <button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button>
-          <hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">
-        `;
-      });
+      data.forEach(t => list.innerHTML += `<div class="task"><div><strong>${t.tasks_pool?.title||'Задание'}</strong><br><small>${t.tasks_pool?.description||''}</small></div><span class="status active">В работе</span></div><textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea><button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button><hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">`);
     }
-
-    async function submitTask(id) {
-  console.log('🔘 Кнопка нажата! ID задания:', id);
-  
-  const textarea = document.getElementById(`ans-${id}`);
-  
-  if (!textarea) {
-    alert('❌ Поле ввода не найдено! Попробуйте обновить страницу.');
-    return;
-  }
-  
-  const ans = textarea.value.trim();
-  
-  if (!ans) {
-    alert('❌ Введите ответ!');
-    return;
-  }
-
-  try {
-    const { error } = await db
-      .from('user_tasks')
-      .update({ status: 'submitted', answer: ans })
-      .eq('id', id);
-
-    if (error) throw error;
-
-    alert('✅ Задание отправлено на проверку!');
-    loadTasks();
-    loadProfile();
-    
-  } catch (e) {
-    console.error('Ошибка отправки:', e);
-    alert('❌ Ошибка: ' + e.message);
-  }
-}
-
-async function loadTasks() {
-  if (!currentUser?.id) return;
-  
-  try {
-    const {  data, error } = await db
-      .from('user_tasks')
-      .select('*, tasks_pool(title, description)')
-      .eq('user_id', currentUser.id)
-      .eq('status', 'active')
-      .order('assigned_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    const list = document.getElementById('tasks-list');
-    list.innerHTML = '';
-    
-    if (!data || data.length === 0) {
-      list.innerHTML = '<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>';
-      return;
-    }
-    
-    data.forEach(t => {
-      list.innerHTML += `
-        <div class="task">
-          <div>
-            <strong>${t.tasks_pool?.title || 'Задание'}</strong>
-            <br><small>${t.tasks_pool?.description || ''}</small>
-          </div>
-          <span class="status active">В работе</span>
-        </div>
-        <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea>
-        <button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button>
-        <hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">
-      `;
-    });
-  } catch (e) {
-    console.error('Ошибка загрузки заданий:', e);
-    document.getElementById('tasks-list').innerHTML = `<p style="color:var(--err)">Не удалось загрузить задания: ${e.message}</p>`;
-  }
-}
 
     async function loadRank() {
-      try {
-        const {  tasks } = await db
-          .from('user_tasks')
-          .select('user_id')
-          .eq('status', 'completed');
-        
-        const {  all } = await db.from('profiles').select('id');
-        
-        const myDone = (tasks || []).filter(t => t.user_id === currentUser.id).length;
-        const above = (all || []).filter(a => {
-          const count = (tasks || []).filter(t => t.user_id === a.id).length;
-          return count > myDone;
-        }).length;
-        
-        document.getElementById('rank-pos').textContent = `#${above + 1}`;
-      } catch (e) {
-        console.warn('Rank load error:', e);
-      }
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
+      const {  all } = await db.from('profiles').select('id');
+      const myDone = (tasks||[]).filter(t=>t.user_id===currentUser.id).length;
+      const above = (all||[]).filter(a => (tasks||[]).filter(t=>t.user_id===a.id).length > myDone).length;
+      document.getElementById('rank-pos').textContent = `#${above+1}`;
     }
 
     async function loadTxHistory() {
-      try {
-        const {  tx, error } = await db
-          .from('transactions')
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
-        
-        const box = document.getElementById('tx-history');
-        box.innerHTML = '';
-        
-        if (error) throw error;
-        
-        if (!tx || tx.length === 0) {
-          box.innerHTML = '<p style="color:var(--text-sec);font-size:14px">Нет операций</p>';
-          return;
-        }
-        
-        tx.forEach(t => {
-          const date = new Date(t.created_at).toLocaleString('ru-RU', {
-            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-          });
-          box.innerHTML += `
-            <div class="hist-row">
-              <span>${t.description || t.type} • ${date}</span>
-              <span class="hist-plus">+${t.amount}</span>
-            </div>
-          `;
-        });
-      } catch (e) {
-        document.getElementById('tx-history').innerHTML = 
-          `<p style="color:var(--err)">Ошибка: ${e.message}</p>`;
-      }
+      const {  tx } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(20);
+      const box = document.getElementById('tx-history'); box.innerHTML='';
+      if(!tx?.length) { box.innerHTML='<p style="color:var(--text-sec)">Нет операций</p>'; return; }
+      tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.description||t.type} • ${new Date(t.created_at).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span><span class="hist-plus">+${t.amount}</span></div>`);
     }
 
+    // ✅ ПОКАЗЫВАЕТ ВСЮ ИСТОРИЮ СО СТАТУСАМИ
     async function loadTaskHistory() {
-      const {  tasks } = await db
-        .from('user_tasks')
-        .select('*, tasks_pool(title)')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const {  tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('assigned_at',{ascending:false}).limit(10);
+      const box = document.getElementById('task-history'); box.innerHTML='';
+      if(!tasks?.length) { box.innerHTML='<p style="color:var(--text-sec)">Нет заданий</p>'; return; }
       
-      const box = document.getElementById('task-history');
-      box.innerHTML = '';
+      const statusMap = { active: '🟡 В работе', submitted: '🔵 На проверке', completed: '🟢 Выполнено', rejected: '🔴 Отклонено' };
       
-      if (!tasks || tasks.length === 0) {
-        box.innerHTML = '<p style="color:var(--text-sec);font-size:14px">Нет заданий</p>';
-        return;
-      }
-      
-      tasks.forEach(t => {
-        box.innerHTML += `
-          <div class="hist-row">
-            <span>
-              ${t.tasks_pool?.title || 'Задание'} 
-              <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${t.status}</span>
-            </span>
-            <small style="color:var(--text-sec)">
-              ${new Date(t.created_at).toLocaleDateString('ru-RU')}
-            </small>
-          </div>
-        `;
-      });
+      tasks.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.tasks_pool?.title||'Задание'} <span class="status ${t.status}" style="font-size:10px;padding:2px 6px;">${statusMap[t.status]||t.status}</span></span><small style="color:var(--text-sec)">${new Date(t.assigned_at).toLocaleDateString('ru-RU')}</small></div>`);
     }
 
     async function loadLeaderboard() {
-      const {  tasks } = await db
-        .from('user_tasks')
-        .select('user_id')
-        .eq('status', 'completed');
-      
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status','completed');
       const {  profiles } = await db.from('profiles').select('id, name');
-      
-      if (!profiles) return;
-      
-      const res = profiles.map(p => ({
-        name: p.name,
-        done: (tasks || []).filter(t => t.user_id === p.id).length
-      })).sort((a, b) => b.done - a.done);
-      
-      document.getElementById('lb-body').innerHTML = res.map((u, i) => `
-        <tr>
-          <td><strong>${i + 1}</strong></td>
-          <td>${u.name}</td>
-          <td>${u.done}</td>
-        </tr>
-      `).join('');
+      if(!profiles) return;
+      const res = profiles.map(p => ({ name:p.name, done:(tasks||[]).filter(t=>t.user_id===p.id).length })).sort((a,b)=>b.done-a.done);
+      document.getElementById('lb-body').innerHTML = res.map((u,i) => `<tr><td><strong>${i+1}</strong></td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
     }
 
+    // ✅ ИСПРАВЛЕНА ЗАГРУЗКА АДМИНКИ
     async function loadAdminQueue() {
-      const {  data } = await db
-        .from('user_tasks')
-        .select('*')
-        .eq('status', 'submitted')
-        .order('created_at', { ascending: false });
-      
-      const q = document.getElementById('admin-queue');
-      q.innerHTML = '';
-      
-      if (!data || data.length === 0) {
-        q.innerHTML = '<p style="color:var(--text-sec)">Нет заявок</p>';
-        return;
-      }
-      
-      const userIds = [...new Set(data.map(t => t.user_id))];
-      const {  users } = await db
-        .from('profiles')
-        .select('id, name')
-        .in('id', userIds);
-      
-      const names = {};
-      users?.forEach(u => { names[u.id] = u.name; });
-      
-      q.innerHTML = data.map(t => `
-        <div class="task">
-          <div>
-            <strong>${names[t.user_id] || 'Пользователь'}</strong>
-            <br><small>${t.answer}</small>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button>
-            <button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function approve(id) {
+      const q = document.getElementById('admin-queue'); q.innerHTML='<p style="color:var(--text-sec)">Загрузка...</p>';
       try {
-        const {  t } = await db
-          .from('user_tasks')
-          .select('user_id')
-          .eq('id', id)
-          .single();
+        // 1. Загружаем задачи
+        const {  tasks } = await db.from('user_tasks').select('*').eq('status','submitted').order('assigned_at',{ascending:false});
+        if(!tasks?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок</p>'; return; }
         
-        await db.from('user_tasks').update({ status: 'completed' }).eq('id', id);
-        await db.rpc('increment_chips', { 
-          p_user_id: t.user_id, 
-          p_amount: 100, 
-          p_desc: 'Выполнение задания' 
-        });
+        // 2. Загружаем имена пользователей
+        const ids = [...new Set(tasks.map(t=>t.user_id))];
+        const {  users } = await db.from('profiles').select('id, name').in('id', ids);
+        const names = {}; users?.forEach(u=>names[u.id]=u.name);
+
+        // 3. Рендерим
+        q.innerHTML = tasks.map(t => `<div class="task"><div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>Ответ: ${t.answer||'нет'}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button></div></div>`).join('');
+      } catch(e) {
+        q.innerHTML = `<p style="color:var(--err)">Ошибка: ${e.message}</p>`;
+      }
+    }
+
+    window.approve = async function(id) {
+      try {
+        const {  t } = await db.from('user_tasks').select('user_id').eq('id',id).single();
+        await db.from('user_tasks').update({status:'completed'}).eq('id',id);
+        await db.rpc('increment_chips', { p_user_id: t.user_id, p_amount: 100, p_desc: 'Выполнение задания' });
         await db.rpc('update_daily_streak', { p_user_id: t.user_id });
-        
-        loadAdminQueue();
-        loadProfile();
-      } catch (e) {
-        alert('❌ ' + e.message);
-      }
-    }
+        loadAdminQueue(); loadProfile();
+      } catch(e) { alert('❌ ' + e.message); }
+    };
+    
+    window.reject = async function(id) {
+      await db.from('user_tasks').update({status:'active'}).eq('id',id);
+      loadAdminQueue(); loadProfile();
+    };
 
-    async function reject(id) {
-      await db.from('user_tasks').update({ status: 'active' }).eq('id', id);
-      loadAdminQueue();
-      loadProfile();
-    }
+    window.handleAddChips = async function() { const uid = document.getElementById('admin-uid').value.trim(); const amt = parseInt(document.getElementById('admin-amount').value); if(uid&&amt) await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt, p_desc: 'Ручное начисление' }); };
+    window.handleResetSpin = async function() { const uid = document.getElementById('admin-uid').value.trim(); if(uid) await db.from('profiles').update({next_spin_at:new Date(0).toISOString()}).eq('id',uid); };
 
-    async function handleAddChips() {
-      const uid = document.getElementById('admin-uid').value.trim();
-      const amt = parseInt(document.getElementById('admin-amount').value);
-      
-      if (uid && amt) {
-        await db.rpc('increment_chips', { 
-          p_user_id: uid, 
-          p_amount: amt, 
-          p_desc: 'Ручное начисление' 
-        });
-      }
-    }
-
-    async function handleResetSpin() {
-      const uid = document.getElementById('admin-uid').value.trim();
-      if (uid) {
-        await db.from('profiles')
-          .update({ next_spin_at: new Date(0).toISOString() })
-          .eq('id', uid);
-      }
-    }
-
-    function switchTab(name, el) {
-      document.querySelectorAll('[id$="-tab"]').forEach(e => e.classList.add('hidden'));
-      document.getElementById(name + '-tab').classList.remove('hidden');
-      
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      if (el) el.classList.add('active');
-      
-      if (name === 'leaderboard') loadLeaderboard();
-      if (name === 'admin') loadAdminQueue();
-    }
+    window.switchTab = function(name, el) {
+      document.querySelectorAll('[id$="-tab"]').forEach(e=>e.classList.add('hidden'));
+      document.getElementById(name+'-tab').classList.remove('hidden');
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      if(el) el.classList.add('active');
+      if(name==='leaderboard') loadLeaderboard();
+      if(name==='admin') loadAdminQueue();
+    };
 
     async function handleLogin() {
       const btn = document.getElementById('login-btn');
       const email = document.getElementById('login-email').value.trim();
       const pass = document.getElementById('login-pass').value;
-      
-      if (!email || !pass) return alert('Введите email и пароль');
-      
-      btn.disabled = true;
-      btn.textContent = '⏳...';
+      if(!email||!pass) return alert('Введите email и пароль');
+      btn.disabled = true; btn.textContent = '⏳...';
       document.getElementById('error-msg').style.display = 'none';
-      
       try {
-        const { error } = await db.auth.signInWithPassword({ 
-          email, 
-          password: pass 
-        });
-        
+        const { error } = await db.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
-        // После успешного входа сработает onAuthStateChange
-      } catch (e) {
-        alert('❌ ' + e.message);
-        resetLoginUI();
-      }
+      } catch(e) { alert('❌ '+e.message); resetLoginUI(); }
     }
-
-    function logout() {
-      db.auth.signOut();
-    }
+    window.logout = function() { db.auth.signOut(); };
 
     async function init() {
-      if (!window.supabase) {
-        return alert('Скрипт Supabase не загрузился. Проверьте интернет.');
-      }
-      
+      if(!window.supabase) return alert('Script not loaded');
       db = window.supabase.createClient(SB_URL, SB_KEY);
-      console.log('✅ Supabase клиент создан');
-      
-      // Подписываемся на изменения авторизации
-      db.auth.onAuthStateChange((event, session) => {
-        console.log('🔄 Auth event:', event);
-        
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          currentUser = session?.user || null;
-          console.log('👤 User signed in:', currentUser?.email);
-          loadProfile();
-        } else if (event === 'SIGNED_OUT') {
-          currentUser = null;
-          console.log(' User signed out');
-          showScreen('auth');
-        }
-      });
-
-      // Проверяем текущую сессию
+      db.auth.onAuthStateChange((e, s) => { if(e==='SIGNED_IN'||e==='TOKEN_REFRESHED') { currentUser=s.user; loadProfile(); } else if(e==='SIGNED_OUT') { currentUser=null; showScreen('auth'); } });
       const {  session } = await db.auth.getSession();
-      console.log('📋 Initial session:', session?.user?.email);
-      
-      if (session?.user) {
-        currentUser = session.user;
-        await loadProfile();
-      } else {
-        showScreen('auth');
-      }
+      if(session?.user) { currentUser=session.user; await loadProfile(); } else showScreen('auth');
     }
-    
-    // Запускаем приложение
     init();
   </script>
 </body>
