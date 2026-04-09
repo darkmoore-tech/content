@@ -143,7 +143,7 @@
   </div>
 
   <script>
-    // ✅ КЛЮЧИ ВСТАВЛЕНЫ
+    // ✅ КЛЮЧИ
     const SB_URL = 'https://lnyhvimmlyashhgudiok.supabase.co';
     const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxueWh2aW1tbHlhc2hoZ3VkaW9rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODQ0MjcsImV4cCI6MjA5MTI2MDQyN30.Tkzi9nAga_TIteHrvDGGaZ06DlyMQCJL_Hm9oRZ5hd8';
     
@@ -151,7 +151,6 @@
     let currentUser = null;
     let profile = null;
 
-    // Тема
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.getElementById('theme-toggle').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
@@ -191,12 +190,10 @@
         document.getElementById('chips').textContent = data.chips || 0;
         document.getElementById('profile-name').textContent = data.name || 'Сотрудник';
         
-        // Админка
         const role = (data.role || '').trim().toLowerCase();
         if (role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
         else document.getElementById('nav-admin').classList.add('hidden');
 
-        // Инициализация
         renderStreak(data.daily_streak || 0);
         updateSpinUI(data.next_spin_at);
         showScreen('app');
@@ -261,7 +258,7 @@
       document.getElementById('streak-hint').textContent = streak===0 ? 'Сделайте первое действие!' : `Награда: +${next} фишек.`;
     }
 
-    // ✅ ИСПРАВЛЕНА ФУНКЦИЯ ОТПРАВКИ ЗАДАНИЙ
+    // ✅ ФУНКЦИЯ ОТПРАВКИ
     window.submitTask = async function(id) {
       const ans = document.getElementById(`ans-${id}`).value.trim();
       if (!ans) return alert('❌ Введите ответ!');
@@ -273,7 +270,7 @@
         }).eq('id', id);
         
         if (error) throw error;
-        alert('✅ Отправлено!');
+        alert('✅ Отправлено на проверку!');
         loadTasks();
         loadProfile();
       } catch(e) {
@@ -282,6 +279,7 @@
     };
 
     async function loadTasks() {
+      // Игрок видит только свои активные
       const {  data } = await db.from('user_tasks')
         .select('*, tasks_pool(title, description)')
         .eq('user_id', currentUser.id)
@@ -309,9 +307,14 @@
       tx.forEach(t => box.innerHTML += `<div class="hist-row"><span>${t.description||t.type} • ${new Date(t.created_at).toLocaleString('ru-RU', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span><span class="hist-plus">+${t.amount}</span></div>`);
     }
 
-    // ✅ ПОКАЗЫВАЕТ ВСЮ ИСТОРИЮ СО СТАТУСАМИ
+    // ✅ ИСТОРИЯ ЗАДАНИЙ (Показывает все статусы: active, submitted, completed)
     async function loadTaskHistory() {
-      const {  tasks } = await db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).order('assigned_at',{ascending:false}).limit(10);
+      const {  tasks } = await db.from('user_tasks')
+        .select('*, tasks_pool(title)')
+        .eq('user_id', currentUser.id)
+        .order('assigned_at',{ascending:false})
+        .limit(15);
+      
       const box = document.getElementById('task-history'); box.innerHTML='';
       if(!tasks?.length) { box.innerHTML='<p style="color:var(--text-sec)">Нет заданий</p>'; return; }
       
@@ -328,20 +331,25 @@
       document.getElementById('lb-body').innerHTML = res.map((u,i) => `<tr><td><strong>${i+1}</strong></td><td>${u.name}</td><td>${u.done}</td></tr>`).join('');
     }
 
-    // ✅ ИСПРАВЛЕНА ЗАГРУЗКА АДМИНКИ
+    // ✅ АДМИНКА: Загружает ВСЕ задачи со статусом submitted
     async function loadAdminQueue() {
-      const q = document.getElementById('admin-queue'); q.innerHTML='<p style="color:var(--text-sec)">Загрузка...</p>';
+      const q = document.getElementById('admin-queue'); 
+      q.innerHTML='<p style="color:var(--text-sec)">Загрузка заявок...</p>';
       try {
-        // 1. Загружаем задачи
-        const {  tasks } = await db.from('user_tasks').select('*').eq('status','submitted').order('assigned_at',{ascending:false});
-        if(!tasks?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок</p>'; return; }
+        // Благодаря новой политике, админ увидит задачи ВСЕХ пользователей
+        const {  tasks } = await db.from('user_tasks')
+          .select('*')
+          .eq('status','submitted')
+          .order('assigned_at',{ascending:false});
         
-        // 2. Загружаем имена пользователей
+        if(!tasks?.length) { q.innerHTML='<p style="color:var(--text-sec)">Нет заявок на проверку</p>'; return; }
+        
+        // Подтягиваем имена
         const ids = [...new Set(tasks.map(t=>t.user_id))];
         const {  users } = await db.from('profiles').select('id, name').in('id', ids);
         const names = {}; users?.forEach(u=>names[u.id]=u.name);
 
-        // 3. Рендерим
+        // Рендер
         q.innerHTML = tasks.map(t => `<div class="task"><div><strong>${names[t.user_id]||'Пользователь'}</strong><br><small>Ответ: ${t.answer||'нет'}</small></div><div style="display:flex;gap:8px;"><button class="btn" style="background:var(--ok)" onclick="approve('${t.id}')">✅</button><button class="btn" style="background:var(--err)" onclick="reject('${t.id}')">❌</button></div></div>`).join('');
       } catch(e) {
         q.innerHTML = `<p style="color:var(--err)">Ошибка: ${e.message}</p>`;
