@@ -340,7 +340,7 @@
   try {
     // 1. Загружаем ВСЕ задачи со статусом submitted
     console.log('📥 Запрос к user_tasks...');
-    const {  tasks, error: tasksError } = await db
+    const {  data: tasks, error: tasksError } = await db
       .from('user_tasks')
       .select('*')
       .eq('status', 'submitted')
