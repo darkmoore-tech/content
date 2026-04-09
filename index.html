@@ -354,6 +354,41 @@
       });
     }
 
+    async function submitTask(id) {
+  console.log('🔘 Кнопка нажата! ID задания:', id);
+  
+  const textarea = document.getElementById(`ans-${id}`);
+  
+  if (!textarea) {
+    alert('❌ Поле ввода не найдено! Попробуйте обновить страницу.');
+    return;
+  }
+  
+  const ans = textarea.value.trim();
+  
+  if (!ans) {
+    alert('❌ Введите ответ!');
+    return;
+  }
+
+  try {
+    const { error } = await db
+      .from('user_tasks')
+      .update({ status: 'submitted', answer: ans })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    alert('✅ Задание отправлено на проверку!');
+    loadTasks();
+    loadProfile();
+    
+  } catch (e) {
+    console.error('Ошибка отправки:', e);
+    alert('❌ Ошибка: ' + e.message);
+  }
+}
+
 async function loadTasks() {
   if (!currentUser?.id) return;
   
