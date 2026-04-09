@@ -354,18 +354,46 @@
       });
     }
 
-    async function submitTask(id) {
-      const ans = document.getElementById(`ans-${id}`).value.trim();
-      if (!ans) return alert('Введите ответ');
-      
-      await db.from('user_tasks').update({ 
-        status: 'submitted', 
-        answer: ans 
-      }).eq('id', id);
-      
-      loadTasks();
-      loadProfile();
+async function loadTasks() {
+  if (!currentUser?.id) return;
+  
+  try {
+    const {  data, error } = await db
+      .from('user_tasks')
+      .select('*, tasks_pool(title, description)')
+      .eq('user_id', currentUser.id)
+      .eq('status', 'active')
+      .order('assigned_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const list = document.getElementById('tasks-list');
+    list.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-sec)">Нет активных заданий. Крутите колесо!</p>';
+      return;
     }
+    
+    data.forEach(t => {
+      list.innerHTML += `
+        <div class="task">
+          <div>
+            <strong>${t.tasks_pool?.title || 'Задание'}</strong>
+            <br><small>${t.tasks_pool?.description || ''}</small>
+          </div>
+          <span class="status active">В работе</span>
+        </div>
+        <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea>
+        <button class="btn" onclick="submitTask('${t.id}')">✅ Отправить</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:15px 0;">
+      `;
+    });
+  } catch (e) {
+    console.error('Ошибка загрузки заданий:', e);
+    document.getElementById('tasks-list').innerHTML = `<p style="color:var(--err)">Не удалось загрузить задания: ${e.message}</p>`;
+  }
+}
 
     async function loadRank() {
       try {
