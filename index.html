@@ -22,12 +22,25 @@
       --shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
     }
     * { box-sizing: border-box; transition: background 0.2s, color 0.2s, border-color 0.2s; }
-    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); height: 100vh; overflow: hidden; display: flex; }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); height: 100vh; display: flex; overflow: hidden; }
     
     /* Sidebar */
-    .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 10px; transition: width 0.3s ease; position: relative; z-index: 100; flex-shrink: 0; }
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 10px;
+      transition: width 0.3s ease;
+      position: relative;
+      z-index: 100;
+      flex-shrink: 0;
+    }
     .sidebar.collapsed { width: var(--sidebar-collapsed); }
-    .sidebar.collapsed .nav-text, .sidebar.collapsed .user-info, .sidebar.collapsed .logo-text { display: none; }
+    .sidebar.collapsed .nav-text, 
+    .sidebar.collapsed .user-info, 
+    .sidebar.collapsed .logo-text { display: none; }
     .sidebar.collapsed .nav-item { justify-content: center; padding: 15px 0; }
     .sidebar.collapsed .logo { font-size: 24px; margin: 0 auto; }
     
@@ -36,28 +49,71 @@
     .logo-text { font-weight: 800; font-size: 20px; background: linear-gradient(135deg, var(--acc), #ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     
     .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px; cursor: pointer; color: var(--text-sec); font-weight: 500; transition: all 0.2s; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text-sec);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
     .nav-item:hover { background: var(--bg-hover); color: var(--text); }
     .nav-item.active { background: var(--acc-light); color: var(--acc); }
     .nav-icon { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
     
-    .user-block { margin-top: auto; padding: 15px; background: var(--bg-hover); border-radius: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; overflow: hidden; white-space: nowrap; border: 1px solid var(--border); }
+    .user-block {
+      margin-top: auto;
+      padding: 15px;
+      background: var(--bg-hover);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      overflow: hidden;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+    }
     .user-block:hover { border-color: var(--acc); }
     .avatar { width: 36px; height: 36px; background: var(--acc); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; flex-shrink: 0; }
     .user-details { display: flex; flex-direction: column; overflow: hidden; }
     .user-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
     .user-chips { font-size: 12px; color: var(--text-sec); }
     
-    .theme-toggle { margin-top: 10px; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px; cursor: pointer; color: var(--text-sec); }
+    .theme-toggle {
+      margin-top: 10px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text-sec);
+    }
     .theme-toggle:hover { background: var(--bg-hover); }
     
-    .collapse-btn { position: absolute; bottom: 20px; right: -12px; width: 24px; height: 24px; background: var(--acc); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--bg-card); font-size: 14px; z-index: 101; transition: transform 0.3s; }
+    .collapse-btn {
+      position: absolute;
+      bottom: 20px;
+      right: -12px;
+      width: 24px; height: 24px;
+      background: var(--acc);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border: 2px solid var(--bg-card);
+      font-size: 14px;
+      z-index: 101;
+      transition: transform 0.3s;
+    }
     .sidebar.collapsed .collapse-btn { transform: rotate(180deg); }
 
     /* Main Content */
     .main-content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
     .container { max-width: 1000px; margin: 0 auto; }
+    
     .card { background: var(--bg-card); padding: 24px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    h2, h3 { margin-top: 0; }
     
     /* Auth Screen */
     .auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex; align-items: center; justify-content: center; }
@@ -75,7 +131,7 @@
     /* Roulette */
     .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
     .wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid var(--bg-card); box-shadow: 0 0 20px rgba(0,0,0,0.2); transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); }
-    .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--text); z-index: 10; }
+    .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--text); z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
     
     /* Tasks */
     .task-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; background: var(--bg-hover); }
@@ -88,11 +144,14 @@
     .badge-medium { background: #fef3c7; color: #92400e; }
     .badge-high-medium { background: #fed7aa; color: #9a3412; }
     .badge-hard { background: #fee2e2; color: #991b1b; }
+    
     .progress-track { height: 4px; background: rgba(0,0,0,0.1); width: 100px; border-radius: 2px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--ok); transition: width 1s linear, background 0.3s; }
+    
     .task-body { padding: 0 16px 16px; display: none; border-top: 1px solid var(--border); }
     .task-card.open .task-body { display: block; animation: slideDown 0.2s ease-out; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    
     textarea { width: 100%; min-height: 80px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); resize: vertical; margin-top: 10px; }
     
     /* Modal */
@@ -115,6 +174,7 @@
     .stat-card { background: var(--bg-hover); padding: 15px; border-radius: 10px; text-align: center; }
     .stat-val { font-size: 24px; font-weight: 800; color: var(--acc); }
     .stat-label { font-size: 12px; color: var(--text-sec); }
+    
     .section-title { font-size: 16px; font-weight: 700; margin: 20px 0 10px; display: flex; justify-content: space-between; align-items: center; }
     .history-list { max-height: 300px; overflow-y: auto; }
     .history-item { padding: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
@@ -129,7 +189,7 @@
     .loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--acc); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .error-banner { background: var(--err-bg); color: var(--err); padding: 15px; border-radius: 8px; margin: 20px; text-align: center; display: none; max-width: 600px; }
+    .error-banner { background: var(--err-bg); color: var(--err); padding: 15px; border-radius: 8px; margin: 20px; text-align: center; display: none; }
     
     /* Toast Notifications */
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
@@ -145,7 +205,6 @@
   <div id="loading-screen" class="loading-screen">
     <div class="spinner"></div>
     <p style="margin-top: 15px; color: var(--text-sec);">Загрузка системы...</p>
-    <p id="load-status" style="margin-top: 5px; font-size: 12px; color: var(--text-sec);">Инициализация...</p>
   </div>
 
   <!-- Error Banner -->
@@ -377,48 +436,19 @@
     let currentUser = null;
     let profile = null;
     let currentTab = 'roulette';
-    let initComplete = false;
-
-    // Глобальные функции для HTML
-    window.toggleTheme = toggleTheme;
-    window.toggleSidebar = toggleSidebar;
-    window.switchTab = switchTab;
-    window.handleLogin = handleLogin;
-    window.handleSpin = handleSpin;
-    window.handleReroll = handleReroll;
-    window.closeModal = closeModal;
-    window.renderTasks = renderTasks;
-    window.submitTask = submitTask;
-    window.editName = editName;
-    window.saveName = saveName;
-    window.adminAddChips = adminAddChips;
-    window.adminSubChips = adminSubChips;
-    window.adminResetSpin = adminResetSpin;
-    window.showTaskDetail = showTaskDetail;
-    window.adminApprove = adminApprove;
-    window.adminReject = adminReject;
 
     // Init
     window.addEventListener('DOMContentLoaded', async () => {
-      const statusEl = document.getElementById('load-status');
       try {
-        statusEl.textContent = "Подключение к базе...";
-        if (!window.supabase) throw new Error('Supabase JS library not loaded');
-        
+        if (!window.supabase) throw new Error('Supabase JS not loaded');
         db = supabase.createClient(SB_URL, SB_KEY);
-        
-        // Проверка подключения простым запросом
-        const { error: connError } = await db.from('profiles').select('count', { count: 'exact', head: true });
-        if (connError && connError.code !== 'PGRST116') throw connError; // PGRST116 is ok (empty table)
-
-        statusEl.textContent = "Проверка авторизации...";
         
         // Theme
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
 
-        // Auth State Listener
+        // Auth State
         db.auth.onAuthStateChange(async (event, session) => {
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             currentUser = session?.user;
@@ -430,32 +460,23 @@
           }
         });
 
-        // Check existing session
-        const { { session } } = await db.auth.getSession();
-        if (session) {
-          currentUser = session.user;
+        // Check Session
+        const { data, error } = await db.auth.getSession();
+        if (error) throw error;
+        
+        if (data.session) {
+          currentUser = data.session.user;
           await loadProfile();
         } else {
           showScreen('auth');
         }
 
-        initComplete = true;
-        document.getElementById('loading-screen').classList.add('hidden');
-
       } catch (e) {
-        console.error("Init Error:", e);
+        console.error(e);
+        showError('Ошибка подключения: ' + e.message);
         document.getElementById('loading-screen').classList.add('hidden');
-        showError('Критическая ошибка запуска: ' + e.message + '. Проверьте консоль (F12).');
       }
     });
-
-    // Таймер безопасности (если зависло)
-    setTimeout(() => {
-      if (!initComplete) {
-        document.getElementById('loading-screen').classList.add('hidden');
-        showError('Превышено время ожидания ответа от сервера. Проверьте интернет или ключи API.');
-      }
-    }, 8000);
 
     function showScreen(screen) {
       document.getElementById('loading-screen').classList.add('hidden');
@@ -507,13 +528,15 @@
 
     function switchTab(tabName, el) {
       currentTab = tabName;
+      // Update Nav
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       if (el) el.classList.add('active');
 
+      // Show Tab
       document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-      const target = document.getElementById(`tab-${tabName}`);
-      if(target) target.classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
+      // Load Data
       if (tabName === 'tasks') renderTasks();
       if (tabName === 'leaderboard') loadLeaderboard();
       if (tabName === 'admin') loadAdminQueue();
@@ -535,6 +558,7 @@
       try {
         const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
+        // Session change handler will trigger loadProfile
       } catch (e) {
         err.textContent = e.message;
         err.style.display = 'block';
@@ -545,60 +569,45 @@
     // Profile Logic
     async function loadProfile() {
       try {
-        if (!currentUser) return;
-        
-        // Попытка получить профиль
-        let { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        
+        const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
         if (error || !data) {
-          // Если профиль не найден, пробуем создать
-          console.log("Profile not found, creating...");
-          const newName = currentUser.email ? currentUser.email.split('@')[0] : 'User';
-          const { error: insErr } = await db.from('profiles').insert({
-            id: currentUser.id,
-            email: currentUser.email,
-            name: newName,
-            chips: 0,
-            days_in_game: 1,
-            role: 'user'
-          });
-          
-          if (insErr) {
-             // Если ошибка создания (например RLS), показываем ошибку
-             if(insErr.code === '23505') { // Unique violation (race condition)
-                // Повторная попытка чтения
-                const {  newData } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-                data = newData;
-             } else {
-                throw insErr;
-             }
+          // If profile missing, try to create or show error
+          if (error && error.code === 'PGRST116') { // Row not found
+             // Auto-create basic profile if auth exists but profile missing
+             const { error: insErr } = await db.from('profiles').insert({
+               id: currentUser.id,
+               email: currentUser.email,
+               name: currentUser.email.split('@')[0],
+               chips: 0,
+               days_in_game: 1
+             });
+             if (insErr) throw insErr;
+             // Retry fetch
+             const { data: newData } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+             profile = newData;
           } else {
-             // Успешно создали, читаем снова
-             const {  newData } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-             data = newData;
+            throw error || new Error('Profile not found');
           }
+        } else {
+          profile = data;
         }
-
-        if (!data) throw new Error("Не удалось загрузить профиль");
-
-        profile = data;
         
         // Update UI
-        document.getElementById('sidebar-name').textContent = data.name || 'User';
-        document.getElementById('sidebar-avatar').textContent = (data.name || 'U')[0].toUpperCase();
-        document.getElementById('sidebar-chips').textContent = data.chips;
+        document.getElementById('sidebar-name').textContent = profile.name || 'User';
+        document.getElementById('sidebar-avatar').textContent = (profile.name || 'U')[0].toUpperCase();
+        document.getElementById('sidebar-chips').textContent = profile.chips;
         
-        document.getElementById('profile-name-display').textContent = data.name || 'User';
-        document.getElementById('profile-chips').textContent = data.chips;
-        document.getElementById('stat-days').textContent = data.days_in_game || 1;
-        document.getElementById('stat-streak').textContent = data.daily_streak || 0;
+        document.getElementById('profile-name-display').textContent = profile.name || 'User';
+        document.getElementById('profile-chips').textContent = profile.chips;
+        document.getElementById('stat-days').textContent = profile.days_in_game || 1;
+        document.getElementById('stat-streak').textContent = profile.daily_streak || 0;
 
         // Admin Check
-        if (data.role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
+        if (profile.role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
         else document.getElementById('nav-admin').classList.add('hidden');
 
         showScreen('app');
-        updateSpinUI(data.next_spin_at);
+        updateSpinUI(profile.next_spin_at);
         
         // Initial Tab Load
         const navItem = document.querySelector(`.nav-item[onclick*="${currentTab}"]`);
@@ -606,14 +615,13 @@
 
       } catch (e) {
         console.error(e);
-        showError('Ошибка профиля: ' + e.message + '. Попробуйте выйти и войти снова.');
-        // Не скрываем лоадер сразу, даем шанс прочитать ошибку, но через таймер он скроется
-        setTimeout(() => showScreen('auth'), 3000);
+        showError('Ошибка профиля: ' + e.message);
       }
     }
 
     async function loadProfileDetails() {
       if (!profile) return;
+      // Load stats that might have changed
       const { data } = await db.from('profiles').select('daily_streak, chips').eq('id', currentUser.id).single();
       if (data) {
         profile.daily_streak = data.daily_streak;
@@ -622,13 +630,16 @@
         document.getElementById('profile-chips').textContent = data.chips;
         document.getElementById('sidebar-chips').textContent = data.chips;
         
+        // Streak Bar
         const progress = (data.daily_streak % 7) / 7 * 100;
         document.getElementById('streak-bar').style.width = `${progress}%`;
       }
 
+      // Load History
       loadTxHistory();
       loadDoneTasksHistory();
       
+      // Count done tasks
       const { count } = await db.from('user_tasks').select('*', { head: true, count: 'exact' }).eq('user_id', currentUser.id).eq('status', 'completed');
       document.getElementById('stat-done').textContent = count || 0;
     }
@@ -670,8 +681,6 @@
       const btn = document.getElementById('spin-btn');
       const status = document.getElementById('spin-status');
       
-      if (!btn || !status) return;
-
       if (next <= now) {
         status.textContent = 'Готово к игре!';
         status.style.color = 'var(--ok)';
@@ -688,21 +697,17 @@
 
     async function handleSpin(isReroll = false) {
       const btn = document.getElementById('spin-btn');
-      if(!btn) return;
       btn.disabled = true;
       
+      // Animation
       const wheel = document.getElementById('wheel');
-      if(wheel) {
-        wheel.style.transition = 'none';
-        wheel.style.transform = 'rotate(0deg)';
-      }
+      wheel.style.transition = 'none';
+      wheel.style.transform = 'rotate(0deg)';
       
       setTimeout(async () => {
-        if(wheel) {
-            wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
-            const randomDeg = 1440 + Math.floor(Math.random() * 360);
-            wheel.style.transform = `rotate(${randomDeg}deg)`;
-        }
+        wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.7, 0.1, 1)';
+        const randomDeg = 1440 + Math.floor(Math.random() * 360);
+        wheel.style.transform = `rotate(${randomDeg}deg)`;
         
         setTimeout(async () => {
           try {
@@ -714,7 +719,10 @@
             if (error) throw error;
             if (data && data.error) throw new Error(data.error);
             
+            // Show Result Modal
             showResultModal(data);
+            
+            // Refresh Profile
             await loadProfile();
             
           } catch (e) {
@@ -727,43 +735,40 @@
     }
 
     async function handleReroll() {
-      if (!profile || profile.chips < 50) return showToast('Недостаточно фишек!', 'error');
+      if (profile.chips < 50) return showToast('Недостаточно фишек!', 'error');
       closeModal();
       await handleSpin(true);
     }
 
     function showResultModal(data) {
       const modal = document.getElementById('result-modal');
-      if(!modal) return;
-
       const diffMap = {
         'easy': 'Легкая', 'low-medium': 'Средне-легкая', 
         'medium': 'Средняя', 'high-medium': 'Средне-сложная', 'hard': 'Сложная'
       };
       
-      document.getElementById('modal-difficulty').textContent = diffMap[data?.difficulty] || data?.difficulty || 'Неизвестно';
+      document.getElementById('modal-difficulty').textContent = diffMap[data.difficulty] || data.difficulty;
       
       const list = document.getElementById('modal-tasks-container');
       list.innerHTML = '<p>Ваши задания:</p>';
       
-      if (data && data.task_ids && data.task_ids.length > 0) {
+      if (data.task_ids && data.task_ids.length > 0) {
+        // Fetch details for preview
         db.from('tasks_pool').select('title, reward, difficulty').in('id', data.task_ids).then(({data: tasks}) => {
           list.innerHTML = '';
-          if(tasks && tasks.length > 0) {
+          if(tasks) {
             tasks.forEach(t => {
-                list.innerHTML += `
+              list.innerHTML += `
                 <div class="modal-task-item">
-                    <strong>${t.title}</strong><br>
-                    <small>Награда: ${t.reward} 💰 | Сложность: ${diffMap[t.difficulty]}</small>
+                  <strong>${t.title}</strong><br>
+                  <small>Награда: ${t.reward} 💰 | Сложность: ${diffMap[t.difficulty]}</small>
                 </div>
-                `;
+              `;
             });
-          } else {
-              list.innerHTML += '<p>Задания назначены, но детали загружаются...</p>';
           }
         });
       } else {
-        list.innerHTML += '<p>Нет новых заданий.</p>';
+        list.innerHTML += '<p>Нет новых заданий (попробуйте еще раз).</p>';
       }
       
       modal.style.display = 'flex';
@@ -776,10 +781,9 @@
     // Tasks
     async function renderTasks() {
       const list = document.getElementById('tasks-list');
-      if(!list) return;
       list.innerHTML = '<p style="text-align:center; color:var(--text-sec)">Загрузка...</p>';
       
-      const filter = document.getElementById('filter-difficulty')?.value || 'all';
+      const filter = document.getElementById('filter-difficulty').value;
       
       let query = db.from('user_tasks')
         .select('*, tasks_pool(title, description, reward, difficulty)')
@@ -814,8 +818,8 @@
         const pct = Math.max(0, Math.min(100, (remaining / total) * 100));
         
         let color = 'var(--ok)';
-        if (pct < 50) color = '#fbbf24'; 
-        if (pct < 20) color = 'var(--err)'; 
+        if (pct < 50) color = '#fbbf24'; // yellow
+        if (pct < 20) color = 'var(--err)'; // red
 
         const diffClass = `badge-${t.tasks_pool?.difficulty || 'medium'}`;
         const diffName = t.tasks_pool?.difficulty || 'medium';
@@ -862,13 +866,14 @@
     // Leaderboard
     async function loadLeaderboard() {
       const tbody = document.getElementById('lb-body');
-      if(!tbody) return;
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Загрузка...</td></tr>';
       
-      const {  users } = await db.from('profiles').select('id, name, days_in_game');
-      if (!users) { tbody.innerHTML = ''; return; }
+      // Get all profiles
+      const { data: users } = await db.from('profiles').select('id, name, days_in_game');
+      if (!users) return;
       
-      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status', 'completed');
+      // Get completed counts
+      const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status', 'completed');
       
       const counts = {};
       tasks?.forEach(t => { counts[t.user_id] = (counts[t.user_id] || 0) + 1; });
@@ -877,7 +882,7 @@
         name: u.name || 'Anon',
         days: u.days_in_game || 1,
         done: counts[u.id] || 0
-      })).sort((a, b) => b.days - a.days || b.done - a.done);
+      })).sort((a, b) => b.days - a.days || b.done - a.done); // Sort by days first
       
       tbody.innerHTML = ranked.map((u, i) => `
         <tr>
@@ -892,7 +897,6 @@
     // History
     async function loadTxHistory() {
       const box = document.getElementById('tx-history');
-      if(!box) return;
       const { data } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false}).limit(20);
       
       box.innerHTML = '';
@@ -915,7 +919,6 @@
 
     async function loadDoneTasksHistory() {
       const box = document.getElementById('done-tasks-history');
-      if(!box) return;
       const { data } = await db.from('user_tasks')
         .select('*, tasks_pool(title)')
         .eq('user_id', currentUser.id)
@@ -930,10 +933,10 @@
       }
       
       data.forEach(t => {
-        // Safe stringify
-        const tStr = JSON.stringify(t).replace(/'/g, "&apos;");
+        // Safe stringify for onclick
+        const taskStr = JSON.stringify(t).replace(/'/g, "&apos;");
         box.innerHTML += `
-          <div class="history-item clickable-row" onclick='showTaskDetail(${tStr})'>
+          <div class="history-item clickable-row" onclick='showTaskDetail(${taskStr})'>
             <span>${t.tasks_pool?.title || 'Задание'}</span>
             <span style="color:var(--text-sec); font-size:12px;">${new Date(t.completed_at).toLocaleDateString()}</span>
           </div>
@@ -951,7 +954,6 @@
     // Admin
     async function loadAdminQueue() {
       const box = document.getElementById('admin-queue');
-      if(!box) return;
       box.innerHTML = 'Загрузка...';
       
       const { data } = await db.from('user_tasks')
