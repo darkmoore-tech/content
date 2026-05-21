@@ -654,43 +654,86 @@
     };
 
     // PROFILE DETAILS
-    async function loadProfileDetails() {
-      // Load history in parallel
-      const [txRes, histRes, doneRes] = await Promise.all([
-        db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false}).limit(10),
-        db.from('user_tasks').select('*, tasks_pool(title)').eq('user_id', currentUser.id).eq('status', 'completed').order('completed_at', {ascending:false}).limit(10),
-        db.from('user_tasks').select('id', {count:'exact'}).eq('user_id', currentUser.id).eq('status', 'completed')
-      ]);
+        async function loadProfile() {
+      const debugLog = (msg) => {
+        console.log('[DEBUG]', msg);
+        const errBox = document.getElementById('global-error');
+        if(errBox) {
+          errBox.style.display = 'block';
+          errBox.innerHTML += `<div style="font-size:12px; margin-top:5px; border-bottom:1px solid rgba(0,0,0,0.1); padding:2px;">${msg}</div>`;
+          errBox.style.textAlign = 'left';
+        }
+      };
 
-      // Stats
-      document.getElementById('stat-done').textContent = doneRes.count || 0;
-      document.getElementById('streak-current').textContent = profile.daily_streak || 0;
-      document.getElementById('streak-reward').textContent = ((profile.daily_streak || 0) % 7 + 1) * 100;
-      document.getElementById('streak-bar').style.width = ((profile.daily_streak || 0) % 7 * 14.28) + '%';
+      try {
+        debugLog(`1. Начинаем загрузку для пользователя: ${currentUser?.email}`);
+        
+        if (!currentUser || !currentUser.id) {
+          throw new Error('Нет ID пользователя в сессии');
+        }
 
-      // TX History
-      const txBox = document.getElementById('tx-history');
-      txBox.innerHTML = '';
-      if(txRes.data?.length) {
-        txRes.data.forEach(t => {
-          txBox.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
-            <span>${t.description}</span>
-            <span style="color:${t.amount>0?'var(--ok)':'var(--err)'}">${t.amount>0?'+':''}${t.amount}</span>
-          </div>`;
-        });
-      } else txBox.innerHTML = '<p style="color:var(--text-sec)">Нет операций</p>';
+        debugLog('2. Делаем запрос к таблице profiles...');
+        
+        const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        
+        if (error) {
+          debugLog(`3. Ошибка запроса: ${error.message} (код: ${error.code})`);
+          if (error.code === 'PGRST116') {
+            debugLog('4. Профиль не найден. Пытаемся создать автоматически...');
+            const { error: insErr, data: newData } = await db.from('profiles').insert({
+              id: currentUser.id,
+              email: currentUser.email,
+              name: currentUser.email.split('@')[0],
+              chips: 100, // Стартовый баланс
+              days_in_game: 1,
+              next_spin_at: new Date(0).toISOString() // Рулетка доступна сразу
+            }).select().single();
+            
+            if (insErr) throw insErr;
+            profile = newData;
+            debugLog('5. Профиль успешно создан!');
+          } else {
+            throw error;
+          }
+        } else {
+          debugLog('3. Профиль найден успешно.');
+          profile = data;
+        }
 
-      // Task History
-      const hBox = document.getElementById('task-history');
-      hBox.innerHTML = '';
-      if(histRes.data?.length) {
-        histRes.data.forEach(t => {
-          hBox.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; cursor:pointer;" onclick='alert("Задание: ${t.tasks_pool?.title}\\nВаш ответ: ${t.answer||'-'}")'>
-            <span>${t.tasks_pool?.title}</span>
-            <span style="color:var(--text-sec)">${new Date(t.completed_at).toLocaleDateString()}</span>
-          </div>`;
-        });
-      } else hBox.innerHTML = '<p style="color:var(--text-sec)">Пока нет выполненных</p>';
+        debugLog('6. Обновляем интерфейс (UI)...');
+        
+        // Обновление UI
+        document.getElementById('sidebar-name').textContent = profile.name || 'User';
+        document.getElementById('sidebar-avatar').textContent = (profile.name || 'U')[0].toUpperCase();
+        document.getElementById('sidebar-chips').textContent = profile.chips;
+        
+        document.getElementById('profile-name-display').textContent = profile.name || 'User';
+        document.getElementById('profile-chips').textContent = profile.chips;
+        document.getElementById('stat-days').textContent = profile.days_in_game || 1;
+        document.getElementById('stat-streak').textContent = profile.daily_streak || 0;
+
+        // Проверка админки
+        if (profile.role === 'admin') {
+          document.getElementById('nav-admin').classList.remove('hidden');
+          debugLog('7. Найдены права администратора.');
+        } else {
+          document.getElementById('nav-admin').classList.add('hidden');
+        }
+
+        debugLog('8. Показываем приложение...');
+        showScreen('app');
+        updateSpinUI(profile.next_spin_at);
+        
+        debugLog('9. Переключаем вкладку...');
+        switchTab(currentTab, document.querySelector(`.nav-item[onclick*="${currentTab}"]`) || document.querySelector('.nav-item'));
+        
+        debugLog('✅ ЗАГРУЗКА ЗАВЕРШЕНА УСПЕШНО');
+
+      } catch (e) {
+        console.error(e);
+        debugLog(`❌ КРИТИЧЕСКАЯ ОШИБКА: ${e.message}`);
+        // Не скрываем лоадер, чтобы было видно ошибку
+      }
     }
 
     window.editNickname = async function() {
