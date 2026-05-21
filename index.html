@@ -7,26 +7,25 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #f0f2f5; --bg-card: #ffffff; --bg-hover: #e4e6eb;
-      --acc: #4a90e2; --acc-hover: #357abd; --acc-light: #eef4fb;
-      --text: #1c1e21; --text-sec: #65676b; --border: #dddfe2;
-      --ok: #42b72a; --ok-bg: #e7f8e2; --err: #fa3e3e; --err-bg: #ffebe9;
-      --shadow: 0 2px 8px rgba(0,0,0,0.1); --radius: 12px;
+      --bg: #f8fafc; --bg-card: #ffffff; --bg-hover: #f1f5f9;
+      --acc: #3b82f6; --acc-hover: #2563eb; --acc-light: #dbeafe;
+      --text: #0f172a; --text-sec: #64748b; --border: #e2e8f0;
+      --ok: #10b981; --ok-bg: #d1fae5; --err: #ef4444; --err-bg: #fee2e2;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08); --radius: 14px;
       --sidebar-width: 260px; --sidebar-collapsed: 70px;
     }
     [data-theme="dark"] {
-      --bg: #18191a; --bg-card: #242526; --bg-hover: #3a3b3c;
-      --acc: #4a90e2; --acc-hover: #5ca0f0; --acc-light: #1e3a5c;
-      --text: #e4e6eb; --text-sec: #b0b3b8; --border: #3e4042;
-      --ok: #42b72a; --ok-bg: #1a3316; --err: #fa3e3e; --err-bg: #4a1a1a;
-      --shadow: 0 2px 12px rgba(0,0,0,0.4);
+      --bg: #0f172a; --bg-card: #1e293b; --bg-hover: #334155;
+      --acc: #60a5fa; --acc-hover: #3b82f6; --acc-light: #1e3a8a;
+      --text: #e2e8f0; --text-sec: #94a3b8; --border: #334155;
+      --ok: #34d399; --ok-bg: #064e3b; --err: #f87171; --err-bg: #7f1d1d;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
-    * { box-sizing: border-box; transition: background 0.2s, color 0.2s; }
-    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+    * { box-sizing: border-box; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); overflow-x: hidden; }
     
     /* Layout */
-    .app-container { display:flex; min-height:100vh; transition:margin-left 0.3s ease; }
-    .app-container.sidebar-closed { margin-left: calc(var(--sidebar-collapsed) - var(--sidebar-width)); }
+    .app-container { display: flex; min-height: 100vh; }
     
     /* Sidebar */
     .sidebar {
@@ -35,306 +34,217 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      position: fixed;
-      height: 100vh;
-      z-index: 100;
+      padding: 20px 10px;
       transition: width 0.3s ease;
-      overflow: hidden;
+      position: relative;
+      z-index: 100;
+      flex-shrink: 0;
     }
-    .app-container.sidebar-closed .sidebar { width: var(--sidebar-collapsed); }
+    .sidebar.collapsed { width: var(--sidebar-collapsed); padding: 20px 5px; }
+    .sidebar.collapsed .nav-text, 
+    .sidebar.collapsed .user-info-text, 
+    .sidebar.collapsed .logo-text { display: none; }
+    .sidebar.collapsed .nav-item { justify-content: center; padding: 12px 0; }
+    .sidebar.collapsed .user-block { flex-direction: column; padding: 10px 0; }
+    .sidebar.collapsed .avatar { margin: 0 auto 5px; }
     
     .logo-area {
-      padding: 20px;
-      font-weight: 800;
-      font-size: 20px;
-      color: var(--acc);
-      white-space: nowrap;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      height: 60px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 10px 20px; margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 800; font-size: 20px; color: var(--acc);
+      white-space: nowrap; overflow: hidden;
     }
-    .logo-text { margin-left: 10px; opacity: 1; transition: opacity 0.2s; }
-    .app-container.sidebar-closed .logo-text { opacity: 0; width: 0; }
-    .logo-short { display: none; font-size: 24px; }
-    .app-container.sidebar-closed .logo-short { display: block; }
-
-    .nav-menu { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .logo-icon { font-size: 24px; min-width: 30px; text-align: center; }
+    
+    .nav-list { list-style: none; padding: 0; margin: 0; flex: 1; }
     .nav-item {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      color: var(--text-sec);
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; margin-bottom: 8px;
+      border-radius: 12px; cursor: pointer;
+      color: var(--text-sec); font-weight: 500;
+      transition: all 0.2s;
     }
     .nav-item:hover { background: var(--bg-hover); color: var(--text); }
     .nav-item.active { background: var(--acc-light); color: var(--acc); }
-    .nav-icon { font-size: 20px; min-width: 30px; text-align: center; margin-right: 10px; }
-    .app-container.sidebar-closed .nav-text { opacity: 0; width: 0; }
+    .nav-icon { font-size: 20px; min-width: 24px; text-align: center; }
     
-    .user-mini-profile {
-      padding: 12px;
-      margin: 10px;
-      background: var(--bg-hover);
-      border-radius: var(--radius);
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      white-space: nowrap;
-      overflow: hidden;
-      border: 1px solid transparent;
+    .user-block {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px; background: var(--bg-hover);
+      border-radius: 12px; cursor: pointer;
+      margin-top: auto;
     }
-    .user-mini-profile:hover { border-color: var(--acc); }
-    .avatar-small {
-      width: 36px; height: 36px; border-radius: 50%; background: var(--acc);
-      color: #fff; display: flex; align-items: center; justify-content: center;
-      font-weight: bold; font-size: 14px; margin-right: 10px; flex-shrink: 0;
+    .user-block:hover { filter: brightness(0.95); }
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--acc); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 16px; flex-shrink: 0;
     }
-    .user-info { flex: 1; overflow: hidden; }
-    .user-name { font-weight: 600; font-size: 14px; truncate; }
+    .user-info-text { overflow: hidden; }
+    .user-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-chips { font-size: 12px; color: var(--text-sec); }
-    .app-container.sidebar-closed .user-info { opacity: 0; width: 0; }
-
-    .sidebar-footer { padding: 10px; border-top: 1px solid var(--border); }
+    
     .toggle-btn {
-      width: 100%;
-      padding: 10px;
-      background: var(--bg-hover);
-      border: none;
-      color: var(--text);
-      cursor: pointer;
-      border-radius: var(--radius);
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute; bottom: 20px; right: -12px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--acc); color: #fff;
+      border: 2px solid var(--bg-card);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 101;
     }
-    .toggle-btn:hover { background: var(--border); }
-    .arrow-icon { transition: transform 0.3s; }
-    .app-container.sidebar-closed .arrow-icon { transform: rotate(180deg); }
+    .sidebar.collapsed .toggle-btn { transform: rotate(180deg); }
 
     /* Main Content */
-    .main-content {
-      flex: 1;
-      padding: 20px;
-      margin-left: var(--sidebar-width);
-      transition: margin-left 0.3s ease;
-      width: 100%;
-    }
-    .app-container.sidebar-closed .main-content { margin-left: var(--sidebar-collapsed); }
-
+    .main-content { flex: 1; padding: 20px; overflow-y: auto; height: 100vh; }
+    
     /* Components */
     .card { background: var(--bg-card); padding: 20px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-    .btn { background: var(--acc); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
-    .btn:hover:not(:disabled) { background: var(--acc-hover); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { border-color: var(--acc); color: var(--acc); }
+    .btn { background: var(--acc); color: #fff; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: transform 0.1s; }
+    .btn:hover:not(:disabled) { background: var(--acc-hover); transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-sec); }
+    .btn-outline:hover { border-color: var(--acc); color: var(--acc); background: var(--acc-light); }
     
-    input, textarea, select {
-      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg); color: var(--text); margin: 5px 0 15px; font-family: inherit;
-    }
+    input, textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color:var(--text); margin: 6px 0; }
+    textarea { min-height: 60px; resize: vertical; }
     
-    /* Wheel */
-    .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
-    .wheel {
-      width: 100%; height: 100%; border-radius: 50%;
-      background: conic-gradient(
-        #81C784 0deg 72deg, 
-        #AED581 72deg 144deg, 
-        #FFF176 144deg 216deg, 
-        #FFB74D 216deg 288deg, 
-        #E57373 288deg 360deg
-      );
-      transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
-      border: 4px solid var(--bg-card);
-    }
-    .pointer {
-      position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-      width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent;
-      border-top: 25px solid var(--text); z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
-    }
-
+    .hidden { display: none !important; }
+    
+    /* Roulette */
+    .wheel-wrap { position: relative; width: 220px; height: 220px; margin: 20px auto; }
+    .wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(#4ade80 0deg 72deg, #86efac 72deg 144deg, #facc15 144deg 216deg, #fca5a5 216deg 288deg, #ef4444 288deg 360deg); transition: transform 4s cubic-bezier(0.25,0.1,0.25,1); box-shadow: 0 0 30px rgba(0,0,0,0.3); border: 4px solid var(--bg-card); }
+    .pointer { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 18px solid var(--text); z-index: 2; }
+    
     /* Tasks */
-    .task-card {
-      background: var(--bg-hover); border-radius: var(--radius); margin-bottom: 15px; overflow: hidden;
-      border: 1px solid var(--border);
-    }
-    .task-header {
-      padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-      position: relative; overflow: hidden;
-    }
-    .task-header:hover { background: rgba(0,0,0,0.05); }
-    .burn-bar {
-      position: absolute; bottom: 0; left: 0; height: 4px; background: var(--err);
-      transition: width 1s linear, background 0.3s;
-    }
-    .task-title { font-weight: 600; z-index: 1; }
-    .task-meta { display: flex; gap: 8px; z-index: 1; }
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: var(--bg-card); border: 1px solid var(--border); }
-    .task-body { padding: 0 15px 15px; display: none; border-top: 1px solid var(--border); margin-top: 10px; }
-    .task-body.open { display: block; animation: slideDown 0.3s ease; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
+    .task-card { background: var(--bg-hover); border-radius: 12px; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .task-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .task-title { font-weight: 600; font-size: 15px; }
+    .task-meta { display: flex; gap: 8px; margin-top: 4px; }
+    .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; background: var(--acc-light); color: var(--acc); }
+    .burn-bar { height: 4px; background: #ddd; border-radius: 2px; margin-top: 8px; overflow: hidden; flex: 1; }
+    .burn-fill { height: 100%; background: var(--ok); transition: width 1s linear, background 0.3s; }
+    .task-body { padding: 0 16px 16px; display: none; border-top: 1px solid var(--border); margin-top: 10px; padding-top: 10px; }
+    .task-body.open { display: block; }
+    
     /* Profile */
-    .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
-    .name-edit-group { display: flex; align-items: center; gap: 10px; }
+    .profile-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    .profile-name-group { display: flex; align-items: center; gap: 10px; }
     .edit-icon { cursor: pointer; font-size: 18px; opacity: 0.6; }
     .edit-icon:hover { opacity: 1; color: var(--acc); }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .stat-box { background: var(--bg-hover); padding: 15px; border-radius: var(--radius); text-align: center; }
-    .stat-val { font-size: 24px; font-weight: 800; color: var(--acc); }
-    .stat-label { font-size: 13px; color: var(--text-sec); }
-
-    /* Tables & Lists */
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { color: var(--text-sec); font-weight: 600; font-size: 14px; }
+    .streak-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 15px 0; }
+    .streak-day { background: var(--bg-hover); border: 2px solid var(--border); border-radius: 10px; padding: 8px 4px; text-align: center; font-size: 12px; }
+    .streak-day.done { background: var(--acc); border-color: var(--acc); color: #fff; }
     
     /* Modal */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7); z-index: 1000;
-      display: none; justify-content: center; align-items: center;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      background: var(--bg-card); padding: 25px; border-radius: var(--radius);
-      max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 15px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal { background: var(--bg-card); padding: 25px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.3s ease; }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-tasks-list { max-height: 300px; overflow-y: auto; margin: 15px 0; }
+    .modal-task-item { background: var(--bg-hover); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--acc); }
     
-    /* Toast Notifications */
+    /* Notifications */
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
-    .toast {
-      background: var(--bg-card); color: var(--text); padding: 12px 20px;
-      border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      border-left: 4px solid var(--acc); min-width: 250px;
-      animation: slideIn 0.3s ease; display: flex; justify-content: space-between; align-items: center;
-    }
+    .toast { background: var(--bg-card); padding: 12px 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); border-left: 5px solid var(--acc); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease; min-width: 250px; }
     .toast.success { border-color: var(--ok); }
     .toast.error { border-color: var(--err); }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-    .hidden { display: none !important; }
-    .loading-screen {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--bg); z-index: 9999;
-      display: flex; flex-direction: column; justify-content: center; align-items: center;
-    }
+    /* Loading & Auth */
+    .loading-screen, .auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; }
+    .loading-spinner { font-size: 40px; animation: spin 1s infinite linear; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    
+    table { width: 100%; border-collapse: collapse; } th, td { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { color: var(--text-sec); font-size: 13px; }
   </style>
 </head>
 <body>
 
   <!-- Loading Screen -->
   <div id="loading-screen" class="loading-screen">
-    <div style="font-size: 40px; margin-bottom: 20px;">🎰</div>
-    <div style="font-size: 18px; font-weight: 600;">Загрузка системы...</div>
-    <div id="load-error" style="color: var(--err); margin-top: 10px; display: none;"></div>
+    <div class="loading-spinner">🎰</div>
+    <p style="margin-top: 20px; color: var(--text-sec);">Загрузка системы...</p>
   </div>
 
   <!-- Auth Screen -->
-  <div id="auth-screen" class="hidden" style="display:flex; justify-content:center; align-items:center; height:100vh; background:var(--bg);">
+  <div id="auth-screen" class="auth-screen hidden">
     <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
-      <h2 style="margin-top:0; color: var(--acc);">Content Game</h2>
-      <p style="color: var(--text-sec);">Вход для сотрудников</p>
+      <h2 style="color: var(--acc); margin-bottom: 10px;">Content Game</h2>
+      <p style="color: var(--text-sec); margin-bottom: 20px;">Вход для сотрудников</p>
       <input type="email" id="login-email" placeholder="Email">
       <input type="password" id="login-pass" placeholder="Пароль">
-      <button class="btn" style="width: 100%;" onclick="handleLogin()">Войти</button>
-      <div id="auth-error" style="color: var(--err); margin-top: 10px; font-size: 14px;"></div>
+      <button class="btn" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">Войти</button>
+      <p id="auth-error" style="color: var(--err); margin-top: 10px; font-size: 14px; display: none;"></p>
     </div>
   </div>
 
   <!-- App Container -->
-  <div id="app-container" class="app-container hidden sidebar-closed">
+  <div id="app-container" class="app-container hidden">
     
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="logo-area">
-        <span class="logo-short">CG</span>
+        <span class="logo-icon">🎮</span>
         <span class="logo-text">Content Game</span>
+        <span class="logo-text" style="display:none; font-size: 14px; opacity: 0.7; margin-left: auto;">CG</span>
       </div>
       
-      <nav class="nav-menu">
-        <div class="nav-item active" onclick="switchTab('roulette', this)">
+      <ul class="nav-list">
+        <li class="nav-item active" onclick="switchTab('roulette', this)">
           <span class="nav-icon">🎡</span>
           <span class="nav-text">Рулетка</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('tasks', this)">
+        </li>
+        <li class="nav-item" onclick="switchTab('tasks', this)">
           <span class="nav-icon">📋</span>
           <span class="nav-text">Задания</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('leaderboard', this)">
+        </li>
+        <li class="nav-item" onclick="switchTab('leaderboard', this)">
           <span class="nav-icon">🏆</span>
-          <span class="nav-text">Турнирка</span>
-        </div>
-        <div class="nav-item hidden" id="nav-admin" onclick="switchTab('admin', this)">
+          <span class="nav-text">Турнирная таблица</span>
+        </li>
+        <li class="nav-item hidden" id="nav-admin" onclick="switchTab('admin', this)">
           <span class="nav-icon">⚙️</span>
           <span class="nav-text">Админка</span>
-        </div>
-      </nav>
+        </li>
+      </ul>
 
-      <div class="user-mini-profile" onclick="switchTab('profile', null)">
-        <div class="avatar-small" id="mini-avatar">U</div>
-        <div class="user-info">
-          <div class="user-name" id="mini-name">Гость</div>
-          <div class="user-chips">💰 <span id="mini-chips">0</span></div>
+      <div class="user-block" onclick="switchTab('profile', null)">
+        <div class="avatar" id="sidebar-avatar">U</div>
+        <div class="user-info-text">
+          <div class="user-name" id="sidebar-name">Гость</div>
+          <div class="user-chips" id="sidebar-chips">0 💰</div>
         </div>
       </div>
 
-      <div class="sidebar-footer">
-        <button class="toggle-btn" onclick="toggleSidebar()">
-          <span class="arrow-icon">⟨</span>
-        </button>
-        <div style="display:flex; gap:5px; margin-top:5px;">
-            <button class="btn-outline" style="flex:1; padding:8px;" onclick="toggleTheme()" title="Тема">🌓</button>
-            <button class="btn-outline" style="flex:1; padding:8px;" onclick="logout()" title="Выход">🚪</button>
-        </div>
-      </div>
-    </aside>
+      <div class="toggle-btn" id="toggle-sidebar" onclick="toggleSidebar()">⟨</div>
+    </div>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <div class="main-content">
       
       <!-- Roulette Tab -->
       <div id="roulette-tab" class="tab-content">
         <div class="card" style="text-align: center;">
           <h2>Испытай удачу</h2>
-          <p style="color: var(--text-sec); margin-bottom: 20px;">Крути колесо и получай задания разной сложности!</p>
-          
-          <div class="wheel-container">
+          <p style="color: var(--text-sec); margin-bottom: 20px;">Крути колесо и получай новые задания!</p>
+          <div class="wheel-wrap">
             <div class="pointer"></div>
             <div class="wheel" id="wheel"></div>
           </div>
-          
-          <div id="spin-status" style="margin: 15px 0; font-weight: 600; color: var(--text-sec);"></div>
-          <button id="spin-btn" class="btn" style="font-size: 16px; padding: 12px 30px;" onclick="handleSpin()">КРУТИТЬ</button>
+          <p id="spin-status" style="margin: 15px 0; font-weight: 500;"></p>
+          <button class="btn" id="spin-btn" onclick="handleSpin()">КРУТИТЬ</button>
         </div>
       </div>
 
       <!-- Tasks Tab -->
       <div id="tasks-tab" class="tab-content hidden">
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
-            <h2 style="margin:0">Активные задания</h2>
-            <div style="display:flex; gap:10px;">
-                <select id="filter-difficulty" onchange="renderTasks()" style="margin:0; width:auto;">
-                    <option value="all">Все сложности</option>
-                    <option value="easy">Лёгкие</option>
-                    <option value="medium">Средние</option>
-                    <option value="hard">Сложные</option>
-                </select>
-            </div>
-          </div>
-          <div id="tasks-list"></div>
-        </div>
+        <h2>Активные задания</h2>
+        <div id="tasks-list"></div>
       </div>
 
       <!-- Leaderboard Tab -->
@@ -359,51 +269,38 @@
       <div id="profile-tab" class="tab-content hidden">
         <div class="card">
           <div class="profile-header">
-            <div class="name-edit-group">
-                <div class="avatar-small" style="width:50px; height:50px; font-size:20px;" id="profile-avatar">U</div>
-                <div>
-                    <h2 style="margin:0; display:flex; align-items:center; gap:10px;">
-                        <span id="profile-name">Загрузка...</span>
-                        <span class="edit-icon" onclick="editNickname()" title="Изменить ник">✏️</span>
-                    </h2>
-                    <small style="color:var(--text-sec)">Участник команды</small>
-                </div>
+            <div class="profile-name-group">
+              <div class="avatar" style="width: 50px; height: 50px; font-size: 20px;" id="profile-avatar">U</div>
+              <div>
+                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                  <span id="profile-name">...</span>
+                  <span class="edit-icon" onclick="editNickname()">✏️</span>
+                </h2>
+                <p style="margin: 5px 0 0; color: var(--text-sec); font-size: 14px;">В игре <span id="profile-days">0</span> дней</p>
+              </div>
             </div>
-            <div style="text-align:right;">
-                <div style="font-size:24px; font-weight:800; color:var(--acc);">💰 <span id="profile-chips">0</span></div>
-                <div style="font-size:12px; color:var(--text-sec);">На балансе</div>
-            </div>
-          </div>
-
-          <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-val" id="stat-days">0</div>
-                <div class="stat-label">Дней в игре</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val" id="stat-streak">0</div>
-                <div class="stat-label">Текущий стрик</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val" id="stat-done">0</div>
-                <div class="stat-label">Выполнено заданий</div>
+            <div style="text-align: right;">
+              <div style="font-size: 24px; font-weight: 800; color: var(--acc);" id="profile-balance">0</div>
+              <div style="font-size: 12px; color: var(--text-sec);">фишек</div>
             </div>
           </div>
 
-          <h3>🔥 Ежедневный прогресс</h3>
-          <div style="background:var(--bg-hover); height:10px; border-radius:5px; overflow:hidden; margin-bottom:5px;">
-            <div id="streak-bar" style="width:0%; height:100%; background:linear-gradient(90deg, var(--acc), #8b5cf6); transition:width 0.5s;"></div>
-          </div>
-          <p style="font-size:13px; color:var(--text-sec); margin-bottom:20px;" id="streak-text">Крутите рулетку или выполняйте задания ежедневно!</p>
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+          
+          <h3>🔥 Ежедневный вход</h3>
+          <div class="streak-grid" id="streak-grid"></div>
+          <p style="font-size: 13px; color: var(--text-sec); text-align: center;">Награда начисляется автоматически при активности</p>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div>
-                <h3>📊 История операций</h3>
-                <div id="tx-history" style="max-height:300px; overflow-y:auto; font-size:13px;"></div>
+              <h3>📊 История операций</h3>
+              <div id="tx-history" style="max-height: 300px; overflow-y: auto; font-size: 13px;"></div>
             </div>
             <div>
-                <h3>✅ Выполненные задания</h3>
-                <div id="done-history" style="max-height:300px; overflow-y:auto; font-size:13px;"></div>
+              <h3>✅ Выполненные задания</h3>
+              <div id="completed-tasks-history" style="max-height: 300px; overflow-y: auto; font-size: 13px;"></div>
             </div>
           </div>
         </div>
@@ -413,51 +310,37 @@
       <div id="admin-tab" class="tab-content hidden">
         <div class="card">
           <h2>⚙️ Панель администратора</h2>
+          <div id="admin-queue" style="margin-bottom: 20px;"></div>
           
-          <h3>Очередь проверок</h3>
-          <div id="admin-queue"></div>
-          
-          <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
-          
-          <h3>Ручное управление</h3>
-          <div style="display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <h3>Управление балансом</h3>
+          <div style="display: grid; gap: 10px; grid-template-columns: 1fr 1fr auto;">
             <input type="text" id="admin-uid" placeholder="UUID пользователя">
-            <input type="number" id="admin-amount" placeholder="Количество фишек">
-            <button class="btn" style="background:var(--ok);" onclick="adminAction('add')">➕ Начислить</button>
-            <button class="btn" style="background:var(--err);" onclick="adminAction('remove')">➖ Списать</button>
-            <button class="btn" style="background:#f59e0b; color:#000;" onclick="adminAction('reset')">🔄 Сброс кулдауна</button>
+            <input type="number" id="admin-amount" placeholder="Сумма">
+            <button class="btn" style="background: var(--ok);" onclick="handleAddChips()">+</button>
+            <button class="btn" style="background: var(--err);" onclick="handleSubChips()">-</button>
           </div>
+          <button class="btn" style="width: 100%; margin-top: 10px; background: #f59e0b;" onclick="handleResetSpin()">🔄 Сбросить кулдаун рулетки</button>
         </div>
       </div>
 
-    </main>
-  </div>
-
-  <!-- Modal for Spin Result -->
-  <div id="spin-modal" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-title">Результат вращения!</div>
-      <div id="modal-content"></div>
-      <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
-        <button class="btn btn-outline" onclick="closeModal()">Закрыть</button>
-        <button id="modal-reroll-btn" class="btn" style="background:#f59e0b; color:#000;" onclick="rerollWheel()">🔄 Перекрутить (50 💰)</button>
-      </div>
     </div>
   </div>
 
-  <!-- Task Detail Modal -->
-  <div id="task-detail-modal" class="modal-overlay">
+  <!-- Modal for Spin Result -->
+  <div id="spin-modal" class="modal-overlay hidden">
     <div class="modal">
-      <div class="modal-title" id="detail-title">Задание</div>
-      <div id="detail-body"></div>
-      <div style="margin-top:20px; text-align:right;">
-        <button class="btn btn-outline" onclick="document.getElementById('task-detail-modal').classList.remove('active')">Закрыть</button>
+      <h2 style="margin-top: 0;">🎉 Результат!</h2>
+      <p id="modal-result-text"></p>
+      <div class="modal-tasks-list" id="modal-tasks-list"></div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button class="btn btn-outline" id="reroll-btn" onclick="handleReroll()">🔄 Перекрутить (50💰)</button>
+        <button class="btn" onclick="closeModal()">Принять</button>
       </div>
     </div>
   </div>
 
   <!-- Toast Container -->
-  <div id="toast-container" class="toast-container"></div>
+  <div class="toast-container" id="toast-container"></div>
 
   <script>
     // --- CONFIG ---
@@ -469,599 +352,513 @@
     let profile = null;
     let currentTab = 'roulette';
 
-    // --- INIT ---
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        if (!window.supabase) throw new Error('Supabase library not loaded');
-        db = window.supabase.createClient(SB_URL, SB_KEY);
-        
-        // Check session
-        const { data: { session }, error } = await db.auth.getSession();
-        if (error) throw error;
-        
-        if (session) {
-          currentUser = session.user;
-          await loadProfileData();
-          showApp();
-        } else {
-          showAuth();
-        }
-      } catch (e) {
-        console.error("Init error:", e);
-        document.getElementById('load-error').textContent = "Ошибка подключения: " + e.message;
-        document.getElementById('load-error').style.display = 'block';
-        // Don't hide loading screen completely if error, so user sees it
-      }
-    });
-
-    function showAuth() {
-      document.getElementById('loading-screen').classList.add('hidden');
-      document.getElementById('auth-screen').classList.remove('hidden');
-      document.getElementById('auth-screen').style.display = 'flex';
-    }
-
-    function showApp() {
-      document.getElementById('loading-screen').classList.add('hidden');
-      document.getElementById('auth-screen').classList.add('hidden');
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app-container').classList.remove('hidden');
-      
-      // Restore tab or default to roulette
-      const savedTab = localStorage.getItem('lastTab') || 'roulette';
-      const navItem = document.querySelector(`.nav-item[onclick*="'${savedTab}'"]`);
-      if (navItem) {
-          switchTab(savedTab, navItem);
-      } else {
-          switchTab('roulette', document.querySelector('.nav-item'));
-      }
-    }
-
-    // --- AUTH ---
-    async function handleLogin() {
-      const email = document.getElementById('login-email').value.trim();
-      const pass = document.getElementById('login-pass').value;
-      const btn = document.querySelector('#auth-screen .btn');
-      const errDiv = document.getElementById('auth-error');
-      
-      if(!email || !pass) return showToast('Введите email и пароль', 'error');
-      
-      btn.disabled = true; btn.textContent = 'Вход...';
-      errDiv.textContent = '';
-      
-      try {
-        const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
-        if (error) throw error;
-        currentUser = data.user;
-        await loadProfileData();
-        showApp();
-      } catch (e) {
-        errDiv.textContent = e.message;
-        btn.disabled = false; btn.textContent = 'Войти';
-      }
-    }
-
-    async function logout() {
-      await db.auth.signOut();
-      window.location.reload();
-    }
-
-    // --- CORE DATA ---
-    async function loadProfileData() {
-      if (!currentUser) return;
-      
-      // Update days in game on login
-      await db.rpc('increment_days_in_game', { p_user_id: currentUser.id });
-
-      const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-      if (error || !data) {
-        // If profile missing, create one
-        const { data:newProf, error:insErr } = await db.from('profiles').insert({
-            id: currentUser.id,
-            email: currentUser.email,
-            name: currentUser.email.split('@')[0],
-            role: 'user'
-        }).select().single();
-        
-        if(insErr) throw insErr;
-        profile = newProf;
-      } else {
-        profile = data;
-      }
-
-      // Update UI
-      const name = profile.name || 'Игрок';
-      const chips = profile.chips || 0;
-      const days = profile.days_in_game || 0;
-      
-      document.getElementById('mini-name').textContent = name;
-      document.getElementById('mini-chips').textContent = chips;
-      document.getElementById('mini-avatar').textContent = name[0].toUpperCase();
-      
-      document.getElementById('profile-name').textContent = name;
-      document.getElementById('profile-chips').textContent = chips;
-      document.getElementById('profile-avatar').textContent = name[0].toUpperCase();
-      document.getElementById('stat-days').textContent = days;
-      
-      // Admin check
-      if (profile.role === 'admin') {
-        document.getElementById('nav-admin').classList.remove('hidden');
-      } else {
-        document.getElementById('nav-admin').classList.add('hidden');
-      }
-
-      updateSpinUI();
-      renderStreak(profile.daily_streak || 0);
-      loadTxHistory();
-      loadDoneHistory();
-    }
-
-    // --- TABS & UI ---
-    function toggleSidebar() {
-      document.getElementById('app-container').classList.toggle('sidebar-closed');
-    }
-
-    function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      localStorage.setItem('theme', isDark ? 'light' : 'dark');
-    }
-
-    function switchTab(tabId, navElement) {
-      // Hide all tabs
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      // Show target
-      document.getElementById(tabId + '-tab').classList.remove('hidden');
-      
-      // Update nav active state
-      if (navElement) {
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        navElement.classList.add('active');
-      } else {
-        // If called programmatically (e.g. from mini-profile), find and highlight corresponding nav item
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        const targetNav = document.querySelector(`.nav-item[onclick*="'${tabId}'"]`);
-        if(targetNav) targetNav.classList.add('active');
-      }
-
-      currentTab = tabId;
-      localStorage.setItem('lastTab', tabId);
-
-      // Load data based on tab
-      if (tabId === 'tasks') renderTasks();
-      if (tabId === 'leaderboard') loadLeaderboard();
-      if (tabId === 'admin') loadAdminQueue();
-      if (tabId === 'profile') {
-          loadTxHistory();
-          loadDoneHistory();
-          // Refresh stats
-          loadProfileData(); 
-      }
-    }
-
-    function showToast(msg, type = 'success') {
+    // --- UTILS ---
+    function showNotification(msg, type = 'success') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
       toast.className = `toast ${type}`;
-      toast.innerHTML = `<span>${msg}</span>`;
+      toast.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span><span>${msg}</span>`;
       container.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
 
-    // --- ROULETTE ---
-    function updateSpinUI() {
-      const btn = document.getElementById('spin-btn');
-      const status = document.getElementById('spin-status');
-      if (!profile) return;
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      const btn = document.getElementById('toggle-sidebar');
+      sb.classList.toggle('collapsed');
+      btn.textContent = sb.classList.contains('collapsed') ? '⟩' : '⟨';
+    }
 
-      const now = new Date();
-      const next = profile.next_spin_at ? new Date(profile.next_spin_at) : new Date(0);
+    function switchTab(tabName, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.getElementById(tabName + '-tab').classList.remove('hidden');
       
-      if (next <= now) {
-        btn.disabled = false;
-        btn.textContent = 'КРУТИТЬ';
-        status.textContent = 'Рулетка готова!';
-        status.style.color = 'var(--ok)';
-      } else {
-        btn.disabled = true;
-        const diff = Math.ceil((next - now) / 3600000);
-        btn.textContent = `Ждать ${diff} ч.`;
-        status.textContent = 'Перезарядка...';
-        status.style.color = 'var(--text-sec)';
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      if (el) el.classList.add('active');
+      
+      currentTab = tabName;
+      if (tabName === 'leaderboard') loadLeaderboard();
+      if (tabName === 'tasks') loadTasks();
+      if (tabName === 'admin') loadAdminQueue();
+      if (tabName === 'profile') loadProfileDetails();
+    }
+
+    // --- CORE FUNCTIONS ---
+
+    async function init() {
+      try {
+        if (!window.supabase) throw new Error('Supabase library not loaded');
+        db = window.supabase.createClient(SB_URL, SB_KEY);
+
+        // Check session
+        const { data: { session }, error } = await db.auth.getSession();
+        if (error) throw error;
+
+        if (session) {
+          currentUser = session.user;
+          await loadProfileData();
+          showScreen('app');
+        } else {
+          showScreen('auth');
+        }
+      } catch (e) {
+        console.error("Init error:", e);
+        document.getElementById('loading-screen').innerHTML = `<p style="color:red">Ошибка загрузки: ${e.message}<br>Попробуйте обновить страницу.</p>`;
       }
     }
 
-    async function handleSpin(isReroll = false) {
-      const btn = document.getElementById('spin-btn');
-      btn.disabled = true;
+    function showScreen(screen) {
+      document.getElementById('loading-screen').classList.add('hidden');
+      if (screen === 'auth') {
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-container').classList.add('hidden');
+      } else {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-container').classList.remove('hidden');
+        // Restore tab
+        const navItems = document.querySelectorAll('.nav-item');
+        // Simple mapping to restore active state if needed, defaulting to roulette logic handled in switchTab
+        switchTab(currentTab, document.querySelector(`.nav-item[onclick*="'${currentTab}'"]`));
+      }
+    }
+
+    async function loadProfileData() {
+      if (!currentUser) return;
+      try {
+        const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (error || !data) {
+          // If profile doesn't exist, create it
+          const { error: insertErr } = await db.from('profiles').insert({
+            id: currentUser.id,
+            email: currentUser.email,
+            name: currentUser.email.split('@')[0],
+            chips: 0,
+            days_in_game: 1
+          });
+          if (insertErr) throw insertErr;
+          profile = { id: currentUser.id, name: currentUser.email.split('@')[0], chips: 0, days_in_game: 1 };
+        } else {
+          profile = data;
+          // Update days in game on login if new day
+          const lastLogin = new Date(profile.last_login || 0);
+          const today = new Date();
+          if (lastLogin.getDate() !== today.getDate() || lastLogin.getMonth() !== today.getMonth() || lastLogin.getFullYear() !== today.getFullYear()) {
+             await db.rpc('update_daily_streak', { p_user_id: currentUser.id });
+             profile.days_in_game = (profile.days_in_game || 0) + 1;
+          }
+        }
+        
+        updateUI();
+        if ((profile.role || '').toLowerCase() === 'admin') {
+          document.getElementById('nav-admin').classList.remove('hidden');
+        }
+      } catch (e) {
+        console.error("Profile load error:", e);
+        showNotification("Ошибка загрузки профиля", "error");
+      }
+    }
+
+    function updateUI() {
+      if (!profile) return;
+      const name = profile.name || 'User';
+      const chips = profile.chips || 0;
+      const avatarLetter = name.charAt(0).toUpperCase();
+
+      document.getElementById('sidebar-name').textContent = name;
+      document.getElementById('sidebar-chips').textContent = `${chips} 💰`;
+      document.getElementById('sidebar-avatar').textContent = avatarLetter;
       
+      document.getElementById('profile-name').textContent = name;
+      document.getElementById('profile-balance').textContent = chips;
+      document.getElementById('profile-days').textContent = profile.days_in_game || 0;
+      document.getElementById('profile-avatar').textContent = avatarLetter;
+
+      renderStreak(profile.daily_streak || 0);
+      updateSpinUI(profile.next_spin_at);
+    }
+
+    function renderStreak(streak) {
+      const grid = document.getElementById('streak-grid');
+      if(!grid) return;
+      grid.innerHTML = '';
+      const currentDay = streak > 7 ? 7 : (streak === 0 ? 0 : streak);
+      for (let i = 1; i <= 7; i++) {
+        const done = i <= currentDay ? 'done' : '';
+        grid.innerHTML += `<div class="streak-day ${done}"><div>День ${i}</div><div style="font-weight:bold; font-size:10px;">+${i*50}</div></div>`;
+      }
+    }
+
+    function updateSpinUI(nextAt) {
+      const btn = document.getElementById('spin-btn');
+      const status = document.getElementById('spin-status');
+      if (!btn || !status) return;
+
+      const now = new Date();
+      const next = nextAt ? new Date(nextAt) : new Date(0);
+      
+      if (next <= now) {
+        btn.disabled = false;
+        btn.textContent = "КРУТИТЬ";
+        status.textContent = "Рулетка готова!";
+        status.style.color = "var(--ok)";
+      } else {
+        btn.disabled = true;
+        const hours = Math.ceil((next - now) / 3600000);
+        btn.textContent = `Ждать ${hours}ч`;
+        status.textContent = "Перезарядка...";
+        status.style.color = "var(--text-sec)";
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-pass').value;
+      const errEl = document.getElementById('auth-error');
+      
+      if (!email || !pass) {
+        errEl.textContent = "Введите email и пароль";
+        errEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const { error } = await db.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+        // Reload will trigger init again
+        location.reload();
+      } catch (e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+      }
+    }
+
+    window.logout = async function() {
+      await db.auth.signOut();
+      location.reload();
+    };
+
+    // --- ROULETTE LOGIC ---
+
+    window.handleSpin = async function(reroll = false) {
+      const btn = document.getElementById('spin-btn');
+      if (btn) btn.disabled = true;
+
       const wheel = document.getElementById('wheel');
       wheel.style.transition = 'none';
       wheel.style.transform = 'rotate(0deg)';
       
-      // Force reflow
-      wheel.offsetHeight;
-      
-      const randomDeg = Math.floor(Math.random() * 360);
-      const totalRot = 1440 + randomDeg; // 4 full spins + random
-      
-      wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
-      wheel.style.transform = `rotate(${totalRot}deg)`;
-
       setTimeout(async () => {
-        try {
-          const { data, error } = await db.rpc('spin_wheel_v2', { 
-            p_user_id: currentUser.id, 
-            p_reroll: isReroll 
-          });
-          
-          if (error) throw error;
-          if (data && data.error) throw new Error(data.error);
-          
-          // Reload profile to get new cooldown and chips (if reroll cost applied)
-          await loadProfileData();
-          
-          // Show modal with tasks
-          showSpinResultModal(data);
-          
-        } catch (e) {
-          showToast(e.message, 'error');
-          updateSpinUI();
-        }
-      }, 4000);
-    }
+        wheel.style.transition = 'transform 4s cubic-bezier(0.25,0.1,0.25,1)';
+        const randomDeg = Math.floor(Math.random() * 360);
+        wheel.style.transform = `rotate(${1440 + randomDeg}deg)`;
 
-    function showSpinResultModal(data) {
-      const modal = document.getElementById('spin-modal');
-      const content = document.getElementById('modal-content');
-      const rerollBtn = document.getElementById('modal-reroll-btn');
-      
-      if (!data || !data.tasks || data.tasks.length === 0) {
-        content.innerHTML = '<p>В этот раз без заданий. Попробуйте еще раз через 24 часа!</p>';
-        rerollBtn.classList.add('hidden');
-      } else {
-        let html = '<p>Вам назначены следующие задания:</p><ul style="padding-left:20px;">';
-        data.tasks.forEach(t => {
-            html += `<li style="margin-bottom:8px;"><strong>${t.title}</strong> <span style="font-size:12px; color:var(--text-sec)">(${t.difficulty})</span></li>`;
-        });
-        html += '</ul>';
-        content.innerHTML = html;
-        
-        // Show reroll button only if user has enough chips and hasn't used it? 
-        // Logic: Allow 1 reroll per spin session if chips > 50
-        if ((profile.chips || 0) >= 50) {
-            rerollBtn.classList.remove('hidden');
-        } else {
-            rerollBtn.classList.add('hidden');
-        }
-      }
-      
-      modal.classList.add('active');
-    }
+        setTimeout(async () => {
+          try {
+            const { data, error } = await db.rpc('spin_wheel', { p_user_id: currentUser.id, p_reroll: reroll });
+            if (error) throw error;
+            if (data && data.error) throw new Error(data.error);
 
-    function closeModal() {
-      document.getElementById('spin-modal').classList.remove('active');
-      updateSpinUI();
-      // Switch to tasks tab automatically if tasks were assigned
-      const content = document.getElementById('modal-content');
-      if(content.innerHTML.includes('<li')) {
-          const navItem = document.querySelector(`.nav-item[onclick*="'tasks'"]`);
-          switchTab('tasks', navItem);
-          renderTasks();
-      }
-    }
+            // Show Modal
+            const modal = document.getElementById('spin-modal');
+            const list = document.getElementById('modal-tasks-list');
+            const resText = document.getElementById('modal-result-text');
+            const rerollBtn = document.getElementById('reroll-btn');
 
-    async function rerollWheel() {
+            resText.textContent = `Выпало заданий: ${data.tasks_count}`;
+            list.innerHTML = '';
+            
+            if (data.new_tasks && data.new_tasks.length > 0) {
+              data.new_tasks.forEach(t => {
+                list.innerHTML += `
+                  <div class="modal-task-item">
+                    <strong>${t.title}</strong><br>
+                    <small>${t.description || 'Нет описания'}</small><br>
+                    <span class="badge">Награда: ${t.reward} 💰</span>
+                  </div>
+                `;
+              });
+              rerollBtn.style.display = 'inline-block';
+            } else {
+              list.innerHTML = '<p>Нет доступных заданий в пуле.</p>';
+              rerollBtn.style.display = 'none';
+            }
+
+            modal.classList.remove('hidden');
+            
+            // Refresh UI after delay
+            setTimeout(() => {
+               loadProfileData();
+               if(btn) { btn.textContent = "Ждать 24ч"; btn.disabled = true; }
+            }, 500);
+
+          } catch (e) {
+            showNotification(e.message, 'error');
+            if(btn) { btn.disabled = false; updateSpinUI(profile.next_spin_at); }
+          }
+        }, 100);
+      }, 50);
+    };
+
+    window.handleReroll = function() {
       if ((profile.chips || 0) < 50) {
-        showToast('Недостаточно фишек!', 'error');
+        showNotification("Недостаточно фишек!", "error");
         return;
       }
-      
       closeModal();
-      showToast('Перекрутка...', 'success');
-      await handleSpin(true);
-    }
+      handleSpin(true);
+    };
 
-    // --- TASKS ---
-    async function renderTasks() {
-      const list = document.getElementById('tasks-list');
-      list.innerHTML = '<p>Загрузка...</p>';
-      
-      const filter = document.getElementById('filter-difficulty').value;
-      
-      let query = db.from('user_tasks')
-        .select('*, tasks_pool(title, description, reward, difficulty)')
-        .eq('user_id', currentUser.id)
-        .eq('status', 'active')
-        .order('assigned_at', { ascending: false });
-      
-      if (filter !== 'all') {
-        // Filtering by difficulty requires joining and filtering. 
-        // Since we selected tasks_pool columns, we filter in JS for simplicity or use rpc.
-        // Let's fetch all active and filter in JS for now as count is small.
+    window.closeModal = function() {
+      document.getElementById('spin-modal').classList.add('hidden');
+      switchTab('tasks', document.querySelector(`.nav-item[onclick*="'tasks'"]`));
+    };
+
+    // --- TASKS LOGIC ---
+
+    window.toggleTask = function(id) {
+      const body = document.getElementById(`task-body-${id}`);
+      const icon = document.getElementById(`task-icon-${id}`);
+      if (body.classList.contains('open')) {
+        body.classList.remove('open');
+        icon.textContent = '▶';
+      } else {
+        body.classList.add('open');
+        icon.textContent = '▼';
       }
+    };
 
-      const { data, error } = await query;
-      
-      if (error) {
-        list.innerHTML = '<p style="color:var(--err)">Ошибка загрузки</p>';
-        return;
-      }
-
-      let tasks = data || [];
-      if (filter !== 'all') {
-        tasks = tasks.filter(t => t.tasks_pool?.difficulty === filter);
-      }
-
-      if (tasks.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:var(--text-sec); padding:20px;">Нет активных заданий. Крутите рулетку!</p>';
-        return;
-      }
-
-      list.innerHTML = '';
-      const now = new Date();
-      const deadlineMs = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-      tasks.forEach(t => {
-        const assigned = new Date(t.assigned_at);
-        const expires = new Date(assigned.getTime() + deadlineMs);
-        const remaining = expires - now;
-        const percent = Math.max(0, Math.min(100, (remaining / deadlineMs) * 100));
-        
-        let color = '#42b72a'; // Green
-        if (percent < 50) color = '#f59e0b'; // Orange
-        if (percent < 20) color = '#fa3e3e'; // Red
-
-        const timeLeft = remaining > 0 
-            ? `${Math.floor(remaining / (1000*60*60))}ч ${Math.floor((remaining % (1000*60*60)) / (1000*60))}м`
-            : 'Истекло';
-
-        const div = document.createElement('div');
-        div.className = 'task-card';
-        div.innerHTML = `
-          <div class="task-header" onclick="toggleTaskBody('${t.id}')">
-            <div class="task-title">${t.tasks_pool?.title || 'Задание'}</div>
-            <div class="task-meta">
-                <span class="badge">💰 ${t.tasks_pool?.reward || 0}</span>
-                <span class="badge" style="background:${color}; color:#fff; border:none;">⏳ ${timeLeft}</span>
-            </div>
-            <div class="burn-bar" style="width:${percent}%; background:${color}"></div>
-          </div>
-          <div id="body-${t.id}" class="task-body">
-            <p style="color:var(--text-sec); font-size:14px; margin:10px 0;">${t.tasks_pool?.description || 'Нет описания'}</p>
-            <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea>
-            <button class="btn" onclick="submitTask('${t.id}')">Отправить на проверку</button>
-          </div>
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function toggleTaskBody(id) {
-      const body = document.getElementById(`body-${id}`);
-      body.classList.toggle('open');
-    }
-
-    async function submitTask(id) {
+    window.submitTask = async function(id) {
       const ans = document.getElementById(`ans-${id}`).value.trim();
-      if (!ans) return showToast('Введите ответ!', 'error');
-      
+      if (!ans) return showNotification("Введите ответ!", "error");
+
       try {
-        const { error } = await db.from('user_tasks')
-          .update({ status: 'submitted', answer: ans })
-          .eq('id', id);
-        
+        const { error } = await db.from('user_tasks').update({ status: 'submitted', answer: ans }).eq('id', id);
         if (error) throw error;
-        showToast('Отправлено на проверку!', 'success');
-        renderTasks();
+        showNotification("Отправлено на проверку!");
+        loadTasks();
+        loadProfileDetails(); // Refresh history
       } catch (e) {
-        showToast(e.message, 'error');
+        showNotification(e.message, "error");
+      }
+    };
+
+    async function loadTasks() {
+      const list = document.getElementById('tasks-list');
+      if (!list) return;
+      list.innerHTML = '<p>Загрузка...</p>';
+
+      try {
+        const { data, error } = await db.from('user_tasks')
+          .select('*, tasks_pool(title, description, reward)')
+          .eq('user_id', currentUser.id)
+          .eq('status', 'active')
+          .order('assigned_at', { ascending: false });
+
+        if (error) throw error;
+        list.innerHTML = '';
+
+        if (!data || data.length === 0) {
+          list.innerHTML = '<p style="text-align:center; color:var(--text-sec); margin-top:20px;">Нет активных заданий. Крутите рулетку!</p>';
+          return;
+        }
+
+        const now = new Date();
+        data.forEach(t => {
+          const assigned = new Date(t.assigned_at);
+          const deadline = new Date(assigned.getTime() + (7 * 24 * 60 * 60 * 1000));
+          const remaining = deadline - now;
+          const total = 7 * 24 * 60 * 60 * 1000;
+          const pct = Math.max(0, Math.min(100, (remaining / total) * 100));
+          
+          let color = 'var(--ok)';
+          if (pct < 50) color = '#facc15'; // yellow
+          if (pct < 20) color = 'var(--err)'; // red
+
+          const dateStr = assigned.toLocaleDateString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+
+          list.innerHTML += `
+            <div class="task-card">
+              <div class="task-header" onclick="toggleTask('${t.id}')">
+                <div style="flex:1">
+                  <div class="task-title">${t.tasks_pool?.title || 'Задание'}</div>
+                  <div class="task-meta">
+                    <span class="badge">💰 ${t.tasks_pool?.reward || 0}</span>
+                    <span class="badge" style="background:var(--bg-hover); color:var(--text-sec)">${dateStr}</span>
+                  </div>
+                  <div class="burn-bar"><div class="burn-fill" style="width:${pct}%; background:${color}"></div></div>
+                </div>
+                <div style="font-size:20px; margin-left:10px;" id="task-icon-${t.id}">▶</div>
+              </div>
+              <div class="task-body" id="task-body-${t.id}">
+                <p><strong>Описание:</strong> ${t.tasks_pool?.description || '...'}</p>
+                <textarea id="ans-${t.id}" placeholder="Ваш ответ..."></textarea>
+                <button class="btn" onclick="submitTask('${t.id}')">Отправить</button>
+              </div>
+            </div>
+          `;
+        });
+      } catch (e) {
+        list.innerHTML = `<p style="color:var(--err)">Ошибка: ${e.message}</p>`;
       }
     }
+
+    // --- PROFILE & HISTORY ---
+
+    async function loadProfileDetails() {
+      // Refresh basic data first
+      await loadProfileData();
+      
+      // Load Tx History
+      const txBox = document.getElementById('tx-history');
+      if (txBox) {
+        const { data } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false}).limit(10);
+        txBox.innerHTML = data && data.length ? data.map(t => 
+          `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border)">
+            <span>${t.description || t.type}</span>
+            <span style="color:${t.amount>0?'var(--ok)':'var(--err)'}">${t.amount>0?'+':''}${t.amount}</span>
+          </div>`
+        ).join('') : '<p style="color:var(--text-sec)">Нет операций</p>';
+      }
+
+      // Load Completed Tasks History
+      const compBox = document.getElementById('completed-tasks-history');
+      if (compBox) {
+        const { data } = await db.from('user_tasks')
+          .select('*, tasks_pool(title)')
+          .eq('user_id', currentUser.id)
+          .eq('status', 'completed')
+          .order('completed_at', {ascending:false})
+          .limit(10);
+        
+        compBox.innerHTML = data && data.length ? data.map(t => 
+          `<div style="padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer;" onclick="alert('Задание: ${t.tasks_pool?.title}\\nВаш ответ: ${t.answer || '-'}')">
+            <div style="font-weight:600">${t.tasks_pool?.title}</div>
+            <div style="font-size:12px; color:var(--text-sec)">${new Date(t.completed_at).toLocaleDateString('ru-RU')}</div>
+          </div>`
+        ).join('') : '<p style="color:var(--text-sec)">Пока нет выполненных</p>';
+      }
+    }
+
+    window.editNickname = async function() {
+      const newName = prompt("Введите новый никнейм:", profile.name);
+      if (newName && newName !== profile.name) {
+        const { error } = await db.from('profiles').update({ name: newName }).eq('id', currentUser.id);
+        if (error) showNotification(error.message, 'error');
+        else {
+          profile.name = newName;
+          updateUI();
+          showNotification("Никнейм изменен!");
+        }
+      }
+    };
 
     // --- LEADERBOARD ---
     async function loadLeaderboard() {
       const tbody = document.getElementById('lb-body');
+      if (!tbody) return;
       tbody.innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
-      
-      // Get all profiles
-      const { data: users } = await db.from('profiles').select('id, name, days_in_game');
-      if (!users) return;
-      
-      // Get completed tasks count per user
-      const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status', 'completed');
-      
-      const stats = users.map(u => {
-        const doneCount = tasks ? tasks.filter(t => t.user_id === u.id).length : 0;
-        return {
-            name: u.name || 'Аноним',
-            days: u.days_in_game || 0,
-            done: doneCount
-        };
-      });
-      
-      // Sort by days desc, then done desc
-      stats.sort((a,b) => b.days - a.days || b.done - a.done);
-      
-      tbody.innerHTML = stats.slice(0, 20).map((u, i) => `
-        <tr>
+
+      try {
+        const { data: profiles } = await db.from('profiles').select('id, name, days_in_game');
+        const { data: tasks } = await db.from('user_tasks').select('user_id').eq('status', 'completed');
+        
+        if (!profiles) throw new Error('No profiles');
+
+        const stats = profiles.map(p => {
+          const doneCount = tasks ? tasks.filter(t => t.user_id === p.id).length : 0;
+          return { ...p, done: doneCount };
+        }).sort((a,b) => b.days_in_game - a.days_in_game); // Sort by days
+
+        tbody.innerHTML = stats.map((u, i) => `
+          <tr>
             <td><strong>${i+1}</strong></td>
             <td>${u.name}</td>
-            <td>${u.days}</td>
+            <td>${u.days_in_game || 0}</td>
             <td>${u.done}</td>
-        </tr>
-      `).join('');
-    }
-
-    // --- PROFILE HISTORY ---
-    async function loadTxHistory() {
-      const box = document.getElementById('tx-history');
-      const { data } = await db.from('transactions')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      if (!data || data.length === 0) {
-        box.innerHTML = '<p style="color:var(--text-sec)">Нет операций</p>';
-        return;
-      }
-      
-      box.innerHTML = data.map(t => `
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
-            <span>${t.description}</span>
-            <span style="color:${t.amount > 0 ? 'var(--ok)' : 'var(--err)'}">
-                ${t.amount > 0 ? '+' : ''}${t.amount}
-            </span>
-        </div>
-      `).join('');
-    }
-
-    async function loadDoneHistory() {
-        const box = document.getElementById('done-history');
-        const { data } = await db.from('user_tasks')
-            .select('*, tasks_pool(title)')
-            .eq('user_id', currentUser.id)
-            .eq('status', 'completed')
-            .order('completed_at', { ascending: false })
-            .limit(10);
-
-        if (!data || data.length === 0) {
-            box.innerHTML = '<p style="color:var(--text-sec)">Пока нет выполненных</p>';
-            return;
-        }
-
-        box.innerHTML = data.map(t => `
-            <div style="padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer;" onclick="showTaskDetail('${t.id}')">
-                <div style="font-weight:600;">${t.tasks_pool?.title}</div>
-                <div style="font-size:12px; color:var(--text-sec);">${new Date(t.completed_at).toLocaleDateString()}</div>
-            </div>
+          </tr>
         `).join('');
-        
-        // Update stat
-        document.getElementById('stat-done').textContent = data.length; // Simplified, ideally count all
-    }
-
-    async function showTaskDetail(taskId) {
-        // Fetch full details including answer
-        const { data } = await db.from('user_tasks')
-            .select('*, tasks_pool(title, description)')
-            .eq('id', taskId)
-            .single();
-            
-        if (!data) return;
-        
-        document.getElementById('detail-title').textContent = data.tasks_pool?.title || 'Задание';
-        document.getElementById('detail-body').innerHTML = `
-            <p><strong>Описание:</strong><br>${data.tasks_pool?.description}</p>
-            <p><strong>Ваш ответ:</strong><br><em>${data.answer || 'Нет ответа'}</em></p>
-            <p><strong>Статус:</strong> ${data.status}</p>
-        `;
-        document.getElementById('task-detail-modal').classList.add('active');
-    }
-
-    async function editNickname() {
-        const newName = prompt('Введите новый никнейм:', profile.name);
-        if (newName && newName.trim() !== '') {
-            const { error } = await db.from('profiles').update({ name: newName }).eq('id', currentUser.id);
-            if (error) {
-                showToast('Ошибка обновления', 'error');
-            } else {
-                showToast('Ник изменён!', 'success');
-                loadProfileData();
-            }
-        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="color:var(--err)">Ошибка: ${e.message}</td></tr>`;
+      }
     }
 
     // --- ADMIN ---
     async function loadAdminQueue() {
-        const q = document.getElementById('admin-queue');
-        q.innerHTML = 'Загрузка...';
-        
-        const { data } = await db.from('user_tasks')
-            .select('*, profiles(name), tasks_pool(title)')
-            .eq('status', 'submitted')
-            .order('assigned_at', { ascending: false });
-            
-        if (!data || data.length === 0) {
-            q.innerHTML = '<p>Очередь пуста</p>';
-            return;
-        }
-        
-        q.innerHTML = data.map(t => `
-            <div class="card" style="padding:10px; margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div>
-                        <strong>${t.profiles?.name}</strong>: ${t.tasks_pool?.title}
-                        <br><small>Ответ: ${t.answer}</small>
-                    </div>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn" style="padding:5px 10px; background:var(--ok);" onclick="adminApprove('${t.id}', '${t.user_id}')">✓</button>
-                        <button class="btn" style="padding:5px 10px; background:var(--err);" onclick="adminReject('${t.id}')">✗</button>
-                    </div>
-                </div>
+      const q = document.getElementById('admin-queue');
+      if (!q) return;
+      q.innerHTML = 'Загрузка...';
+      
+      const { data } = await db.from('user_tasks')
+        .select('*, profiles(name), tasks_pool(title)')
+        .eq('status', 'submitted')
+        .order('assigned_at', {ascending:false});
+      
+      if (!data || data.length === 0) {
+        q.innerHTML = '<p>Нет заявок</p>';
+        return;
+      }
+
+      q.innerHTML = data.map(t => `
+        <div class="card" style="padding:15px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between;">
+            <div>
+              <strong>${t.profiles?.name}</strong>: ${t.tasks_pool?.title}
+              <div style="font-size:13px; color:var(--text-sec); margin:5px 0;">Ответ: ${t.answer}</div>
             </div>
-        `).join('');
+            <div style="display:flex; gap:5px;">
+              <button class="btn" style="background:var(--ok); padding:5px 10px;" onclick="approveTask('${t.id}', '${t.user_id}')">✓</button>
+              <button class="btn" style="background:var(--err); padding:5px 10px;" onclick="rejectTask('${t.id}')">✗</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
     }
 
-    async function adminApprove(taskId, userId) {
-        // 1. Mark completed
-        await db.from('user_tasks').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', taskId);
-        // 2. Reward chips (assume 100 per task for now, or get from pool)
-        await db.rpc('increment_chips', { p_user_id: userId, p_amount: 100, p_desc: 'Выполнение задания' });
-        // 3. Update streak
-        await db.rpc('update_daily_streak', { p_user_id: userId });
-        
-        showToast('Задание одобрено', 'success');
-        loadAdminQueue();
-    }
+    window.approveTask = async function(id, uid) {
+      await db.from('user_tasks').update({status:'completed', completed_at:new Date().toISOString()}).eq('id', id);
+      await db.rpc('increment_chips', {p_user_id: uid, p_amount: 100, p_desc: 'Задание выполнено'});
+      showNotification("Одобрено!");
+      loadAdminQueue();
+    };
 
-    async function adminReject(taskId) {
-        await db.from('user_tasks').update({ status: 'active', answer: null }).eq('id', taskId);
-        showToast('Задание отклонено', 'success');
-        loadAdminQueue();
-    }
+    window.rejectTask = async function(id) {
+      await db.from('user_tasks').update({status:'active'}).eq('id', id);
+      showNotification("Отклонено");
+      loadAdminQueue();
+    };
 
-    async function adminAction(type) {
-        const uid = document.getElementById('admin-uid').value.trim();
-        const amt = parseInt(document.getElementById('admin-amount').value);
-        
-        if (!uid) return showToast('Введите UUID', 'error');
-        
-        try {
-            if (type === 'add') {
-                await db.rpc('increment_chips', { p_user_id: uid, p_amount: amt, p_desc: 'Админ начисление' });
-                showToast(`Начислено ${amt}`, 'success');
-            } else if (type === 'remove') {
-                await db.rpc('increment_chips', { p_user_id: uid, p_amount: -amt, p_desc: 'Админ списание' });
-                showToast(`Списано ${amt}`, 'success');
-            } else if (type === 'reset') {
-                await db.from('profiles').update({ next_spin_at: new Date(0).toISOString() }).eq('id', uid);
-                showToast('Кулдаун сброшен', 'success');
-            }
-        } catch (e) {
-            showToast(e.message, 'error');
-        }
-    }
+    window.handleAddChips = async function() {
+      const uid = document.getElementById('admin-uid').value;
+      const amt = parseInt(document.getElementById('admin-amount').value);
+      if(uid && amt) {
+        await db.rpc('increment_chips', {p_user_id: uid, p_amount: amt, p_desc: 'Admin add'});
+        showNotification("Начислено!");
+      }
+    };
 
-    // Expose functions globally for HTML onclick
-    window.handleLogin = handleLogin;
-    window.logout = logout;
-    window.switchTab = switchTab;
-    window.toggleSidebar = toggleSidebar;
-    window.toggleTheme = toggleTheme;
-    window.handleSpin = handleSpin;
-    window.closeModal = closeModal;
-    window.rerollWheel = rerollWheel;
-    window.renderTasks = renderTasks;
-    window.toggleTaskBody = toggleTaskBody;
-    window.submitTask = submitTask;
-    window.editNickname = editNickname;
-    window.adminAction = adminAction;
-    window.adminApprove = adminApprove;
-    window.adminReject = adminReject;
-    window.showTaskDetail = showTaskDetail;
+    window.handleSubChips = async function() {
+      const uid = document.getElementById('admin-uid').value;
+      const amt = parseInt(document.getElementById('admin-amount').value);
+      if(uid && amt) {
+        await db.rpc('increment_chips', {p_user_id: uid, p_amount: -amt, p_desc: 'Admin sub'});
+        showNotification("Списано!");
+      }
+    };
 
+    window.handleResetSpin = async function() {
+      const uid = document.getElementById('admin-uid').value;
+      if(uid) {
+        await db.from('profiles').update({next_spin_at: new Date(0).toISOString()}).eq('id', uid);
+        showNotification("Кулдаун сброшен!");
+        if(uid === currentUser.id) loadProfileData();
+      }
+    };
+
+    // Start
+    init();
   </script>
 </body>
 </html>
