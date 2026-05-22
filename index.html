@@ -24,9 +24,23 @@
     * { box-sizing: border-box; transition: background 0.2s, color 0.2s, border-color 0.2s; }
     body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); height: 100vh; display: flex; overflow: hidden; }
     
-    .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 10px; transition: width 0.3s ease; position: relative; z-index: 100; flex-shrink: 0; }
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 10px;
+      transition: width 0.3s ease;
+      position: relative;
+      z-index: 100;
+      flex-shrink: 0;
+    }
     .sidebar.collapsed { width: var(--sidebar-collapsed); }
-    .sidebar.collapsed .nav-text, .sidebar.collapsed .user-info, .sidebar.collapsed .logo-text { display: none; }
+    .sidebar.collapsed .nav-text, 
+    .sidebar.collapsed .user-info, 
+    .sidebar.collapsed .logo-text { display: none; }
     .sidebar.collapsed .nav-item { justify-content: center; padding: 15px 0; }
     .sidebar.collapsed .logo { font-size: 24px; margin: 0 auto; }
     
@@ -35,34 +49,78 @@
     .logo-text { font-weight: 800; font-size: 20px; background: linear-gradient(135deg, var(--acc), #ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     
     .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px; cursor: pointer; color: var(--text-sec); font-weight: 500; transition: all 0.2s; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text-sec);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
     .nav-item:hover { background: var(--bg-hover); color: var(--text); }
     .nav-item.active { background: var(--acc-light); color: var(--acc); }
     .nav-icon { font-size: 20px; width: 24px; text-align: center; flex-shrink: 0; }
     
-    .user-block { margin-top: auto; padding: 15px; background: var(--bg-hover); border-radius: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; overflow: hidden; white-space: nowrap; border: 1px solid var(--border); }
+    .user-block {
+      margin-top: auto;
+      padding: 15px;
+      background: var(--bg-hover);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      overflow: hidden;
+      white-space: nowrap;
+      border: 1px solid var(--border);
+    }
     .user-block:hover { border-color: var(--acc); }
     .avatar { width: 36px; height: 36px; background: var(--acc); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; flex-shrink: 0; }
     .user-details { display: flex; flex-direction: column; overflow: hidden; }
     .user-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
     .user-chips { font-size: 12px; color: var(--text-sec); }
     
-    .theme-toggle { margin-top: 10px; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 10px; cursor: pointer; color: var(--text-sec); }
+    .theme-toggle {
+      margin-top: 10px;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text-sec);
+    }
     .theme-toggle:hover { background: var(--bg-hover); }
     
-    .collapse-btn { position: absolute; bottom: 20px; right: -12px; width: 24px; height: 24px; background: var(--acc); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--bg-card); font-size: 14px; z-index: 101; transition: transform 0.3s; }
+    .collapse-btn {
+      position: absolute;
+      bottom: 20px;
+      right: -12px;
+      width: 24px; height: 24px;
+      background: var(--acc);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      border: 2px solid var(--bg-card);
+      font-size: 14px;
+      z-index: 101;
+      transition: transform 0.3s;
+    }
     .sidebar.collapsed .collapse-btn { transform: rotate(180deg); }
 
+    /* Main Content */
     .main-content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
     .container { max-width: 1000px; margin: 0 auto; }
     
     .card { background: var(--bg-card); padding: 24px; border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); border: 1px solid var(--border); }
     h2, h3 { margin-top: 0; }
     
+    /* Auth Screen */
     .auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex; align-items: center; justify-content: center; }
     .auth-card { background: var(--bg-card); padding: 40px; border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; }
     input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
     
+    /* Buttons */
     .btn { background: var(--acc); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: transform 0.1s; }
     .btn:hover:not(:disabled) { background: var(--acc-hover); transform: translateY(-1px); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -70,10 +128,12 @@
     .btn-outline:hover { border-color: var(--acc); color: var(--acc); }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
     
+    /* Roulette */
     .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
     .wheel { width: 100%; height: 100%; border-radius: 50%; border: 6px solid var(--bg-card); box-shadow: 0 0 20px rgba(0,0,0,0.2); transition: transform 4s cubic-bezier(0.1, 0.7, 0.1, 1); }
     .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 25px solid var(--text); z-index: 10; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); }
     
+    /* Tasks */
     .task-card { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; background: var(--bg-hover); }
     .task-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
     .task-title { font-weight: 600; }
@@ -94,15 +154,18 @@
     
     textarea { width: 100%; min-height: 80px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); resize: vertical; margin-top: 10px; }
     
+    /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal { background: var(--bg-card); padding: 30px; border-radius: var(--radius); max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; text-align: center; }
     .modal-tasks-list { text-align: left; margin: 20px 0; max-height: 300px; overflow-y: auto; }
     .modal-task-item { background: var(--bg-hover); padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--acc); }
     
+    /* Leaderboard Table */
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
     th { color: var(--text-sec); font-weight: 600; font-size: 14px; }
     
+    /* Profile */
     .profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
     .name-edit-group { display: flex; align-items: center; gap: 10px; }
     .edit-icon { cursor: pointer; font-size: 18px; opacity: 0.6; transition: opacity 0.2s; }
@@ -121,12 +184,28 @@
     .clickable-row { cursor: pointer; transition: background 0.1s; }
     .clickable-row:hover { background: var(--bg-hover); }
 
+    /* Utils */
     .hidden { display: none !important; }
-    .loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--acc); border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error-banner { background: var(--err-bg); color: var(--err); padding: 15px; border-radius: 8px; margin: 20px; text-align: center; display: none; max-width: 600px; word-wrap: break-word; }
     
+    /* Diagnostic Loading Screen */
+    .loading-screen { 
+      position: fixed; inset: 0; background: var(--bg); z-index: 999; 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      padding: 20px; text-align: center;
+    }
+    .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--acc); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .debug-log { 
+      background: var(--bg-card); padding: 15px; border-radius: 8px; 
+      max-width: 500px; width: 100%; text-align: left; font-family: monospace; font-size: 13px;
+      border: 1px solid var(--border); max-height: 300px; overflow-y: auto;
+    }
+    .log-step { margin-bottom: 5px; color: var(--text-sec); }
+    .log-success { color: var(--ok); font-weight: bold; }
+    .log-error { color: var(--err); font-weight: bold; background: var(--err-bg); padding: 2px 5px; border-radius: 4px; }
+    .log-wait { color: #fbbf24; }
+
+    /* Toast Notifications */
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
     .toast { background: var(--bg-card); color: var(--text); padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-left: 4px solid var(--acc); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; min-width: 250px; }
     .toast.success { border-left-color: var(--ok); }
@@ -136,15 +215,14 @@
 </head>
 <body>
 
-  <!-- Loading Screen -->
+  <!-- Diagnostic Loading Screen -->
   <div id="loading-screen" class="loading-screen">
     <div class="spinner"></div>
-    <p style="margin-top: 15px; color: var(--text-sec);">Загрузка системы...</p>
-    <p id="loading-timer" style="margin-top: 5px; font-size: 12px; color: var(--text-sec); opacity: 0.7;"></p>
+    <h3 style="margin-bottom: 10px;">Загрузка системы...</h3>
+    <div id="debug-console" class="debug-log">
+      <div class="log-step">🚀 Инициализация...</div>
+    </div>
   </div>
-
-  <!-- Error Banner -->
-  <div id="global-error" class="error-banner"></div>
 
   <!-- Auth Screen -->
   <div id="auth-screen" class="auth-screen hidden">
@@ -372,34 +450,56 @@
     let currentUser = null;
     let profile = null;
     let currentTab = 'roulette';
-    let loadTimeout;
+
+    // Diagnostic Logger
+    function log(msg, type = 'step') {
+      const consoleEl = document.getElementById('debug-console');
+      if (!consoleEl) return;
+      const div = document.createElement('div');
+      div.className = `log-step log-${type}`;
+      div.textContent = (type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : type === 'wait' ? '⏳ ' : '• ') + msg;
+      consoleEl.appendChild(div);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+      console.log(`[DIAGNOSTIC] ${type.toUpperCase()}: ${msg}`);
+    }
 
     // Init
     window.addEventListener('DOMContentLoaded', async () => {
       try {
-        if (!window.supabase) throw new Error('Supabase JS library not loaded');
-        
-        // Таймер безопасности: если загрузка длится > 7 сек, показываем ошибку
-        loadTimeout = setTimeout(() => {
-          document.getElementById('loading-screen').innerHTML = `
-            <div style="color: var(--err); font-weight: bold; font-size: 18px;">⏱ Время ожидания истекло</div>
-            <p style="color: var(--text-sec); margin-top: 10px;">Сервер не отвечает или база данных не настроена.</p>
-            <button class="btn" onclick="location.reload()" style="margin-top: 20px;">Попробовать снова</button>
-          `;
-        }, 7000);
+        log('Проверка библиотеки Supabase...');
+        if (!window.supabase) throw new Error('Библиотека Supabase не загружена. Проверьте интернет.');
+        log('Библиотека найдена.', 'success');
 
+        log('Подключение к базе данных...');
         db = supabase.createClient(SB_URL, SB_KEY);
+        
+        // Тест соединения
+        const { error: connError } = await db.from('profiles').select('count', { head: true, count: 'exact' });
+        if (connError) {
+          if (connError.message.includes('relation')) {
+             log('Таблицы не найдены! Нужно выполнить SQL скрипт.', 'error');
+          } else {
+             log('Ошибка подключения: ' + connError.message, 'error');
+          }
+          return;
+        }
+        log('База данных отвечает.', 'success');
         
         // Theme
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
+        log('Тема применена.', 'success');
 
-        // Auth State Listener
+        // Auth State
+        log('Проверка авторизации...');
         db.auth.onAuthStateChange(async (event, session) => {
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
             currentUser = session?.user;
-            if (currentUser) await loadProfile();
+            if (currentUser) {
+              log('Пользователь найден: ' + currentUser.email, 'success');
+              await loadProfile();
+            }
           } else if (event === 'SIGNED_OUT') {
             currentUser = null;
             profile = null;
@@ -407,43 +507,41 @@
           }
         });
 
-        // Check existing session
-        const { data, error } = await db.auth.getSession();
-        if (error) throw error;
+        const { data: sessionData, error: sessionError } = await db.auth.getSession();
+        if (sessionError) throw sessionError;
         
-        if (data.session) {
-          currentUser = data.session.user;
+        if (sessionData?.session) {
+          currentUser = sessionData.session.user;
+          log('Активная сессия найдена.', 'success');
           await loadProfile();
         } else {
+          log('Сессия не найдена. Показываем вход.', 'wait');
           showScreen('auth');
         }
 
       } catch (e) {
-        console.error("Init error:", e);
-        clearTimeout(loadTimeout);
-        document.getElementById('loading-screen').classList.add('hidden');
-        showError('Критическая ошибка запуска: ' + e.message);
+        log('КРИТИЧЕСКАЯ ОШИБКА: ' + e.message, 'error');
+        document.getElementById('loading-screen').innerHTML = `
+          <div style="color:var(--err); max-width:600px; text-align:left;">
+            <h2>Ошибка запуска</h2>
+            <p>${e.message}</p>
+            <p>Проверьте консоль браузера (F12) для деталей.</p>
+            <button class="btn" onclick="location.reload()">Перезагрузить</button>
+          </div>
+        `;
       }
     });
 
     function showScreen(screen) {
-      clearTimeout(loadTimeout);
       document.getElementById('loading-screen').classList.add('hidden');
       if (screen === 'auth') {
         document.getElementById('auth-screen').classList.remove('hidden');
         document.getElementById('app-layout').classList.add('hidden');
-        document.getElementById('app-layout').style.display = 'none'; 
       } else {
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('app-layout').classList.remove('hidden');
         document.getElementById('app-layout').style.display = 'flex'; 
       }
-    }
-
-    function showError(msg) {
-      const el = document.getElementById('global-error');
-      el.textContent = msg;
-      el.style.display = 'block';
     }
 
     function showToast(msg, type = 'info') {
@@ -481,8 +579,7 @@
       if (el) el.classList.add('active');
 
       document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-      const target = document.getElementById(`tab-${tabName}`);
-      if(target) target.classList.remove('hidden');
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
       if (tabName === 'tasks') renderTasks();
       if (tabName === 'leaderboard') loadLeaderboard();
@@ -505,7 +602,6 @@
       try {
         const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
-        // Session change handler will trigger loadProfile
       } catch (e) {
         err.textContent = e.message;
         err.style.display = 'block';
@@ -513,95 +609,85 @@
       }
     }
 
-    // Profile Logic (MAXIMUM SAFETY)
+    // Profile Logic
     async function loadProfile() {
       try {
-        if (!currentUser || !currentUser.id) {
-          showScreen('auth');
-          return;
-        }
-
-        // 1. Try to fetch profile
-        let response = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-        let data = response.data;
-        let error = response.error;
-
-        // 2. If profile missing (PGRST116), create it automatically
-        if (error && error.code === 'PGRST116') {
-          console.log('Profile not found, creating...');
-          const insertRes = await db.from('profiles').insert({
-            id: currentUser.id,
-            email: currentUser.email,
-            name: currentUser.email.split('@')[0],
-            chips: 0,
-            days_in_game: 1,
-            role: 'user'
-          }).select().single();
-          
-          if (insertRes.error) throw insertRes.error;
-          data = insertRes.data;
-        } else if (error) {
-          throw error;
-        }
-
-        if (!data) throw new Error('No data received');
-
-        profile = data;
+        log('Загрузка профиля...');
+        const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
         
-        // Update UI safely
-        const safeName = data.name || 'User';
-        document.getElementById('sidebar-name').textContent = safeName;
-        document.getElementById('sidebar-avatar').textContent = safeName.charAt(0).toUpperCase();
-        document.getElementById('sidebar-chips').textContent = data.chips || 0;
+        if (error) {
+          if (error.code === 'PGRST116') { // Row not found
+            log('Профиль не найден. Создаем автоматически...', 'wait');
+            const { error: insErr } = await db.from('profiles').insert({
+              id: currentUser.id,
+              email: currentUser.email,
+              name: currentUser.email.split('@')[0],
+              chips: 0,
+              days_in_game: 1,
+              role: currentUser.email === 'i@darkmoore.ru' ? 'admin' : 'user'
+            });
+            if (insErr) throw insErr;
+            
+            const {  newData } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+            profile = newData;
+            log('Профиль создан!', 'success');
+          } else {
+            throw error;
+          }
+        } else {
+          profile = data;
+          log('Профиль загружен.', 'success');
+        }
         
-        document.getElementById('profile-name-display').textContent = safeName;
-        document.getElementById('profile-chips').textContent = data.chips || 0;
-        document.getElementById('stat-days').textContent = data.days_in_game || 1;
-        document.getElementById('stat-streak').textContent = data.daily_streak || 0;
+        // Update UI
+        document.getElementById('sidebar-name').textContent = profile.name || 'User';
+        document.getElementById('sidebar-avatar').textContent = (profile.name || 'U')[0].toUpperCase();
+        document.getElementById('sidebar-chips').textContent = profile.chips;
+        
+        document.getElementById('profile-name-display').textContent = profile.name || 'User';
+        document.getElementById('profile-chips').textContent = profile.chips;
+        document.getElementById('stat-days').textContent = profile.days_in_game || 1;
+        document.getElementById('stat-streak').textContent = profile.daily_streak || 0;
 
         // Admin Check
-        if (data.role === 'admin') {
+        if (profile.role === 'admin') {
           document.getElementById('nav-admin').classList.remove('hidden');
+          log('Режим администратора активирован.', 'success');
         } else {
           document.getElementById('nav-admin').classList.add('hidden');
         }
 
         showScreen('app');
-        updateSpinUI(data.next_spin_at);
+        updateSpinUI(profile.next_spin_at);
         
-        // Initial Tab Load
-        const navItem = document.querySelector(`.nav-item[onclick*="${currentTab}"]`);
-        switchTab(currentTab, navItem);
+        switchTab(currentTab, document.querySelector(`.nav-item[onclick*="${currentTab}"]`) || document.querySelector('.nav-item'));
 
       } catch (e) {
-        console.error("Load Profile Error:", e);
-        clearTimeout(loadTimeout);
-        document.getElementById('loading-screen').classList.add('hidden');
-        showError('Ошибка загрузки профиля: ' + e.message + '. Проверьте консоль (F12) и базу данных.');
-        // Don't logout immediately, let user see error
+        console.error(e);
+        log('Ошибка профиля: ' + e.message, 'error');
+        alert('Ошибка загрузки профиля: ' + e.message);
       }
     }
 
     async function loadProfileDetails() {
       if (!profile) return;
-      // Reload fresh data
-      const res = await db.from('profiles').select('daily_streak, chips').eq('id', currentUser.id).single();
-      if (res.data) {
-        profile.daily_streak = res.data.daily_streak;
-        profile.chips = res.data.chips;
-        document.getElementById('stat-streak').textContent = res.data.daily_streak || 0;
-        document.getElementById('profile-chips').textContent = res.data.chips;
-        document.getElementById('sidebar-chips').textContent = res.data.chips;
+      const { data } = await db.from('profiles').select('daily_streak, chips').eq('id', currentUser.id).single();
+      if (data) {
+        profile.daily_streak = data.daily_streak;
+        profile.chips = data.chips;
+        document.getElementById('stat-streak').textContent = data.daily_streak || 0;
+        document.getElementById('profile-chips').textContent = data.chips;
+        document.getElementById('sidebar-chips').textContent = data.chips;
         
-        const progress = ((res.data.daily_streak || 0) % 7) / 7 * 100;
+        const progress = (data.daily_streak % 7) / 7 * 100;
         document.getElementById('streak-bar').style.width = `${progress}%`;
       }
 
       loadTxHistory();
       loadDoneTasksHistory();
       
-      const countRes = await db.from('user_tasks').select('*', { head: true, count: 'exact' }).eq('user_id', currentUser.id).eq('status', 'completed');
-      document.getElementById('stat-done').textContent = countRes.count || 0;
+      const { count } = await db.from('user_tasks').select('*', { head: true, count: 'exact' }).eq('user_id', currentUser.id).eq('status', 'completed');
+      document.getElementById('stat-done').textContent = count || 0;
     }
 
     function editName() {
@@ -624,7 +710,7 @@
           profile.name = newName;
           disp.textContent = newName;
           document.getElementById('sidebar-name').textContent = newName;
-          document.getElementById('sidebar-avatar').textContent = newName.charAt(0).toUpperCase();
+          document.getElementById('sidebar-avatar').textContent = newName[0].toUpperCase();
           showToast('Имя изменено', 'success');
         } else {
           showToast('Ошибка: ' + error.message, 'error');
@@ -684,14 +770,14 @@
           } catch (e) {
             showToast(e.message, 'error');
             btn.disabled = false;
-            if(!isReroll && profile) updateSpinUI(profile.next_spin_at);
+            if(!isReroll) updateSpinUI(profile.next_spin_at);
           }
         }, 4000);
       }, 50);
     }
 
     async function handleReroll() {
-      if (!profile || profile.chips < 50) return showToast('Недостаточно фишек!', 'error');
+      if (profile.chips < 50) return showToast('Недостаточно фишек!', 'error');
       closeModal();
       await handleSpin(true);
     }
@@ -711,21 +797,17 @@
       if (data.task_ids && data.task_ids.length > 0) {
         db.from('tasks_pool').select('title, reward, difficulty').in('id', data.task_ids).then(({data: tasks}) => {
           list.innerHTML = '';
-          if(tasks) {
-            tasks.forEach(t => {
-              list.innerHTML += `
-                <div class="modal-task-item">
-                  <strong>${t.title}</strong><br>
-                  <small>Награда: ${t.reward} 💰 | Сложность: ${diffMap[t.difficulty]}</small>
-                </div>
-              `;
-            });
-          } else {
-             list.innerHTML += '<p>Задания назначены.</p>';
-          }
+          tasks.forEach(t => {
+            list.innerHTML += `
+              <div class="modal-task-item">
+                <strong>${t.title}</strong><br>
+                <small>Награда: ${t.reward} 💰 | Сложность: ${diffMap[t.difficulty]}</small>
+              </div>
+            `;
+          });
         });
       } else {
-        list.innerHTML += '<p>Нет новых заданий.</p>';
+        list.innerHTML += '<p>Нет новых заданий (попробуйте еще раз).</p>';
       }
       
       modal.style.display = 'flex';
@@ -757,7 +839,7 @@
 
       let tasks = data || [];
       if (filter !== 'all') {
-        tasks = tasks.filter(t => t.tasks_pool && t.tasks_pool.difficulty === filter);
+        tasks = tasks.filter(t => t.tasks_pool?.difficulty === filter);
       }
 
       list.innerHTML = '';
@@ -778,23 +860,23 @@
         if (pct < 50) color = '#fbbf24'; 
         if (pct < 20) color = 'var(--err)'; 
 
-        const diffClass = `badge-${t.tasks_pool && t.tasks_pool.difficulty ? t.tasks_pool.difficulty : 'medium'}`;
-        const diffName = t.tasks_pool ? t.tasks_pool.difficulty : 'unknown';
+        const diffClass = `badge-${t.tasks_pool?.difficulty || 'medium'}`;
+        const diffName = t.tasks_pool?.difficulty || 'medium';
 
         list.innerHTML += `
           <div class="task-card">
             <div class="task-header" onclick="this.parentElement.classList.toggle('open')">
-              <div class="task-title">${t.tasks_pool ? t.tasks_pool.title : 'Задание'}</div>
+              <div class="task-title">${t.tasks_pool?.title || 'Задание'}</div>
               <div class="task-meta">
                 <span class="badge ${diffClass}">${diffName}</span>
-                <span style="font-weight:bold; color:var(--acc)">💰${t.tasks_pool ? t.tasks_pool.reward : 0}</span>
+                <span style="font-weight:bold; color:var(--acc)">💰${t.tasks_pool?.reward || 0}</span>
                 <div class="progress-track" title="До сгорания">
                   <div class="progress-fill" style="width: ${pct}%; background: ${color}"></div>
                 </div>
               </div>
             </div>
             <div class="task-body">
-              <p style="color:var(--text-sec); font-size:14px;">${t.tasks_pool ? t.tasks_pool.description : ''}</p>
+              <p style="color:var(--text-sec); font-size:14px;">${t.tasks_pool?.description || 'Описание отсутствует'}</p>
               <p style="font-size:12px; color:var(--text-sec); margin-top:5px;">
                 Получено: ${assigned.toLocaleDateString()} ${assigned.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
               </p>
@@ -825,17 +907,15 @@
       const tbody = document.getElementById('lb-body');
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">Загрузка...</td></tr>';
       
-      const usersRes = await db.from('profiles').select('id, name, days_in_game');
-      if (!usersRes.data) { tbody.innerHTML = '<tr><td colspan="4">Ошибка загрузки</td></tr>'; return; }
+      const {  users } = await db.from('profiles').select('id, name, days_in_game');
+      if (!users) return;
       
-      const tasksRes = await db.from('user_tasks').select('user_id').eq('status', 'completed');
+      const {  tasks } = await db.from('user_tasks').select('user_id').eq('status', 'completed');
       
       const counts = {};
-      if (tasksRes.data) {
-        tasksRes.data.forEach(t => { counts[t.user_id] = (counts[t.user_id] || 0) + 1; });
-      }
+      tasks?.forEach(t => { counts[t.user_id] = (counts[t.user_id] || 0) + 1; });
       
-      const ranked = usersRes.data.map(u => ({
+      const ranked = users.map(u => ({
         name: u.name || 'Anon',
         days: u.days_in_game || 1,
         done: counts[u.id] || 0
@@ -854,10 +934,9 @@
     // History
     async function loadTxHistory() {
       const box = document.getElementById('tx-history');
-      const res = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false}).limit(20);
+      const { data } = await db.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', {ascending:false}).limit(20);
       
       box.innerHTML = '';
-      const data = res.data;
       if (!data || data.length === 0) {
         box.innerHTML = '<p style="color:var(--text-sec); font-size:13px;">Нет операций</p>';
         return;
@@ -877,7 +956,7 @@
 
     async function loadDoneTasksHistory() {
       const box = document.getElementById('done-tasks-history');
-      const res = await db.from('user_tasks')
+      const { data } = await db.from('user_tasks')
         .select('*, tasks_pool(title)')
         .eq('user_id', currentUser.id)
         .eq('status', 'completed')
@@ -885,18 +964,15 @@
         .limit(20);
         
       box.innerHTML = '';
-      const data = res.data;
       if (!data || data.length === 0) {
         box.innerHTML = '<p style="color:var(--text-sec); font-size:13px;">Пока нет выполненных заданий</p>';
         return;
       }
       
       data.forEach(t => {
-        // Safe stringify for onclick
-        const taskStr = JSON.stringify(t).replace(/'/g, "&apos;");
         box.innerHTML += `
-          <div class="history-item clickable-row" onclick='showTaskDetail(${taskStr})'>
-            <span>${t.tasks_pool && t.tasks_pool.title ? t.tasks_pool.title : 'Задание'}</span>
+          <div class="history-item clickable-row" onclick='showTaskDetail(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
+            <span>${t.tasks_pool?.title || 'Задание'}</span>
             <span style="color:var(--text-sec); font-size:12px;">${new Date(t.completed_at).toLocaleDateString()}</span>
           </div>
         `;
@@ -904,8 +980,8 @@
     }
 
     window.showTaskDetail = function(task) {
-      document.getElementById('detail-title').textContent = (task.tasks_pool && task.tasks_pool.title) ? task.tasks_pool.title : 'Задание';
-      document.getElementById('detail-desc').textContent = (task.tasks_pool && task.tasks_pool.description) ? task.tasks_pool.description : '';
+      document.getElementById('detail-title').textContent = task.tasks_pool?.title || 'Задание';
+      document.getElementById('detail-desc').textContent = task.tasks_pool?.description || '';
       document.getElementById('detail-answer').textContent = task.answer || 'Нет ответа';
       document.getElementById('task-detail-modal').style.display = 'flex';
     };
@@ -915,13 +991,12 @@
       const box = document.getElementById('admin-queue');
       box.innerHTML = 'Загрузка...';
       
-      const res = await db.from('user_tasks')
+      const { data } = await db.from('user_tasks')
         .select('*, tasks_pool(title), profiles(name)')
         .eq('status', 'submitted')
         .order('assigned_at', {ascending:false});
         
       box.innerHTML = '';
-      const data = res.data;
       if (!data || data.length === 0) {
         box.innerHTML = '<p style="color:var(--text-sec)">Очередь пуста</p>';
         return;
@@ -932,7 +1007,7 @@
           <div class="task-card" style="padding:10px;">
             <div style="display:flex; justify-content:space-between; align-items:start;">
               <div>
-                <strong>${t.profiles && t.profiles.name ? t.profiles.name : 'User'}</strong>: ${t.tasks_pool && t.tasks_pool.title ? t.tasks_pool.title : ''}<br>
+                <strong>${t.profiles?.name || 'User'}</strong>: ${t.tasks_pool?.title}<br>
                 <small>Ответ: ${t.answer}</small>
               </div>
               <div style="display:flex; gap:5px;">
