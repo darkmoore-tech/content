@@ -5,95 +5,142 @@
     <title>Тест Supabase</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
-        input { display: block; width: 100%; margin: 10px 0; padding: 10px; }
-        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; }
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input { display: block; width: 100%; margin: 10px 0; padding: 12px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 12px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: wait; }
         .hidden { display: none; }
-        #log { background: #f4f4f4; padding: 10px; margin-top: 20px; border-radius: 5px; font-size: 14px; white-space: pre-wrap; }
+        #error-msg { color: #dc3545; background: #ffe6e6; padding: 10px; border-radius: 4px; margin-top: 10px; display: none; }
+        #log { background: #2d2d2d; color: #00ff00; padding: 15px; margin-top: 20px; border-radius: 5px; font-family: monospace; font-size: 13px; white-space: pre-wrap; height: 200px; overflow-y: auto; }
+        h2 { margin-top: 0; }
     </style>
 </head>
 <body>
 
-    <h1>🎮 Тест подключения</h1>
-
-    <!-- Экран входа -->
-    <div id="auth-screen">
-        <h3>Вход / Регистрация</h3>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Пароль">
-        <button onclick="handleLogin()">Войти</button>
-        <p id="error-msg" style="color:red"></p>
-    </div>
-
-    <!-- Экран игры -->
-    <div id="game-screen" class="hidden">
-        <h3>Привет, <span id="user-name"></span>!</h3>
-        <p>Баланс: <b id="user-chips">0</b> фишек</p>
-        <p>Роль: <span id="user-role"></span></p>
-        <button onclick="handleLogout()" style="background: #dc3545;">Выйти</button>
+    <div class="card" id="auth-screen">
+        <h2>🎮 Вход в игру</h2>
+        <p style="color: #666; font-size: 14px;">Введите любой email и пароль для входа</p>
         
-        <hr>
-        <h4>Проверка базы данных:</h4>
-        <button onclick="checkDB()">Обновить данные из БД</button>
+        <label>Email</label>
+        <input type="email" id="email" placeholder="name@example.com" value="test@game.local">
+        
+        <label>Пароль</label>
+        <input type="password" id="password" placeholder="Минимум 6 символов" value="12345678">
+        
+        <button id="login-btn" onclick="handleLogin()">Войти</button>
+        
+        <div id="error-msg"></div>
     </div>
 
-    <div id="log">Ожидание действий...</div>
+    <div class="card hidden" id="game-screen">
+        <h2>✅ Успешный вход!</h2>
+        <p><strong>Email:</strong> <span id="user-name"></span></p>
+        <p><strong>ID:</strong> <span id="user-id" style="font-family:monospace; font-size:12px;"></span></p>
+        <hr>
+        <p><strong>Баланс:</strong> <span id="user-chips">Загрузка...</span> 💰</p>
+        <p><strong>Роль:</strong> <span id="user-role">Загрузка...</span></p>
+        
+        <button onclick="checkDB()" style="background: #28a745; margin-top: 10px;">🔄 Обновить данные из БД</button>
+        <button onclick="handleLogout()" style="background: #dc3545; margin-top: 10px;">🚪 Выйти</button>
+    </div>
+
+    <div id="log">Ожидание...</div>
 
     <script>
-        // --- ВСТАВЬТЕ СЮДА ВАШИ ДАННЫЕ ИЗ ШАГА 2 ---
+        // --- ВСТАВЬТЕ СЮДА ВАШИ ДАННЫЕ ИЗ НАСТРОЕК SUPABASE ---
         const SUPABASE_URL = 'https://lgvrgxvityaobrqstzzs.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndnJneHZpdHlhb2JycXN0enpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTA0MzUsImV4cCI6MjA5NTAyNjQzNX0.ER8QkSTpVWAYiRXD-d-_d3SoqeQkKsBK04c8RhiOxe8';
-        // ------------------------------------------
+        // -------------------------------------------------------
+
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
+            alert('Ошибка: Вы не вставили URL и KEY в код!');
+        }
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const logEl = document.getElementById('log');
+        const errorEl = document.getElementById('error-msg');
+        const btn = document.getElementById('login-btn');
 
         function log(msg) {
-            logEl.textContent = msg + '\n' + logEl.textContent;
+            const time = new Date().toLocaleTimeString();
+            logEl.textContent = `[${time}] ${msg}\n` + logEl.textContent;
             console.log(msg);
         }
 
-        // Проверка при загрузке
         async function init() {
             log("Инициализация...");
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                showGame(session.user);
-            } else {
-                log("Сессии нет, показываем вход.");
+            try {
+                const { data, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                
+                if (data.session) {
+                    log("Сессия найдена. Загружаем игру...");
+                    showGame(data.session.user);
+                } else {
+                    log("Сессии нет. Ждем ввода данных.");
+                }
+            } catch (e) {
+                log("Ошибка инициализации: " + e.message);
             }
         }
 
         async function handleLogin() {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
-            log("Попытка входа...");
-
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
             
-            if (error) {
-                log("Ошибка: " + error.message);
-                document.getElementById('error-msg').textContent = error.message;
-            } else {
-                log("Успех! Пользователь: " + data.user.email);
+            if (!email || pass.length < 6) {
+                showError("Введите корректный email и пароль (минимум 6 символов)");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Загрузка...";
+            errorEl.style.display = 'none';
+            log("Отправка запроса на вход...");
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ 
+                    email: email, 
+                    password: pass 
+                });
+                
+                if (error) throw error;
+                
+                log("Успешный вход! Пользователь: " + data.user.email);
                 showGame(data.user);
+            } catch (e) {
+                log("Ошибка входа: " + e.message);
+                showError(e.message);
+                btn.disabled = false;
+                btn.textContent = "Войти";
             }
         }
 
-        async function showGame(user) {
+        function showError(msg) {
+            errorEl.textContent = "❌ " + msg;
+            errorEl.style.display = 'block';
+        }
+
+        function showGame(user) {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('user-name').textContent = user.email;
-            
-            // Загружаем профиль из БД
+            document.getElementById('user-id').textContent = user.id;
             checkDB();
         }
 
         async function checkDB() {
+            const chipsEl = document.getElementById('user-chips');
+            const roleEl = document.getElementById('user-role');
+            chipsEl.textContent = "Загрузка...";
+            
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            log("Запрос к таблице profiles...");
+            log("Запрос к таблице profiles для пользователя " + user.id);
+            
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -102,20 +149,25 @@
 
             if (error) {
                 log("Ошибка БД: " + error.message);
+                chipsEl.textContent = "Ошибка";
+                roleEl.textContent = "Ошибка";
+                if (error.message.includes("Row not found")) {
+                    log("Профиль не найден. Возможно, триггер не сработал. Попробуйте выйти и войти снова.");
+                }
             } else {
-                log("Данные получены успешно!");
-                document.getElementById('user-chips').textContent = data.chips;
-                document.getElementById('user-role').textContent = data.role || 'user';
-                if(!data.name) document.getElementById('user-name').textContent = data.email;
+                log("Данные получены: " + JSON.stringify(data));
+                chipsEl.textContent = data.chips;
+                roleEl.textContent = data.role || 'user';
             }
         }
 
         async function handleLogout() {
+            log("Выход из системы...");
             await supabase.auth.signOut();
             location.reload();
         }
 
-        // Запуск
+        // Запуск при загрузке страницы
         init();
     </script>
 </body>
