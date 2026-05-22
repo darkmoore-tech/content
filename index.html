@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GameWork Roulette</title>
+    <!-- Подключаем Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -65,14 +66,19 @@
         
         /* App Layout */
         #app-container {
-            display: none; /* Hidden by default */
-            display: flex;
+            display: none; 
+            flex-direction: column; /* Исправлено для мобильных */
             height: 100vh;
+        }
+
+        @media (min-width: 768px) {
+            #app-container { flex-direction: row; }
         }
         
         /* Sidebar */
         .sidebar {
-            width: 250px;
+            width: 100%;
+            max-width: 250px;
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
@@ -207,7 +213,7 @@
     </div>
 
     <!-- APP SCREEN -->
-    <div id="app-container" style="display: none;">
+    <div id="app-container">
         <div class="sidebar">
             <h3 style="margin-top: 0;">GameWork</h3>
             <button class="nav-btn active" onclick="showPage('roulette')">🎡 Рулетка</button>
@@ -243,7 +249,6 @@
             <div id="page-tasks" class="page">
                 <h1>Мои Задания</h1>
                 <div id="tasks-list">
-                    <!-- Tasks will be loaded here -->
                     <p>Загрузка...</p>
                 </div>
             </div>
@@ -273,7 +278,7 @@
                 <h1>Профиль</h1>
                 <div class="card" style="text-align: center;">
                     <h2 id="prof-email"></h2>
-                    <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-around; margin-top: 20px; flex-wrap: wrap;">
                         <div>
                             <h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3>
                             <small>Фишки</small>
@@ -293,132 +298,118 @@
     </div>
 
     <script>
-        // --- КОНФИГУРАЦИЯ ---
-        const SUPABASE_URL = 'https://lgvrgxvityaobrqstzzs.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndnJneHZpdHlhb2JycXN0enpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTA0MzUsImV4cCI6MjA5NTAyNjQzNX0.ER8QkSTpVWAYiRXD-d-_d3SoqeQkKsBK04c8RhiOxe8';
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
+        window.gameApp = {};
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // --- СОСТОЯНИЕ ---
-        let isLoginMode = true;
-        let currentUser = null;
-        let userProfile = null;
-        let currentRotation = 0;
-        
-        const colors = {
-            'red': '#ef4444',
-            'blue': '#3b82f6',
-            'green': '#22c55e'
+        // Конфигурация
+        window.gameApp.config = {
+            SUPABASE_URL: 'https://lgvrgxvityaobrqstzzs.supabase.co',
+            SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndnJneHZpdHlhb2JycXN0enpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTA0MzUsImV4cCI6MjA5NTAyNjQzNX0.ER8QkSTpVWAYiRXD-d-_d3SoqeQkKsBK04c8RhiOxe8'
         };
-        const segments = ['red', 'blue', 'green'];
 
-        // --- ИНИЦИАЛИЗАЦИЯ ---
-        async function init() {
-            // Проверка сессии
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                await loadProfile();
-                showApp();
-            } else {
-                showAuth();
-            }
-            
-            // Слушатель изменений авторизации
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN') {
-                    currentUser = session.user;
-                    await loadProfile();
-                    showApp();
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    userProfile = null;
-                    showAuth();
-                }
-            });
+        // Инициализация клиента Supabase (используем var для избежания конфликтов в некоторых средах)
+        var supabaseClient = window.supabase.createClient(window.gameApp.config.SUPABASE_URL, window.gameApp.config.SUPABASE_KEY);
 
-            drawWheel();
-            loadTheme();
-        }
+        // Состояние
+        window.gameApp.state = {
+            isLoginMode: true,
+            currentUser: null,
+            userProfile: null,
+            currentRotation: 0,
+            colors: { 'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e' },
+            segments: ['red', 'blue', 'green']
+        };
 
-        // --- АВТОРИЗАЦИЯ ---
-        function toggleAuthMode() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerText = isLoginMode ? 'Вход' : 'Регистрация';
-            document.getElementById('auth-action-btn').innerText = isLoginMode ? 'Войти' : 'Зарегистрироваться';
-            document.getElementById('auth-switch-text').innerText = isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Есть аккаунт? Войти';
-        }
+        // --- ФУНКЦИИ АВТОРИЗАЦИИ (Глобальные) ---
+        window.toggleAuthMode = function() {
+            window.gameApp.state.isLoginMode = !window.gameApp.state.isLoginMode;
+            document.getElementById('auth-title').innerText = window.gameApp.state.isLoginMode ? 'Вход' : 'Регистрация';
+            document.getElementById('auth-action-btn').innerText = window.gameApp.state.isLoginMode ? 'Войти' : 'Зарегистрироваться';
+            document.getElementById('auth-switch-text').innerText = window.gameApp.state.isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Есть аккаунт? Войти';
+        };
 
-        async function handleAuth() {
+        window.handleAuth = async function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             if (!email || !password) return alert('Заполните все поля');
 
             let error;
-            if (isLoginMode) {
-                const res = await supabase.auth.signInWithPassword({ email, password });
+            if (window.gameApp.state.isLoginMode) {
+                const res = await supabaseClient.auth.signInWithPassword({ email, password });
                 error = res.error;
             } else {
-                // Регистрация без подтверждения почты (требует настройки в Supabase Dashboard, если не работает)
-                const res = await supabase.auth.signUp({ email, password });
+                const res = await supabaseClient.auth.signUp({ email, password });
                 error = res.error;
-                if (!error) alert('Регистрация успешна! Теперь войдите.');
+                if (!error) {
+                    alert('Регистрация успешна! Теперь войдите.');
+                    window.toggleAuthMode(); // Переключить на вход
+                    return;
+                }
             }
 
             if (error) alert(error.message);
-        }
+        };
 
-        async function logout() {
-            await supabase.auth.signOut();
-        }
+        window.logout = async function() {
+            await supabaseClient.auth.signOut();
+        };
 
         // --- НАВИГАЦИЯ ---
-        function showAuth() {
-            document.getElementById('auth-container').style.display = 'flex';
-            document.getElementById('app-container').style.display = 'none';
-        }
-
-        function showApp() {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('app-container').style.display = 'flex';
-            showPage('roulette');
-            loadTasks(); // Загрузить задачи при входе
-            loadLeaderboard();
-        }
-
-        function showPage(pageId) {
+        window.showPage = function(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             
             document.getElementById(`page-${pageId}`).classList.add('active');
             
-            // Подсветка кнопки (упрощенно)
+            // Подсветка кнопки
             const btns = document.querySelectorAll('.nav-btn');
             if(pageId === 'roulette') btns[0].classList.add('active');
-            if(pageId === 'tasks') { btns[1].classList.add('active'); loadTasks(); }
-            if(pageId === 'leaderboard') { btns[2].classList.add('active'); loadLeaderboard(); }
-            if(pageId === 'profile') { btns[3].classList.add('active'); updateProfileUI(); }
-        }
+            if(pageId === 'tasks') { 
+                btns[1].classList.add('active'); 
+                window.loadTasks(); 
+            }
+            if(pageId === 'leaderboard') { 
+                btns[2].classList.add('active'); 
+                window.loadLeaderboard(); 
+            }
+            if(pageId === 'profile') { 
+                btns[3].classList.add('active'); 
+                window.updateProfileUI(); 
+            }
+        };
+
+        window.showAuth = function() {
+            document.getElementById('auth-container').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+        };
+
+        window.showApp = function() {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            window.showPage('roulette');
+            window.loadTasks();
+            window.loadLeaderboard();
+        };
 
         // --- РУЛЕТКА ---
-        function drawWheel() {
+        window.drawWheel = function() {
             const canvas = document.getElementById('wheel');
             const ctx = canvas.getContext('2d');
-            const arcSize = (2 * Math.PI) / segments.length;
+            const arcSize = (2 * Math.PI) / window.gameApp.state.segments.length;
 
-            segments.forEach((color, i) => {
+            window.gameApp.state.segments.forEach((color, i) => {
                 const angle = i * arcSize;
                 ctx.beginPath();
-                ctx.fillStyle = colors[color];
+                ctx.fillStyle = window.gameApp.state.colors[color];
                 ctx.moveTo(150, 150);
                 ctx.arc(150, 150, 150, angle, angle + arcSize);
                 ctx.lineTo(150, 150);
                 ctx.fill();
             });
-        }
+        };
 
-        async function spinWheel() {
+        window.spinWheel = async function() {
             const btn = document.getElementById('spin-btn');
             const resultBox = document.getElementById('result-box');
             
@@ -426,73 +417,70 @@
             resultBox.style.display = 'none';
 
             const randomSpin = Math.floor(Math.random() * 360) + 1800;
-            currentRotation += randomSpin;
+            window.gameApp.state.currentRotation += randomSpin;
             
             const canvas = document.getElementById('wheel');
-            canvas.style.transform = `rotate(-${currentRotation}deg)`;
+            canvas.style.transform = `rotate(-${window.gameApp.state.currentRotation}deg)`;
 
             setTimeout(async () => {
-                const actualRotation = currentRotation % 360;
-                const segmentAngle = 360 / segments.length;
+                const actualRotation = window.gameApp.state.currentRotation % 360;
+                const segmentAngle = 360 / window.gameApp.state.segments.length;
                 const index = Math.floor(actualRotation / segmentAngle);
-                const winningColor = segments[index];
+                const winningColor = window.gameApp.state.segments[index];
 
-                await saveTask(winningColor);
-                
+                await window.saveTask(winningColor);
                 btn.disabled = false;
             }, 4000);
-        }
+        };
 
-        async function saveTask(color) {
-            // Получаем случайное задание из БД
-            const { data: tasks } = await supabase
+        window.saveTask = async function(color) {
+            const { data: tasks, error: fetchError } = await supabaseClient
                 .from('tasks')
                 .select('*')
                 .eq('color', color);
 
-            if (!tasks || tasks.length === 0) {
+            if (fetchError || !tasks || tasks.length === 0) {
                 alert('Ошибка: Нет заданий этого цвета в базе!');
                 return;
             }
 
             const task = tasks[Math.floor(Math.random() * tasks.length)];
+            const reward = color === 'red' ? 30 : (color === 'blue' ? 20 : 10);
 
-            // Сохраняем в историю пользователя
-            const { error } = await supabase
+            const { error: insertError } = await supabaseClient
                 .from('user_tasks')
                 .insert([{
-                    user_id: currentUser.id,
+                    user_id: window.gameApp.state.currentUser.id,
                     title: task.title,
                     description: task.description,
                     color: task.color,
                     status: 'pending',
-                    reward: color === 'red' ? 30 : (color === 'blue' ? 20 : 10)
+                    reward: reward
                 }]);
 
-            if (error) {
-                alert('Ошибка сохранения задания');
+            if (insertError) {
+                alert('Ошибка сохранения задания: ' + insertError.message);
                 return;
             }
 
-            // Показываем результат
             const badge = document.getElementById('res-badge');
-            badge.style.backgroundColor = colors[color];
+            badge.style.backgroundColor = window.gameApp.state.colors[color];
             badge.innerText = color === 'red' ? 'Сложно (+30)' : (color === 'blue' ? 'Средне (+20)' : 'Легко (+10)');
             
             document.getElementById('res-title').innerText = task.title;
             document.getElementById('res-desc').innerText = task.description;
             document.getElementById('result-box').style.display = 'block';
-        }
+        };
 
         // --- ЗАДАНИЯ ---
-        async function loadTasks() {
+        window.loadTasks = async function() {
             const list = document.getElementById('tasks-list');
             list.innerHTML = '<p>Загрузка...</p>';
 
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('user_tasks')
                 .select('*')
-                .eq('user_id', currentUser.id)
+                .eq('user_id', window.gameApp.state.currentUser.id)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -500,7 +488,7 @@
                 return;
             }
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 list.innerHTML = '<p>У вас пока нет заданий. Крутите рулетку!</p>';
                 return;
             }
@@ -509,7 +497,7 @@
             data.forEach(task => {
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.style.borderLeft = `5px solid ${colors[task.color]}`;
+                div.style.borderLeft = `5px solid ${window.gameApp.state.colors[task.color]}`;
                 
                 let actionHtml = '';
                 if (task.status === 'pending') {
@@ -520,11 +508,11 @@
                 } else {
                     const statusText = task.status === 'approved' ? '✅ Выполнено' : '❌ Отклонено';
                     const rewardText = task.status === 'approved' ? `+${task.reward} фишек` : '';
-                    actionHtml = `<div style="margin-top:10px; font-weight:bold;">${statusText} ${rewardText}</div>`;
+                    actionHtml = `<div style="margin-top:10px; font-weight:bold; color: ${task.status === 'approved' ? 'var(--primary)' : 'red'}">${statusText} ${rewardText}</div>`;
                 }
 
                 div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
                         <strong>${task.title}</strong>
                         <span class="badge status-${task.status}">${task.status === 'pending' ? 'Ожидает' : (task.status === 'approved' ? 'Готово' : 'Ошибка')}</span>
                     </div>
@@ -533,74 +521,75 @@
                 `;
                 list.appendChild(div);
             });
-        }
+        };
 
-        async function submitTask(taskId) {
+        window.submitTask = async function(taskId) {
             const answer = document.getElementById(`ans-${taskId}`).value;
             if (!answer) return alert('Введите ответ');
 
-            // В реальной игре здесь была бы отправка админу. 
-            // Для демо мы сразу одобряем задание, если ответ не пустой.
-            // Или можно оставить статус pending, чтобы админ проверил в БД.
-            // Давайте сделаем авто-одобрение для простоты игры сотрудника с самим собой, 
-            // либо оставим на усмотрение (сейчас код ниже меняет статус на approved).
-            
-            // ВАЖНО: Если нужна реальная проверка руководителем, уберите обновление статуса здесь.
-            // Сейчас реализовано: Сотрудник сдал -> Статус стал Approved -> Фишки начислены.
-            
-            const { data: task } = await supabase.from('user_tasks').select('reward').eq('id', taskId).single();
-            
+            // Получаем текущее задание для узнавания награды
+            const { data: taskData } = await supabaseClient
+                .from('user_tasks')
+                .select('reward')
+                .eq('id', taskId)
+                .single();
+
+            if (!taskData) return alert('Ошибка получения данных задания');
+
             // 1. Обновляем задание
-            await supabase.from('user_tasks').update({ 
+            await supabaseClient.from('user_tasks').update({ 
                 status: 'approved', 
                 user_answer: answer 
             }).eq('id', taskId);
 
-            // 2. Начисляем фишки и счетчик в профиль
-            await supabase.rpc('increment_profile_stats', { 
-                uid: currentUser.id, 
-                chips_to_add: task.reward 
-            }); 
-            // Примечание: RPC функцию нужно создать в SQL или сделать это через update profiles напрямую.
-            // Чтобы не усложнять SQL, сделаем это через два запроса ниже:
-            
-            // Обновление профиля (чтение текущего, потом запись нового) - небезопасно в проде, но ок для демо
-            // Лучше используем прямой SQL вызов через RPC, который мы добавим в шаг 1, или сделаем update через инкремент в JS (риск гонки).
-            // Для надежности добавим простую логику обновления профиля здесь:
-            
-            const { data: prof } = await supabase.from('profiles').select('chips, tasks_completed').eq('id', currentUser.id).single();
-            await supabase.from('profiles').update({
-                chips: prof.chips + task.reward,
-                tasks_completed: prof.tasks_completed + 1
-            }).eq('id', currentUser.id);
+            // 2. Получаем текущий профиль
+            const { data: profData } = await supabaseClient
+                .from('profiles')
+                .select('chips, tasks_completed')
+                .eq('id', window.gameApp.state.currentUser.id)
+                .single();
+
+            if (profData) {
+                // 3. Обновляем профиль
+                await supabaseClient.from('profiles').update({
+                    chips: profData.chips + taskData.reward,
+                    tasks_completed: profData.tasks_completed + 1
+                }).eq('id', window.gameApp.state.currentUser.id);
+            }
 
             alert('Задание отправлено и принято! Фишки начислены.');
-            loadTasks();
-            loadProfile();
-        }
+            window.loadTasks();
+            window.loadProfile(); // Обновить данные профиля если мы на этой вкладке
+        };
 
         // --- ПРОФИЛЬ И ТАБЛИЦА ---
-        async function loadProfile() {
-            const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-            userProfile = data;
-            updateProfileUI();
-        }
+        window.loadProfile = async function() {
+            const { data } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', window.gameApp.state.currentUser.id)
+                .single();
+            
+            window.gameApp.state.userProfile = data;
+            window.updateProfileUI();
+        };
 
-        function updateProfileUI() {
-            if (!userProfile) return;
-            document.getElementById('prof-email').innerText = userProfile.email;
-            document.getElementById('prof-chips').innerText = userProfile.chips;
-            document.getElementById('prof-tasks').innerText = userProfile.tasks_completed;
-            document.getElementById('prof-days').innerText = userProfile.days_in_game;
-        }
+        window.updateProfileUI = function() {
+            const prof = window.gameApp.state.userProfile;
+            if (!prof) return;
+            document.getElementById('prof-email').innerText = prof.email;
+            document.getElementById('prof-chips').innerText = prof.chips;
+            document.getElementById('prof-tasks').innerText = prof.tasks_completed;
+            document.getElementById('prof-days').innerText = prof.days_in_game;
+        };
 
-        async function loadLeaderboard() {
+        window.loadLeaderboard = async function() {
             const tbody = document.getElementById('leaderboard-body');
             tbody.innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
 
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('profiles')
-                .select('email, tasks_completed, days_in_game, chips')
+                .select('id, email, tasks_completed, days_in_game, chips')
                 .order('chips', { ascending: false })
                 .limit(20);
 
@@ -612,34 +601,60 @@
             tbody.innerHTML = '';
             data.forEach((p, index) => {
                 const tr = document.createElement('tr');
-                if (p.id === currentUser?.id) tr.style.background = 'var(--border-color)';
+                if (p.id === window.gameApp.state.currentUser?.id) tr.style.background = 'var(--border-color)';
+                const loginName = p.email ? p.email.split('@')[0] : 'User';
                 tr.innerHTML = `
-                    <td>${index + 1}. ${p.email.split('@')[0]}</td>
+                    <td>${index + 1}. ${loginName}</td>
                     <td>${p.tasks_completed}</td>
                     <td>${p.days_in_game}</td>
                     <td><strong>${p.chips}</strong></td>
                 `;
                 tbody.appendChild(tr);
             });
-        }
+        };
 
         // --- ТЕМА ---
-        function toggleTheme() {
+        window.toggleTheme = function() {
             const body = document.body;
             const current = body.getAttribute('data-theme');
             const next = current === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
-        }
+        };
 
-        function loadTheme() {
+        window.loadTheme = function() {
             const saved = localStorage.getItem('theme');
             if (saved) document.body.setAttribute('data-theme', saved);
-        }
+        };
 
-        // Запуск
-        init();
+        // --- ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            window.loadTheme();
+            window.drawWheel();
 
+            // Проверка сессии
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                window.gameApp.state.currentUser = session.user;
+                await window.loadProfile();
+                window.showApp();
+            } else {
+                window.showAuth();
+            }
+            
+            // Слушатель изменений авторизации
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN') {
+                    window.gameApp.state.currentUser = session.user;
+                    await window.loadProfile();
+                    window.showApp();
+                } else if (event === 'SIGNED_OUT') {
+                    window.gameApp.state.currentUser = null;
+                    window.gameApp.state.userProfile = null;
+                    window.showAuth();
+                }
+            });
+        });
     </script>
 </body>
 </html>
