@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Content Game</title>
+  <!-- Подключаем Supabase один раз -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -186,25 +187,11 @@
 
     /* Utils */
     .hidden { display: none !important; }
-    
-    /* Diagnostic Loading Screen */
-    .loading-screen { 
-      position: fixed; inset: 0; background: var(--bg); z-index: 999; 
-      display: flex; flex-direction: column; align-items: center; justify-content: center; 
-      padding: 20px; text-align: center;
-    }
-    .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--acc); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    .loading-screen { position: fixed; inset: 0; background: var(--bg); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--acc); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .debug-log { 
-      background: var(--bg-card); padding: 15px; border-radius: 8px; 
-      max-width: 500px; width: 100%; text-align: left; font-family: monospace; font-size: 13px;
-      border: 1px solid var(--border); max-height: 300px; overflow-y: auto;
-    }
-    .log-step { margin-bottom: 5px; color: var(--text-sec); }
-    .log-success { color: var(--ok); font-weight: bold; }
-    .log-error { color: var(--err); font-weight: bold; background: var(--err-bg); padding: 2px 5px; border-radius: 4px; }
-    .log-wait { color: #fbbf24; }
-
+    .error-banner { background: var(--err-bg); color: var(--err); padding: 15px; border-radius: 8px; margin: 20px; text-align: center; display: none; }
+    
     /* Toast Notifications */
     .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
     .toast { background: var(--bg-card); color: var(--text); padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-left: 4px solid var(--acc); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; min-width: 250px; }
@@ -215,14 +202,15 @@
 </head>
 <body>
 
-  <!-- Diagnostic Loading Screen -->
+  <!-- Loading Screen -->
   <div id="loading-screen" class="loading-screen">
     <div class="spinner"></div>
-    <h3 style="margin-bottom: 10px;">Загрузка системы...</h3>
-    <div id="debug-console" class="debug-log">
-      <div class="log-step">🚀 Инициализация...</div>
-    </div>
+    <p style="margin-top: 15px; color: var(--text-sec);">Загрузка системы...</p>
+    <div id="debug-log" style="margin-top:10px; font-size:12px; color:var(--text-sec); max-width: 300px; text-align:center;"></div>
   </div>
+
+  <!-- Error Banner -->
+  <div id="global-error" class="error-banner"></div>
 
   <!-- Auth Screen -->
   <div id="auth-screen" class="auth-screen hidden">
@@ -450,85 +438,66 @@
     let currentUser = null;
     let profile = null;
     let currentTab = 'roulette';
+    let isInitializing = false; // Флаг защиты от гонок
 
-    // Diagnostic Logger
-    function log(msg, type = 'step') {
-      const consoleEl = document.getElementById('debug-console');
-      if (!consoleEl) return;
-      const div = document.createElement('div');
-      div.className = `log-step log-${type}`;
-      div.textContent = (type === 'success' ? '✅ ' : type === 'error' ? '❌ ' : type === 'wait' ? '⏳ ' : '• ') + msg;
-      consoleEl.appendChild(div);
-      consoleEl.scrollTop = consoleEl.scrollHeight;
-      console.log(`[DIAGNOSTIC] ${type.toUpperCase()}: ${msg}`);
+    // Логирование на экран загрузки
+    function log(msg) {
+      const el = document.getElementById('debug-log');
+      if(el) el.textContent = msg;
+      console.log('[Init]', msg);
     }
 
     // Init
     window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        log('Проверка библиотеки Supabase...');
-        if (!window.supabase) throw new Error('Библиотека Supabase не загружена. Проверьте интернет.');
-        log('Библиотека найдена.', 'success');
+      if (isInitializing) return;
+      isInitializing = true;
 
-        log('Подключение к базе данных...');
+      try {
+        log('🚀 Инициализация...');
+        
+        if (!window.supabase) throw new Error('Библиотека Supabase не загружена');
+        log('• Проверка библиотеки... OK');
+        
         db = supabase.createClient(SB_URL, SB_KEY);
         
-        // Тест соединения
-        const { error: connError } = await db.from('profiles').select('count', { head: true, count: 'exact' });
-        if (connError) {
-          if (connError.message.includes('relation')) {
-             log('Таблицы не найдены! Нужно выполнить SQL скрипт.', 'error');
-          } else {
-             log('Ошибка подключения: ' + connError.message, 'error');
-          }
-          return;
-        }
-        log('База данных отвечает.', 'success');
-        
-        // Theme
+        // Тема
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
-        log('Тема применена.', 'success');
+        log('• Тема применена');
 
-        // Auth State
-        log('Проверка авторизации...');
+        // Настраиваем слушатель ОДИН раз
         db.auth.onAuthStateChange(async (event, session) => {
           if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            // Игнорируем повторные вызовы если уже загружено
+            if (currentUser) return; 
             currentUser = session?.user;
-            if (currentUser) {
-              log('Пользователь найден: ' + currentUser.email, 'success');
-              await loadProfile();
-            }
+            if (currentUser) await loadProfile();
           } else if (event === 'SIGNED_OUT') {
-            currentUser = null;
-            profile = null;
-            showScreen('auth');
+            location.reload(); // Перезагрузка при выходе для чистоты
           }
         });
 
-        const { data: sessionData, error: sessionError } = await db.auth.getSession();
-        if (sessionError) throw sessionError;
+        log('• Проверка сессии...');
+        const { data: { session }, error } = await db.auth.getSession();
         
-        if (sessionData?.session) {
-          currentUser = sessionData.session.user;
-          log('Активная сессия найдена.', 'success');
+        if (error) throw error;
+
+        if (session) {
+          currentUser = session.user;
+          log('✅ Сессия найдена, загрузка профиля...');
           await loadProfile();
         } else {
-          log('Сессия не найдена. Показываем вход.', 'wait');
+          log('⚠️ Сессии нет, показываем вход');
           showScreen('auth');
+          isInitializing = false;
         }
 
       } catch (e) {
-        log('КРИТИЧЕСКАЯ ОШИБКА: ' + e.message, 'error');
-        document.getElementById('loading-screen').innerHTML = `
-          <div style="color:var(--err); max-width:600px; text-align:left;">
-            <h2>Ошибка запуска</h2>
-            <p>${e.message}</p>
-            <p>Проверьте консоль браузера (F12) для деталей.</p>
-            <button class="btn" onclick="location.reload()">Перезагрузить</button>
-          </div>
-        `;
+        console.error(e);
+        log('❌ Ошибка: ' + e.message);
+        showError('Ошибка подключения: ' + e.message + '. Обновите страницу.');
+        isInitializing = false;
       }
     });
 
@@ -542,6 +511,13 @@
         document.getElementById('app-layout').classList.remove('hidden');
         document.getElementById('app-layout').style.display = 'flex'; 
       }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('global-error');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 10000);
     }
 
     function showToast(msg, type = 'info') {
@@ -602,6 +578,7 @@
       try {
         const { data, error } = await db.auth.signInWithPassword({ email, password: pass });
         if (error) throw error;
+        // onAuthStateChange обработает вход
       } catch (e) {
         err.textContent = e.message;
         err.style.display = 'block';
@@ -612,34 +589,35 @@
     // Profile Logic
     async function loadProfile() {
       try {
-        log('Загрузка профиля...');
+        if (!currentUser) return;
+
         const { data, error } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
         
         if (error) {
-          if (error.code === 'PGRST116') { // Row not found
-            log('Профиль не найден. Создаем автоматически...', 'wait');
-            const { error: insErr } = await db.from('profiles').insert({
-              id: currentUser.id,
-              email: currentUser.email,
-              name: currentUser.email.split('@')[0],
-              chips: 0,
-              days_in_game: 1,
-              role: currentUser.email === 'i@darkmoore.ru' ? 'admin' : 'user'
-            });
-            if (insErr) throw insErr;
-            
-            const {  newData } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-            profile = newData;
-            log('Профиль создан!', 'success');
+          // Если профиль не найден (PGRST116), создаем его
+          if (error.code === 'PGRST116') {
+             log('Профиль не найден, создаем...');
+             const { error: insErr } = await db.from('profiles').insert({
+               id: currentUser.id,
+               email: currentUser.email,
+               name: currentUser.email.split('@')[0],
+               chips: 0,
+               days_in_game: 1,
+               next_spin_at: new Date(0).toISOString() // Сразу доступен спин
+             });
+             if (insErr) throw insErr;
+             
+             // Повторный запрос
+             const {  newData } = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+             profile = newData;
           } else {
             throw error;
           }
         } else {
           profile = data;
-          log('Профиль загружен.', 'success');
         }
-        
-        // Update UI
+
+        // Обновление UI
         document.getElementById('sidebar-name').textContent = profile.name || 'User';
         document.getElementById('sidebar-avatar').textContent = (profile.name || 'U')[0].toUpperCase();
         document.getElementById('sidebar-chips').textContent = profile.chips;
@@ -649,23 +627,20 @@
         document.getElementById('stat-days').textContent = profile.days_in_game || 1;
         document.getElementById('stat-streak').textContent = profile.daily_streak || 0;
 
-        // Admin Check
-        if (profile.role === 'admin') {
-          document.getElementById('nav-admin').classList.remove('hidden');
-          log('Режим администратора активирован.', 'success');
-        } else {
-          document.getElementById('nav-admin').classList.add('hidden');
-        }
+        if (profile.role === 'admin') document.getElementById('nav-admin').classList.remove('hidden');
+        else document.getElementById('nav-admin').classList.add('hidden');
 
         showScreen('app');
         updateSpinUI(profile.next_spin_at);
         
+        // Загружаем первую вкладку
         switchTab(currentTab, document.querySelector(`.nav-item[onclick*="${currentTab}"]`) || document.querySelector('.nav-item'));
+        isInitializing = false;
 
       } catch (e) {
         console.error(e);
-        log('Ошибка профиля: ' + e.message, 'error');
-        alert('Ошибка загрузки профиля: ' + e.message);
+        showError('Критическая ошибка профиля: ' + e.message);
+        isInitializing = false;
       }
     }
 
@@ -770,7 +745,7 @@
           } catch (e) {
             showToast(e.message, 'error');
             btn.disabled = false;
-            if(!isReroll) updateSpinUI(profile.next_spin_at);
+            if(!isReroll && profile) updateSpinUI(profile.next_spin_at);
           }
         }, 4000);
       }, 50);
@@ -807,7 +782,7 @@
           });
         });
       } else {
-        list.innerHTML += '<p>Нет новых заданий (попробуйте еще раз).</p>';
+        list.innerHTML += '<p>Нет новых заданий.</p>';
       }
       
       modal.style.display = 'flex';
@@ -857,8 +832,8 @@
         const pct = Math.max(0, Math.min(100, (remaining / total) * 100));
         
         let color = 'var(--ok)';
-        if (pct < 50) color = '#fbbf24'; 
-        if (pct < 20) color = 'var(--err)'; 
+        if (pct < 50) color = '#fbbf24';
+        if (pct < 20) color = 'var(--err)';
 
         const diffClass = `badge-${t.tasks_pool?.difficulty || 'medium'}`;
         const diffName = t.tasks_pool?.difficulty || 'medium';
@@ -970,8 +945,10 @@
       }
       
       data.forEach(t => {
+        // Безопасная сериализация для onclick
+        const taskStr = JSON.stringify(t).replace(/'/g, "&apos;");
         box.innerHTML += `
-          <div class="history-item clickable-row" onclick='showTaskDetail(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
+          <div class="history-item clickable-row" onclick='showTaskDetail(${taskStr})'>
             <span>${t.tasks_pool?.title || 'Задание'}</span>
             <span style="color:var(--text-sec); font-size:12px;">${new Date(t.completed_at).toLocaleDateString()}</span>
           </div>
