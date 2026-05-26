@@ -3,198 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameWork Roulette</title>
-    <!-- Подключаем Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>GameWork Roulette (Google Sheets)</title>
     <style>
-        :root {
-            --bg-color: #f0f2f5;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --sidebar-bg: #ffffff;
-            --border-color: #e5e7eb;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #111827;
-            --text-color: #f3f4f6;
-            --card-bg: #1f2937;
-            --sidebar-bg: #1f2937;
-            --border-color: #374151;
-            --primary: #60a5fa;
-            --primary-hover: #3b82f6;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background 0.3s, color 0.3s;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Auth Styles */
-        #auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .auth-box {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            box-sizing: border-box;
-        }
+        /* Стили те же самые, что и раньше */
+        :root { --bg-color: #f0f2f5; --text-color: #333; --card-bg: #ffffff; --sidebar-bg: #ffffff; --border-color: #e5e7eb; --primary: #3b82f6; --primary-hover: #2563eb; }
+        [data-theme="dark"] { --bg-color: #111827; --text-color: #f3f4f6; --card-bg: #1f2937; --sidebar-bg: #1f2937; --border-color: #374151; --primary: #60a5fa; --primary-hover: #3b82f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); height: 100vh; overflow: hidden; transition: 0.3s; }
         
-        /* App Layout */
-        #app-container {
-            display: none;
-            display: flex;
-            height: 100vh;
-        }
+        #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .auth-box { background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
         
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            transition: background 0.3s;
-        }
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            padding: 12px;
-            text-align: left;
-            cursor: pointer;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        .nav-btn:hover, .nav-btn.active {
-            background-color: var(--primary);
-            color: white;
-        }
-        .theme-toggle {
-            margin-top: auto;
-            border: 1px solid var(--border-color);
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            position: relative;
-        }
-        .page {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
+        #app-container { display: none; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
+        .nav-btn { background: none; border: none; color: var(--text-color); padding: 12px; text-align: left; cursor: pointer; border-radius: 6px; margin-bottom: 5px; font-size: 16px; }
+        .nav-btn:hover, .nav-btn.active { background-color: var(--primary); color: white; }
+        .theme-toggle { margin-top: auto; border: 1px solid var(--border-color); }
+        
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .page { display: none; animation: fadeIn 0.3s; }
         .page.active { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Wheel */
-        .wheel-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-        }
-        .pointer {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid var(--text-color);
-            z-index: 10;
-        }
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
+        canvas { width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+        .pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--text-color); z-index: 10; }
 
-        /* Buttons & Cards */
-        button.action-btn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+        button.action-btn { padding: 12px 24px; font-size: 16px; background-color: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
         button.action-btn:hover { background-color: var(--primary-hover); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        /* Tables */
+        .card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { color: var(--primary); }
-
-        /* Badges */
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            color: white;
-            font-size: 0.8em;
-            display: inline-block;
-        }
+        .badge { padding: 4px 8px; border-radius: 12px; color: white; font-size: 0.8em; display: inline-block; }
         .status-pending { background-color: #f59e0b; }
         .status-approved { background-color: #22c55e; }
-        .status-rejected { background-color: #ef4444; }
-
-        /* Result Box */
-        #result-box {
-            margin-top: 20px;
-            text-align: center;
-            display: none;
-        }
+        #result-box { margin-top: 20px; text-align: center; display: none; }
     </style>
 </head>
 <body>
 
-    <!-- AUTH SCREEN -->
+    <!-- AUTH -->
     <div id="auth-container">
         <div class="auth-box">
             <h2 id="auth-title">Вход</h2>
@@ -205,10 +56,11 @@
                 <span id="auth-switch-text">Нет аккаунта? Зарегистрироваться</span>
             </p>
             <p id="auth-error" style="color: red; font-size: 0.9em; display: none;"></p>
+            <p id="loading-msg" style="color: var(--primary); display: none;">Загрузка...</p>
         </div>
     </div>
 
-    <!-- APP SCREEN -->
+    <!-- APP -->
     <div id="app-container" style="display: none;">
         <div class="sidebar">
             <h3 style="margin-top: 0;">GameWork</h3>
@@ -217,12 +69,11 @@
             <button class="nav-btn" onclick="showPage('leaderboard')">🏆 Таблица</button>
             <button class="nav-btn" onclick="showPage('profile')">👤 Профиль</button>
             <button class="nav-btn" onclick="logout()">🚪 Выход</button>
-            
             <button class="nav-btn theme-toggle" onclick="toggleTheme()">🌓 Тема</button>
         </div>
 
         <div class="main-content">
-            <!-- ROULETTE PAGE -->
+            <!-- ROULETTE -->
             <div id="page-roulette" class="page active">
                 <h1>Испытай удачу!</h1>
                 <div class="wheel-container">
@@ -232,61 +83,39 @@
                 <div style="text-align: center;">
                     <button class="action-btn" style="width: auto; padding: 15px 40px;" id="spin-btn" onclick="spinWheel()">Крутить рулетку</button>
                 </div>
-                
                 <div id="result-box" class="card">
                     <div id="res-badge" class="badge"></div>
                     <h3 id="res-title"></h3>
                     <p id="res-desc"></p>
-                    <p style="font-size: 0.9em; color: #888;">Задание сохранено во вкладке "Задания"</p>
                 </div>
             </div>
 
-            <!-- TASKS PAGE -->
+            <!-- TASKS -->
             <div id="page-tasks" class="page">
                 <h1>Мои Задания</h1>
-                <div id="tasks-list">
-                    <p>Загрузка...</p>
-                </div>
+                <div id="tasks-list"><p>Загрузка...</p></div>
             </div>
 
-            <!-- LEADERBOARD PAGE -->
+            <!-- LEADERBOARD -->
             <div id="page-leaderboard" class="page">
                 <h1>Турнирная таблица</h1>
                 <div class="card">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Логин</th>
-                                <th>Заданий</th>
-                                <th>Дней в игре</th>
-                                <th>Фишки</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-body">
-                            <!-- Data -->
-                        </tbody>
+                        <thead><tr><th>Логин</th><th>Заданий</th><th>Дней</th><th>Фишки</th></tr></thead>
+                        <tbody id="leaderboard-body"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- PROFILE PAGE -->
+            <!-- PROFILE -->
             <div id="page-profile" class="page">
                 <h1>Профиль</h1>
                 <div class="card" style="text-align: center;">
                     <h2 id="prof-email"></h2>
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
-                        <div>
-                            <h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3>
-                            <small>Фишки</small>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; color: var(--primary);" id="prof-tasks">0</h3>
-                            <small>Выполнено</small>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; color: var(--primary);" id="prof-days">1</h3>
-                            <small>Дней в игре</small>
-                        </div>
+                        <div><h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3><small>Фишки</small></div>
+                        <div><h3 style="margin:0; color: var(--primary);" id="prof-tasks">0</h3><small>Выполнено</small></div>
+                        <div><h3 style="margin:0; color: var(--primary);" id="prof-days">1</h3><small>Дней</small></div>
                     </div>
                 </div>
             </div>
@@ -294,122 +123,130 @@
     </div>
 
     <script>
-        // --- КОНФИГУРАЦИЯ SUPABASE ---
-        var SUPABASE_URL = 'https://lgvrgxvityaobrqstzzs.supabase.co';
-        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxndnJneHZpdHlhb2JycXN0enpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTA0MzUsImV4cCI6MjA5NTAyNjQzNX0.ER8QkSTpVWAYiRXD-d-_d3SoqeQkKsBK04c8RhiOxe8';
-        
-        // ИСПРАВЛЕНИЕ: Используем var и проверяем, не создан ли клиент уже
-        var supabaseClient;
-        if (!window.supabaseClientInstance) {
-            window.supabaseClientInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        }
-        supabaseClient = window.supabaseClientInstance;
+        // === НАСТРОЙКИ ===
+        // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ ИЗ ШАГА 3
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4fs9I3OlZIhixZDRXFmYyEMEjSqCy3R6hyAdJ6PR00aPUaGjlPSqqMNCCnm-veyss/exec';
 
-        // --- СОСТОЯНИЕ ---
-        var isLoginMode = true;
         var currentUser = null;
-        var userProfile = null;
         var currentRotation = 0;
-        
-        var colors = {
-            'red': '#ef4444',
-            'blue': '#3b82f6',
-            'green': '#22c55e'
-        };
+        var colors = { 'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e' };
         var segments = ['red', 'blue', 'green'];
 
-        // --- ИНИЦИАЛИЗАЦИЯ ---
-        async function initApp() {
-            // Проверка сессии
-            var sessionResponse = await supabaseClient.auth.getSession();
-            var session = sessionResponse.data.session;
-            
-            if (session) {
-                currentUser = session.user;
-                await loadProfile();
+        // === ИНИЦИАЛИЗАЦИЯ ===
+        window.onload = function() {
+            var savedUser = localStorage.getItem('gw_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
                 showApp();
             } else {
                 showAuth();
             }
-            
-            // Слушатель изменений авторизации
-            supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN') {
-                    currentUser = session.user;
-                    await loadProfile();
-                    showApp();
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    userProfile = null;
-                    showAuth();
-                }
-            });
-
             drawWheel();
             loadTheme();
+        };
+
+        // === API ЗАПРОСЫ ===
+        function apiCall(action, params, method) {
+            document.getElementById('loading-msg').style.display = 'block';
+            
+            var url = SCRIPT_URL + '?action=' + action;
+            if (params) {
+                Object.keys(params).forEach(key => url += '&' + key + '=' + encodeURIComponent(params[key]));
+            }
+
+            return fetch(url, {
+                method: method || 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading-msg').style.display = 'none';
+                return data;
+            })
+            .catch(err => {
+                document.getElementById('loading-msg').style.display = 'none';
+                console.error(err);
+                alert('Ошибка соединения с таблицей');
+                return { error: 'Connection failed' };
+            });
         }
 
-        // --- АВТОРИЗАЦИЯ (Глобальные функции) ---
+        function apiPost(action, dataObj) {
+            document.getElementById('loading-msg').style.display = 'block';
+            // Используем текстовый режим для обхода CORS preflight в простых скриптах
+            return fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: action, ...dataObj })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading-msg').style.display = 'none';
+                return data;
+            })
+            .catch(err => {
+                document.getElementById('loading-msg').style.display = 'none';
+                alert('Ошибка соединения');
+                return { error: 'Failed' };
+            });
+        }
+
+        // === АВТОРИЗАЦИЯ ===
+        var isLoginMode = true;
         window.toggleAuthMode = function() {
             isLoginMode = !isLoginMode;
             document.getElementById('auth-title').innerText = isLoginMode ? 'Вход' : 'Регистрация';
             document.getElementById('auth-action-btn').innerText = isLoginMode ? 'Войти' : 'Зарегистрироваться';
             document.getElementById('auth-switch-text').innerText = isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Есть аккаунт? Войти';
             document.getElementById('auth-error').style.display = 'none';
-        }
+        };
 
-        window.handleAuth = async function() {
+        window.handleAuth = function() {
             var email = document.getElementById('email').value;
-            var password = document.getElementById('password').value;
-            var errorDisplay = document.getElementById('auth-error');
+            var pass = document.getElementById('password').value;
+            if (!email || !pass) return alert('Заполните поля');
 
-            if (!email || !password) {
-                errorDisplay.innerText = 'Заполните все поля';
-                errorDisplay.style.display = 'block';
-                return;
-            }
-
-            var error;
             if (isLoginMode) {
-                var res = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
-                error = res.error;
+                apiCall('login', { email: email, password: pass }).then(res => {
+                    if (res.success) {
+                        currentUser = res.user;
+                        localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                        showApp();
+                    } else {
+                        document.getElementById('auth-error').innerText = res.message;
+                        document.getElementById('auth-error').style.display = 'block';
+                    }
+                });
             } else {
-                var res = await supabaseClient.auth.signUp({ email: email, password: password });
-                error = res.error;
-                if (!error) {
-                    alert('Регистрация успешна! Теперь войдите.');
-                    toggleAuthMode(); // Переключить на вход
-                    return;
-                }
+                apiPost('register', { email: email, password: pass }).then(res => {
+                    if (res.success) {
+                        alert('Регистрация успешна! Теперь войдите.');
+                        toggleAuthMode();
+                    } else {
+                        document.getElementById('auth-error').innerText = res.message;
+                        document.getElementById('auth-error').style.display = 'block';
+                    }
+                });
             }
+        };
 
-            if (error) {
-                errorDisplay.innerText = error.message;
-                errorDisplay.style.display = 'block';
-            }
-        }
+        window.logout = function() {
+            localStorage.removeItem('gw_user');
+            location.reload();
+        };
 
-        window.logout = async function() {
-            await supabaseClient.auth.signOut();
-            location.reload(); // Перезагрузка для чистоты состояния
-        }
-
-        // --- НАВИГАЦИЯ ---
+        // === НАВИГАЦИЯ ===
         function showAuth() {
             document.getElementById('auth-container').style.display = 'flex';
             document.getElementById('app-container').style.display = 'none';
         }
-
         function showApp() {
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'flex';
             showPage('roulette');
         }
-
         window.showPage = function(pageId) {
-            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-            document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
-            
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
             
             var btns = document.querySelectorAll('.nav-btn');
@@ -417,247 +254,158 @@
             if(pageId === 'tasks') { btns[1].classList.add('active'); loadTasks(); }
             if(pageId === 'leaderboard') { btns[2].classList.add('active'); loadLeaderboard(); }
             if(pageId === 'profile') { btns[3].classList.add('active'); updateProfileUI(); }
-        }
+        };
 
-        // --- РУЛЕТКА ---
+        // === РУЛЕТКА ===
         function drawWheel() {
             var canvas = document.getElementById('wheel');
             var ctx = canvas.getContext('2d');
             var arcSize = (2 * Math.PI) / segments.length;
-
             segments.forEach(function(color, i) {
-                var angle = i * arcSize;
                 ctx.beginPath();
                 ctx.fillStyle = colors[color];
                 ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, angle, angle + arcSize);
-                ctx.lineTo(150, 150);
+                ctx.arc(150, 150, 150, i * arcSize, (i + 1) * arcSize);
                 ctx.fill();
             });
         }
 
-        window.spinWheel = async function() {
+        window.spinWheel = function() {
             var btn = document.getElementById('spin-btn');
             var resultBox = document.getElementById('result-box');
-            
             btn.disabled = true;
             resultBox.style.display = 'none';
 
             var randomSpin = Math.floor(Math.random() * 360) + 1800;
             currentRotation += randomSpin;
-            
-            var canvas = document.getElementById('wheel');
-            canvas.style.transform = 'rotate(-' + currentRotation + 'deg)';
+            document.getElementById('wheel').style.transform = 'rotate(-' + currentRotation + 'deg)';
 
-            setTimeout(async function() {
-                var actualRotation = currentRotation % 360;
-                var segmentAngle = 360 / segments.length;
-                var index = Math.floor(actualRotation / segmentAngle);
-                var winningColor = segments[index];
-
-                await saveTask(winningColor);
-                btn.disabled = false;
+            setTimeout(function() {
+                var index = Math.floor((currentRotation % 360) / (360 / segments.length));
+                var color = segments[index];
+                
+                // Получаем задание из таблицы
+                apiCall('getTasks', { color: color }).then(res => {
+                    if (res.tasks && res.tasks.length > 0) {
+                        var task = res.tasks[Math.floor(Math.random() * res.tasks.length)];
+                        
+                        // Сохраняем в историю
+                        apiPost('saveTask', {
+                            email: currentUser.email,
+                            title: task.title,
+                            desc: task.description,
+                            color: color,
+                            reward: task.reward
+                        }).then(() => {
+                            var badge = document.getElementById('res-badge');
+                            badge.style.backgroundColor = colors[color];
+                            badge.innerText = (color === 'red' ? 'Сложно' : (color === 'blue' ? 'Средне' : 'Легко')) + ' (+' + task.reward + ')';
+                            document.getElementById('res-title').innerText = task.title;
+                            document.getElementById('res-desc').innerText = task.description;
+                            resultBox.style.display = 'block';
+                            btn.disabled = false;
+                        });
+                    } else {
+                        alert('Нет заданий такого цвета в таблице!');
+                        btn.disabled = false;
+                    }
+                });
             }, 4000);
-        }
+        };
 
-        async function saveTask(color) {
-            // Получаем случайное задание из БД
-            var response = await supabaseClient
-                .from('tasks')
-                .select('*')
-                .eq('color', color)
-                .limit(1); // Берем одно случайное (в идеале нужно перемешивать, но limit 1 проще)
-
-            // Если заданий мало, лучше взять все и выбрать случайно в JS, но для простоты возьмем первый попавшийся
-            // Чтобы было случайнее, можно сделать select('*'), а потом выбрать рандомный из data
-            var allTasksResponse = await supabaseClient.from('tasks').select('*').eq('color', color);
-            
-            if (!allTasksResponse.data || allTasksResponse.data.length === 0) {
-                alert('Ошибка: Нет заданий этого цвета в базе!');
-                return;
-            }
-
-            var tasks = allTasksResponse.data;
-            var task = tasks[Math.floor(Math.random() * tasks.length)];
-            var reward = color === 'red' ? 30 : (color === 'blue' ? 20 : 10);
-
-            // Сохраняем в историю пользователя
-            var insertError = await supabaseClient
-                .from('user_tasks')
-                .insert([{
-                    user_id: currentUser.id,
-                    title: task.title,
-                    description: task.description,
-                    color: task.color,
-                    status: 'pending',
-                    reward: reward
-                }]);
-
-            if (insertError.error) {
-                alert('Ошибка сохранения задания: ' + insertError.error.message);
-                return;
-            }
-
-            // Показываем результат
-            var badge = document.getElementById('res-badge');
-            badge.style.backgroundColor = colors[color];
-            badge.innerText = color === 'red' ? 'Сложно (+30)' : (color === 'blue' ? 'Средне (+20)' : 'Легко (+10)');
-            
-            document.getElementById('res-title').innerText = task.title;
-            document.getElementById('res-desc').innerText = task.description;
-            document.getElementById('result-box').style.display = 'block';
-        }
-
-        // --- ЗАДАНИЯ ---
-        window.loadTasks = async function() {
+        // === ЗАДАНИЯ ===
+        window.loadTasks = function() {
             var list = document.getElementById('tasks-list');
-            list.innerHTML = '<p>Загрузка...</p>';
-
-            var response = await supabaseClient
-                .from('user_tasks')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
-
-            if (response.error) {
-                list.innerHTML = '<p>Ошибка загрузки</p>';
-                return;
-            }
-
-            var data = response.data;
-            if (data.length === 0) {
-                list.innerHTML = '<p>У вас пока нет заданий. Крутите рулетку!</p>';
-                return;
-            }
-
-            list.innerHTML = '';
-            data.forEach(function(task) {
-                var div = document.createElement('div');
-                div.className = 'card';
-                div.style.borderLeft = '5px solid ' + colors[task.color];
-                
-                var actionHtml = '';
-                if (task.status === 'pending') {
-                    actionHtml = 
-                        '<textarea id="ans-' + task.id + '" placeholder="Ваш ответ..." style="width:100%; margin:10px 0; padding:8px; background:var(--bg-color); color:var(--text-color); border:1px solid var(--border-color);"></textarea>' +
-                        '<button class="action-btn" onclick="submitTask(' + task.id + ', ' + task.reward + ')">Отправить на проверку</button>';
-                } else {
-                    var statusText = task.status === 'approved' ? '✅ Выполнено' : '❌ Отклонено';
-                    var rewardText = task.status === 'approved' ? '+' + task.reward + ' фишек' : '';
-                    actionHtml = '<div style="margin-top:10px; font-weight:bold;">' + statusText + ' ' + rewardText + '</div>';
+            list.innerHTML = 'Загрузка...';
+            
+            apiCall('getHistory', { email: currentUser.email }).then(res => {
+                if (!res.history || res.history.length === 0) {
+                    list.innerHTML = '<p>Нет заданий. Крутите рулетку!</p>';
+                    return;
                 }
-
-                div.innerHTML = 
-                    '<div style="display:flex; justify-content:space-between;">' +
-                        '<strong>' + task.title + '</strong>' +
-                        '<span class="badge status-' + task.status + '">' + (task.status === 'pending' ? 'Ожидает' : (task.status === 'approved' ? 'Готово' : 'Ошибка')) + '</span>' +
-                    '</div>' +
-                    '<p>' + task.description + '</p>' +
-                    actionHtml;
                 
-                list.appendChild(div);
+                list.innerHTML = '';
+                res.history.forEach(function(task, idx) {
+                    var div = document.createElement('div');
+                    div.className = 'card';
+                    div.style.borderLeft = '5px solid ' + colors[task.color];
+                    
+                    var actionHtml = '';
+                    if (task.status === 'pending') {
+                        actionHtml = '<textarea id="ans-' + idx + '" placeholder="Ответ..." style="width:100%; margin:10px 0; padding:8px;"></textarea>' +
+                                     '<button class="action-btn" onclick="submitAnswer(\'' + task.title + '\', \'' + task.reward + '\', ' + idx + ')">Отправить</button>';
+                    } else {
+                        actionHtml = '<div style="margin-top:10px; font-weight:bold;">✅ Выполнено (+ ' + task.reward + ')</div>';
+                    }
+
+                    div.innerHTML = '<strong>' + task.title + '</strong> <span class="badge status-' + task.status + '">' + task.status + '</span>' +
+                                    '<p>' + task.description + '</p>' + actionHtml;
+                    list.appendChild(div);
+                });
             });
-        }
+        };
 
-        window.submitTask = async function(taskId, reward) {
-            var answerField = document.getElementById('ans-' + taskId);
-            var answer = answerField ? answerField.value : '';
-            
-            if (!answer) return alert('Введите ответ');
+        window.submitAnswer = function(title, reward, idx) {
+            var ans = document.getElementById('ans-' + idx).value;
+            if (!ans) return alert('Введите ответ');
 
-            // 1. Обновляем задание
-            await supabaseClient.from('user_tasks').update({ 
-                status: 'approved', 
-                user_answer: answer 
-            }).eq('id', taskId);
+            apiPost('submitAnswer', {
+                email: currentUser.email,
+                taskTitle: title,
+                answer: ans,
+                reward: reward
+            }).then(res => {
+                if (res.success) {
+                    alert('Принято! Фишки начислены.');
+                    // Обновляем локально данные о фишках
+                    currentUser.chips = res.newChips;
+                    currentUser.tasks_completed = (currentUser.tasks_completed || 0) + 1;
+                    localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                    loadTasks();
+                } else {
+                    alert('Ошибка: ' + res.message);
+                }
+            });
+        };
 
-            // 2. Читаем текущий профиль
-            var profResp = await supabaseClient.from('profiles').select('chips, tasks_completed').eq('id', currentUser.id).single();
-            
-            if (profResp.error) {
-                alert('Ошибка профиля: ' + profResp.error.message);
-                return;
-            }
-
-            var prof = profResp.data;
-            var newChips = (prof.chips || 0) + reward;
-            var newTasks = (prof.tasks_completed || 0) + 1;
-
-            // 3. Обновляем профиль
-            await supabaseClient.from('profiles').update({
-                chips: newChips,
-                tasks_completed: newTasks
-            }).eq('id', currentUser.id);
-
-            alert('Задание отправлено и принято! Фишки начислены.');
-            loadTasks();
-            loadProfile();
-        }
-
-        // --- ПРОФИЛЬ И ТАБЛИЦА ---
-        async function loadProfile() {
-            var response = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
-            if (!response.error) {
-                userProfile = response.data;
-                updateProfileUI();
-            }
-        }
-
+        // === ПРОФИЛЬ И ТАБЛИЦА ===
         function updateProfileUI() {
-            if (!userProfile) return;
-            document.getElementById('prof-email').innerText = userProfile.email;
-            document.getElementById('prof-chips').innerText = userProfile.chips || 0;
-            document.getElementById('prof-tasks').innerText = userProfile.tasks_completed || 0;
-            document.getElementById('prof-days').innerText = userProfile.days_in_game || 1;
+            document.getElementById('prof-email').innerText = currentUser.email;
+            document.getElementById('prof-chips').innerText = currentUser.chips || 0;
+            document.getElementById('prof-tasks').innerText = currentUser.tasks_completed || 0;
+            document.getElementById('prof-days').innerText = currentUser.days_in_game || 1;
         }
 
-        window.loadLeaderboard = async function() {
+        window.loadLeaderboard = function() {
             var tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
-
-            var response = await supabaseClient
-                .from('profiles')
-                .select('email, tasks_completed, days_in_game, chips')
-                .order('chips', { ascending: false })
-                .limit(20);
-
-            if (response.error) {
-                tbody.innerHTML = '<tr><td colspan="4">Ошибка</td></tr>';
-                return;
-            }
-
-            var data = response.data;
-            tbody.innerHTML = '';
-            data.forEach(function(p, index) {
-                var tr = document.createElement('tr');
-                if (p.id === currentUser?.id) tr.style.background = 'var(--border-color)';
-                var loginName = p.email ? p.email.split('@')[0] : 'User';
-                tr.innerHTML = 
-                    '<td>' + (index + 1) + '. ' + loginName + '</td>' +
-                    '<td>' + (p.tasks_completed || 0) + '</td>' +
-                    '<td>' + (p.days_in_game || 1) + '</td>' +
-                    '<td><strong>' + (p.chips || 0) + '</strong></td>';
-                tbody.appendChild(tr);
+            tbody.innerHTML = 'Загрузка...';
+            
+            apiCall('getLeaderboard', {}).then(res => {
+                if (!res.leaderboard) return;
+                tbody.innerHTML = '';
+                res.leaderboard.forEach(function(u, i) {
+                    var tr = document.createElement('tr');
+                    if (u.email === currentUser.email) tr.style.background = 'var(--border-color)';
+                    tr.innerHTML = '<td>' + (i+1) + '. ' + u.email.split('@')[0] + '</td>' +
+                                   '<td>' + u.tasks_completed + '</td>' +
+                                   '<td>' + u.days_in_game + '</td>' +
+                                   '<td><strong>' + u.chips + '</strong></td>';
+                    tbody.appendChild(tr);
+                });
             });
-        }
+        };
 
-        // --- ТЕМА ---
+        // === ТЕМА ===
         window.toggleTheme = function() {
             var body = document.body;
-            var current = body.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
+            var next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
-        }
-
+        };
         function loadTheme() {
-            var saved = localStorage.getItem('theme');
-            if (saved) document.body.setAttribute('data-theme', saved);
+            var t = localStorage.getItem('theme');
+            if (t) document.body.setAttribute('data-theme', t);
         }
-
-        // Запуск после загрузки DOM
-        document.addEventListener('DOMContentLoaded', initApp);
-
     </script>
 </body>
 </html>
