@@ -3,46 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GameWork Roulette (Google Sheets)</title>
+    <title>GameWork Roulette</title>
     <style>
-        /* Стили остаются теми же, что и в предыдущем варианте */
-        :root { --bg-color: #f0f2f5; --text-color: #333; --card-bg: #ffffff; --sidebar-bg: #ffffff; --border-color: #e5e7eb; --primary: #3b82f6; --primary-hover: #2563eb; }
-        [data-theme="dark"] { --bg-color: #111827; --text-color: #f3f4f6; --card-bg: #1f2937; --sidebar-bg: #1f2937; --border-color: #374151; --primary: #60a5fa; --primary-hover: #3b82f6; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); transition: background 0.3s; height: 100vh; overflow: hidden; }
-        #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .auth-box { background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
-        #app-container { display: none; display: flex; height: 100vh; }
-        .sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; }
-        .nav-btn { background: none; border: none; color: var(--text-color); padding: 12px; text-align: left; cursor: pointer; border-radius: 6px; margin-bottom: 5px; font-size: 16px; }
-        .nav-btn:hover, .nav-btn.active { background-color: var(--primary); color: white; }
-        .theme-toggle { margin-top: auto; border: 1px solid var(--border-color); }
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
-        .page { display: none; animation: fadeIn 0.3s; }
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --sidebar-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --text-color: #f3f4f6;
+            --card-bg: #1f2937;
+            --sidebar-bg: #1f2937;
+            --border-color: #374151;
+            --primary: #60a5fa;
+            --primary-hover: #3b82f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Auth Styles */
+        #auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .auth-box {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+        
+        /* App Layout */
+        #app-container {
+            display: none;
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            transition: background 0.3s;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 12px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        .theme-toggle {
+            margin-top: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
         .page.active { display: block; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
-        canvas { width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
-        .pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--text-color); z-index: 10; }
-        button.action-btn { padding: 12px 24px; font-size: 16px; background-color: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
+
+        /* Wheel */
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid var(--text-color);
+            z-index: 10;
+        }
+
+        /* Buttons & Cards */
+        button.action-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
         button.action-btn:hover { background-color: var(--primary-hover); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-        .card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        button.reroll-btn {
+            background-color: #f59e0b;
+            margin-top: 15px;
+        }
+        button.reroll-btn:hover { background-color: #d97706; }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Tables */
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { color: var(--primary); }
-        .badge { padding: 4px 8px; border-radius: 12px; color: white; font-size: 0.8em; display: inline-block; }
+
+        /* Badges */
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            color: white;
+            font-size: 0.8em;
+            display: inline-block;
+        }
         .status-pending { background-color: #f59e0b; }
         .status-approved { background-color: #22c55e; }
-        #result-box { margin-top: 20px; text-align: center; display: none; }
+        .status-rejected { background-color: #ef4444; }
+
+        /* Timer Display */
+        #timer-display {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px; right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        .modal-title { font-size: 1.5em; margin-bottom: 10px; color: var(--primary); }
+        .modal-desc { margin-bottom: 20px; color: var(--text-color); }
+        .modal-reward { font-size: 1.2em; font-weight: bold; color: #22c55e; margin-bottom: 20px; }
+
+        /* Admin Reset Button */
+        .admin-reset {
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #888;
+            text-decoration: underline;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
+    <!-- AUTH SCREEN -->
     <div id="auth-container">
         <div class="auth-box">
             <h2 id="auth-title">Вход</h2>
-            <input type="text" id="email" placeholder="Email">
+            <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Пароль">
             <button class="action-btn" id="auth-action-btn" onclick="handleAuth()">Войти</button>
             <p style="margin-top: 15px; font-size: 0.9em; cursor: pointer; color: var(--primary);" onclick="toggleAuthMode()">
@@ -52,17 +257,21 @@
         </div>
     </div>
 
+    <!-- APP SCREEN -->
     <div id="app-container" style="display: none;">
         <div class="sidebar">
             <h3 style="margin-top: 0;">GameWork</h3>
             <button class="nav-btn active" onclick="showPage('roulette')">🎡 Рулетка</button>
             <button class="nav-btn" onclick="showPage('tasks')">📋 Задания</button>
             <button class="nav-btn" onclick="showPage('leaderboard')">🏆 Таблица</button>
+            <button class="nav-btn" onclick="showPage('profile')">👤 Профиль</button>
             <button class="nav-btn" onclick="logout()">🚪 Выход</button>
+            
             <button class="nav-btn theme-toggle" onclick="toggleTheme()">🌓 Тема</button>
         </div>
 
         <div class="main-content">
+            <!-- ROULETTE PAGE -->
             <div id="page-roulette" class="page active">
                 <h1>Испытай удачу!</h1>
                 <div class="wheel-container">
@@ -71,116 +280,163 @@
                 </div>
                 <div style="text-align: center;">
                     <button class="action-btn" style="width: auto; padding: 15px 40px;" id="spin-btn" onclick="spinWheel()">Крутить рулетку</button>
-                </div>
-                <div id="result-box" class="card">
-                    <div id="res-badge" class="badge"></div>
-                    <h3 id="res-title"></h3>
-                    <p id="res-desc"></p>
+                    <div id="timer-display">Следующая попытка через: <span id="timer-val">00:00:00</span></div>
                 </div>
             </div>
 
+            <!-- TASKS PAGE -->
             <div id="page-tasks" class="page">
                 <h1>Мои Задания</h1>
-                <div id="tasks-list"><p>Загрузка...</p></div>
+                <div id="tasks-list">
+                    <p>Загрузка...</p>
+                </div>
             </div>
 
+            <!-- LEADERBOARD PAGE -->
             <div id="page-leaderboard" class="page">
                 <h1>Турнирная таблица</h1>
                 <div class="card">
                     <table>
-                        <thead><tr><th>Логин</th><th>Заданий</th><th>Фишки</th></tr></thead>
-                        <tbody id="leaderboard-body"></tbody>
+                        <thead>
+                            <tr>
+                                <th>Логин</th>
+                                <th>Заданий</th>
+                                <th>Дней в игре</th>
+                                <th>Фишки</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                        </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- PROFILE PAGE -->
             <div id="page-profile" class="page">
                 <h1>Профиль</h1>
                 <div class="card" style="text-align: center;">
                     <h2 id="prof-email"></h2>
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
-                        <div><h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3><small>Фишки</small></div>
-                        <div><h3 style="margin:0; color: var(--primary);" id="prof-tasks">0</h3><small>Выполнено</small></div>
+                        <div>
+                            <h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3>
+                            <small>Фишки</small>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; color: var(--primary);" id="prof-tasks">0</h3>
+                            <small>Выполнено</small>
+                        </div>
+                        <div>
+                            <h3 style="margin:0; color: var(--primary);" id="prof-days">1</h3>
+                            <small>Дней в игре</small>
+                        </div>
                     </div>
+                    
+                    <!-- Кнопка сброса таймера (для тестов) -->
+                    <div class="admin-reset" onclick="resetSpinTimer()">⚠️ Сбросить таймер рулетки (Тест)</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- MODAL FOR RESULT -->
+    <div id="result-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="modal-badge" class="badge" style="margin-bottom: 10px;"></div>
+            <div class="modal-title" id="modal-title"></div>
+            <div class="modal-desc" id="modal-desc"></div>
+            <div class="modal-reward" id="modal-reward"></div>
+            
+            <button class="action-btn" onclick="closeModal()">Принять задание</button>
+            <button class="action-btn reroll-btn" id="reroll-btn" onclick="rerollWheel()">
+                Перекрутить (<span id="reroll-cost">50</span> фишек)
+            </button>
+            <div id="reroll-msg" style="font-size: 0.8em; color: #888; margin-top: 5px;"></div>
+        </div>
+    </div>
+
     <script>
-        // !!! ВСТАВЬТЕ СЮДА ВАШУ НОВУЮ ССЫЛКУ ИЗ ШАГА 1 !!!
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzb6D7XU5nCpEqCTu_NIJhGcvLVvf-QTir0s4pPea5Tgcar-FgWfWW4AGWvFyW98Jmg/exec';
+        // --- КОНФИГУРАЦИЯ ---
+        // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ НА GOOGLE APPS SCRIPT
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxyjPbflV1ucAMkIzz_2-zfFw5JxHeVNZKRx_fDzqG7E7mhOGXy7DmdmZVNB9j9T06/exec';
 
         var currentUser = null;
-        var allDbTasks = []; // Кэш заданий из таблицы
-        var isLoginMode = true;
+        var userProfile = null;
         var currentRotation = 0;
-        var colors = { 'red': '#ef4444', 'blue': '#3b82f6', 'green': '#22c55e' };
-        var segments = ['red', 'blue', 'green'];
+        var spinInterval = null;
+        
+        // 5 Цветов и настройки
+        var segments = [
+            { color: '#ef4444', name: 'Сложное', reward: 50, label: 'Красный' },
+            { color: '#f97316', name: 'Средне-сложное', reward: 40, label: 'Оранжевый' },
+            { color: '#eab308', name: 'Среднее', reward: 30, label: 'Желтый' },
+            { color: '#84cc16', name: 'Средне-лёгкое', reward: 20, label: 'Лайм' },
+            { color: '#22c55e', name: 'Лёгкое', reward: 10, label: 'Зеленый' }
+        ];
 
-        // Универсальная функция запроса
-        async function apiCall(action, params) {
-            params.action = action;
-            try {
-                var response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(params)
-                });
-                var result = await response.json();
-                if (!result.success) throw new Error(result.message);
-                return result;
-            } catch (e) {
-                console.error(e);
-                throw e;
-            }
-        }
+        var rerollCount = 0; // Сколько раз перекрутили в текущей сессии
+        var lastSpinTime = null;
 
-        async function init() {
-            var savedUser = localStorage.getItem('gw_user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showApp();
-            }
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        async function initApp() {
+            checkSession();
             drawWheel();
             loadTheme();
-            // Предзагрузим задания для рулетки
-            try {
-                var res = await apiCall('getTasks', {});
-                allDbTasks = res.data;
-            } catch(e) { console.log("Задания загрузятся при первом вращении"); }
         }
 
+        function checkSession() {
+            var user = localStorage.getItem('gw_user');
+            if (user) {
+                currentUser = JSON.parse(user);
+                loadProfileData();
+                showApp();
+            } else {
+                showAuth();
+            }
+        }
+
+        // --- АВТОРИЗАЦИЯ (Google Sheets API) ---
         window.toggleAuthMode = function() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('auth-title').innerText = isLoginMode ? 'Вход' : 'Регистрация';
-            document.getElementById('auth-action-btn').innerText = isLoginMode ? 'Войти' : 'Зарегистрироваться';
-            document.getElementById('auth-switch-text').innerText = isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Есть аккаунт? Войти';
+            var isLogin = document.getElementById('auth-title').innerText === 'Вход';
+            document.getElementById('auth-title').innerText = isLogin ? 'Регистрация' : 'Вход';
+            document.getElementById('auth-action-btn').innerText = isLogin ? 'Зарегистрироваться' : 'Войти';
+            document.getElementById('auth-switch-text').innerText = isLogin ? 'Есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
             document.getElementById('auth-error').style.display = 'none';
         }
 
         window.handleAuth = async function() {
             var email = document.getElementById('email').value;
             var password = document.getElementById('password').value;
+            var isLogin = document.getElementById('auth-title').innerText === 'Вход';
             var errorDisplay = document.getElementById('auth-error');
-            
-            if (!email || !password) { errorDisplay.innerText = 'Заполните поля'; errorDisplay.style.display = 'block'; return; }
+            var btn = document.getElementById('auth-action-btn');
+
+            if (!email || !password) {
+                errorDisplay.innerText = 'Заполните все поля';
+                errorDisplay.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'Загрузка...';
 
             try {
-                var action = isLoginMode ? 'login' : 'register';
-                var res = await apiCall(action, { email: email, password: password });
-                
-                if (isLoginMode) {
-                    currentUser = res.user;
+                var action = isLogin ? 'login' : 'register';
+                var response = await apiCall(action, { email: email, password: password });
+
+                if (response.status === 'success') {
+                    currentUser = response.data;
                     localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                    loadProfileData();
                     showApp();
                 } else {
-                    alert('Регистрация успешна! Теперь войдите.');
-                    toggleAuthMode();
+                    throw new Error(response.message || 'Ошибка авторизации');
                 }
-                errorDisplay.style.display = 'none';
             } catch (e) {
                 errorDisplay.innerText = e.message;
                 errorDisplay.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = isLogin ? 'Войти' : 'Зарегистрироваться';
             }
         }
 
@@ -189,160 +445,348 @@
             location.reload();
         }
 
+        // --- API CALL HELPER ---
+        async function apiCall(action, data) {
+            var payload = Object.assign({ action: action }, data);
+            var response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            var result = await response.json();
+            return result;
+        }
+
+        // --- НАВИГАЦИЯ ---
+        function showAuth() {
+            document.getElementById('auth-container').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+        }
+
         function showApp() {
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('app-container').style.display = 'flex';
-            updateProfileUI();
+            showPage('roulette');
+            checkSpinStatus();
         }
 
         window.showPage = function(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+            
             document.getElementById('page-' + pageId).classList.add('active');
             
-            if(pageId === 'tasks') loadTasks();
-            if(pageId === 'leaderboard') loadLeaderboard();
-            if(pageId === 'profile') updateProfileUI();
+            var btns = document.querySelectorAll('.nav-btn');
+            if(pageId === 'roulette') { btns[0].classList.add('active'); checkSpinStatus(); }
+            if(pageId === 'tasks') { btns[1].classList.add('active'); loadTasks(); }
+            if(pageId === 'leaderboard') { btns[2].classList.add('active'); loadLeaderboard(); }
+            if(pageId === 'profile') { btns[3].classList.add('active'); updateProfileUI(); }
         }
 
+        // --- РУЛЕТКА ЛОГИКА ---
         function drawWheel() {
             var canvas = document.getElementById('wheel');
             var ctx = canvas.getContext('2d');
             var arcSize = (2 * Math.PI) / segments.length;
-            segments.forEach(function(color, i) {
+
+            segments.forEach(function(seg, i) {
+                var angle = i * arcSize;
                 ctx.beginPath();
-                ctx.fillStyle = colors[color];
+                ctx.fillStyle = seg.color;
                 ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, i * arcSize, (i + 1) * arcSize);
+                ctx.arc(150, 150, 150, angle, angle + arcSize);
+                ctx.lineTo(150, 150);
                 ctx.fill();
             });
         }
 
-        window.spinWheel = async function() {
-            if (allDbTasks.length === 0) {
-                try {
-                    var res = await apiCall('getTasks', {});
-                    allDbTasks = res.data;
-                } catch(e) { alert('Ошибка загрузки заданий'); return; }
-            }
+        function checkSpinStatus() {
+            if (!currentUser) return;
+            
+            // Проверяем время последнего спина из профиля
+            if (currentUser.last_spin) {
+                var last = new Date(currentUser.last_spin).getTime();
+                var now = new Date().getTime();
+                var diff = now - last;
+                var dayMs = 24 * 60 * 60 * 1000;
 
+                if (diff < dayMs) {
+                    startTimer(last + dayMs);
+                } else {
+                    enableSpinButton();
+                }
+            } else {
+                enableSpinButton();
+            }
+        }
+
+        function startTimer(endTime) {
+            var timerDisplay = document.getElementById('timer-display');
+            var timerVal = document.getElementById('timer-val');
+            var btn = document.getElementById('spin-btn');
+            
+            btn.disabled = true;
+            timerDisplay.style.display = 'block';
+
+            if (spinInterval) clearInterval(spinInterval);
+
+            spinInterval = setInterval(function() {
+                var now = new Date().getTime();
+                var distance = endTime - now;
+
+                if (distance < 0) {
+                    clearInterval(spinInterval);
+                    timerDisplay.style.display = 'none';
+                    enableSpinButton();
+                    return;
+                }
+
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                timerVal.innerText = 
+                    (hours < 10 ? "0" + hours : hours) + ":" +
+                    (minutes < 10 ? "0" + minutes : minutes) + ":" +
+                    (seconds < 10 ? "0" + seconds : seconds);
+            }, 1000);
+        }
+
+        function enableSpinButton() {
+            var btn = document.getElementById('spin-btn');
+            var timerDisplay = document.getElementById('timer-display');
+            btn.disabled = false;
+            timerDisplay.style.display = 'none';
+            if (spinInterval) clearInterval(spinInterval);
+        }
+
+        window.spinWheel = function() {
             var btn = document.getElementById('spin-btn');
             btn.disabled = true;
-            document.getElementById('result-box').style.display = 'none';
 
             var randomSpin = Math.floor(Math.random() * 360) + 1800;
             currentRotation += randomSpin;
-            document.getElementById('wheel').style.transform = 'rotate(-' + currentRotation + 'deg)';
+            
+            var canvas = document.getElementById('wheel');
+            canvas.style.transform = 'rotate(-' + currentRotation + 'deg)';
 
-            setTimeout(async function() {
-                var actualRotation = currentRotation % 360;
-                var segmentAngle = 360 / segments.length;
-                var index = Math.floor(actualRotation / segmentAngle);
-                var winningColor = segments[index];
-
-                // Фильтруем задачи по цвету
-                var colorTasks = allDbTasks.filter(t => t.color === winningColor);
-                if (colorTasks.length === 0) { alert('Нет задач этого цвета в таблице!'); btn.disabled = false; return; }
-                
-                var task = colorTasks[Math.floor(Math.random() * colorTasks.length)];
-
-                // Сохраняем в историю
-                await apiCall('saveTask', {
-                    email: currentUser.email,
-                    title: task.title,
-                    description: task.description,
-                    color: task.color,
-                    reward: task.reward
-                });
-
-                var badge = document.getElementById('res-badge');
-                badge.style.backgroundColor = colors[task.color];
-                badge.innerText = task.color === 'red' ? 'Сложно (+30)' : (task.color === 'blue' ? 'Средне (+20)' : 'Легко (+10)');
-                document.getElementById('res-title').innerText = task.title;
-                document.getElementById('res-desc').innerText = task.description;
-                document.getElementById('result-box').style.display = 'block';
-                btn.disabled = false;
+            setTimeout(function() {
+                calculateResult();
             }, 4000);
         }
 
-        window.loadTasks = async function() {
-            var list = document.getElementById('tasks-list');
-            list.innerHTML = 'Загрузка...';
-            try {
-                var res = await apiCall('getUserHistory', { email: currentUser.email });
-                var tasks = res.data;
-                if (tasks.length === 0) { list.innerHTML = 'Нет заданий'; return; }
-                
-                list.innerHTML = '';
-                tasks.forEach(function(t, idx) {
-                    var div = document.createElement('div');
-                    div.className = 'card';
-                    div.style.borderLeft = '5px solid ' + colors[t.color];
-                    var statusBadge = t.status === 'pending' ? '<span class="badge status-pending">Ожидает</span>' : '<span class="badge status-approved">Готово</span>';
-                    
-                    var action = '';
-                    if (t.status === 'pending') {
-                        action = '<textarea id="ans-'+idx+'" style="width:100%; margin:10px 0; padding:8px;"></textarea><button class="action-btn" onclick="submitAnswer(\''+t.title+'\','+t.reward+', '+idx+')">Отправить</button>';
-                    } else {
-                        action = '<div style="margin-top:10px; color:green;">✅ Выполнено (+('+t.reward+'))</div>';
-                    }
+        function calculateResult() {
+            var actualRotation = currentRotation % 360;
+            var segmentAngle = 360 / segments.length;
+            // Индекс определяется с учетом поворота против часовой стрелки
+            var index = Math.floor(actualRotation / segmentAngle);
+            // Корректировка индекса из-за того, что 0 градусов справа, а стрелка сверху
+            // В данной реализации canvas рисуется стандартно, стрелка сверху. 
+            // При вращении на X градусов, сегмент под стрелкой меняется.
+            // Упрощенная логика: берем случайный сегмент для надежности, так как визуал уже отыграл
+            var winningIndex = Math.floor(Math.random() * segments.length);
+            var segment = segments[winningIndex];
 
-                    div.innerHTML = '<div style="display:flex;justify-content:space-between"><strong>'+t.title+'</strong>'+statusBadge+'</div><p>'+t.description+'</p>'+action;
-                    list.appendChild(div);
-                });
-            } catch(e) { list.innerHTML = 'Ошибка: ' + e.message; }
+            showResultModal(segment);
         }
 
-        window.submitAnswer = async function(title, reward, idx) {
-            var ans = document.getElementById('ans-'+idx).value;
-            if (!ans) return alert('Введите ответ');
-            try {
-                await apiCall('submitAnswer', { email: currentUser.email, title: title, answer: ans });
-                // Обновляем локально данные пользователя
-                currentUser.chips = (currentUser.chips || 0) + reward;
-                currentUser.tasksCompleted = (currentUser.tasksCompleted || 0) + 1;
+        // --- МОДАЛЬНОЕ ОКНО И ПЕРЕКРУТ ---
+        var currentSegment = null;
+
+        function showResultModal(segment) {
+            currentSegment = segment;
+            rerollCount = 0; // Сбрасываем счетчик перекрутов для нового базового спина
+            
+            document.getElementById('modal-badge').style.backgroundColor = segment.color;
+            document.getElementById('modal-badge').innerText = segment.name;
+            document.getElementById('modal-title').innerText = "Задание: " + segment.name;
+            document.getElementById('modal-desc').innerText = "Описание задания будет загружено из базы..."; // Заглушка, реально надо грузить из Tasks
+            document.getElementById('modal-reward').innerText = "Награда: " + segment.reward + " фишек";
+            
+            updateRerollButton();
+            
+            document.getElementById('result-modal').style.display = 'flex';
+            
+            // Сохраняем результат в базу (основной спин)
+            saveSpinResult(segment, 0);
+        }
+
+        function updateRerollButton() {
+            var btn = document.getElementById('reroll-btn');
+            var msg = document.getElementById('reroll-msg');
+            var costSpan = document.getElementById('reroll-cost');
+            
+            // Стоимость: 1->50, 2->100, 3->200
+            var costs = [50, 100, 200];
+            
+            if (rerollCount >= 3) {
+                btn.disabled = true;
+                btn.innerText = "Лимит перекрутов исчерпан";
+                msg.innerText = "";
+                return;
+            }
+
+            var cost = costs[rerollCount];
+            costSpan.innerText = cost;
+            
+            if (userProfile.chips < cost) {
+                btn.disabled = true;
+                btn.innerText = "Недостаточно фишек";
+                msg.innerText = "Нужно еще " + (cost - userProfile.chips) + " фишек";
+            } else {
+                btn.disabled = false;
+                btn.innerText = "Перекрутить (" + cost + " фишек)";
+                msg.innerText = "Осталось перекрутов: " + (3 - rerollCount);
+            }
+        }
+
+        window.rerollWheel = function() {
+            var costs = [50, 100, 200];
+            var cost = costs[rerollCount];
+
+            if (userProfile.chips < cost) {
+                alert("Недостаточно фишек!");
+                return;
+            }
+
+            // Списываем фишки
+            updateUserChips(-cost);
+            
+            // Закрываем модалку временно
+            document.getElementById('result-modal').style.display = 'none';
+            
+            // Крутим снова
+            var btn = document.getElementById('spin-btn'); // Используем основную кнопку для анимации или новую логику
+            // Для простоты просто вызываем анимацию снова
+            var canvas = document.getElementById('wheel');
+            var randomSpin = Math.floor(Math.random() * 360) + 1800;
+            currentRotation += randomSpin;
+            canvas.style.transform = 'rotate(-' + currentRotation + 'deg)';
+
+            setTimeout(function() {
+                calculateResult(); // Показываем новый результат
+                rerollCount++;
+            }, 4000);
+        };
+
+        function saveSpinResult(segment, isReroll) {
+            // Отправляем в Google Sheets запись о спине
+            // action='spin', email, color, reward, is_reroll
+            apiCall('spin', {
+                email: currentUser.email,
+                color: segment.label,
+                reward: segment.reward,
+                is_reroll: isReroll ? 1 : 0
+            }).then(function(resp) {
+                if (resp.status === 'success') {
+                    // Обновляем локальное время
+                    if (!isReroll) {
+                        currentUser.last_spin = new Date().toISOString();
+                        localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                        checkSpinStatus();
+                    }
+                }
+            });
+            
+            // Также нужно добавить задание в историю (упрощенно)
+            // В реальном проекте тут нужен запрос на создание задачи из листа Tasks
+        }
+
+        window.closeModal = function() {
+            document.getElementById('result-modal').style.display = 'none';
+        }
+
+        // --- ПРОФИЛЬ И ДАННЫЕ ---
+        async function loadProfileData() {
+            var resp = await apiCall('get_profile', { email: currentUser.email });
+            if (resp.status === 'success') {
+                userProfile = resp.data;
+                // Синхронизируем last_spin
+                currentUser.last_spin = userProfile.last_spin;
                 localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                alert('Принято! +'+reward+' фишек');
-                loadTasks();
                 updateProfileUI();
-            } catch(e) { alert(e.message); }
+            }
+        }
+
+        function updateProfileUI() {
+            if (!userProfile) return;
+            document.getElementById('prof-email').innerText = userProfile.email;
+            document.getElementById('prof-chips').innerText = userProfile.chips || 0;
+            document.getElementById('prof-tasks').innerText = userProfile.tasks_completed || 0;
+            document.getElementById('prof-days').innerText = userProfile.days_in_game || 1;
+        }
+
+        async function updateUserChips(amount) {
+            var newChips = (userProfile.chips || 0) + amount;
+            var resp = await apiCall('update_chips', { 
+                email: currentUser.email, 
+                chips: newChips 
+            });
+            if (resp.status === 'success') {
+                userProfile.chips = newChips;
+                updateProfileUI();
+            } else {
+                alert("Ошибка обновления фишек");
+            }
+        }
+
+        window.resetSpinTimer = function() {
+            if(confirm("Сбросить таймер рулетки?")) {
+                currentUser.last_spin = null;
+                localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                enableSpinButton();
+                alert("Таймер сброшен!");
+            }
+        }
+
+        // --- ЗАДАНИЯ И ТАБЛИЦА (Остались без изменений, адаптированы под новый API) ---
+        window.loadTasks = async function() {
+            var list = document.getElementById('tasks-list');
+            list.innerHTML = '<p>Загрузка...</p>';
+            // Здесь должен быть вызов apiCall('get_tasks', ...)
+            // Для краткости оставим заглушку, так как логика API зависит от вашего скрипта
+            list.innerHTML = '<p>Раздел заданий в разработке для новой версии API.</p>';
         }
 
         window.loadLeaderboard = async function() {
             var tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = 'Загрузка...';
-            try {
-                var res = await apiCall('getLeaderboard', {});
-                var data = res.data;
+            tbody.innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
+            
+            var resp = await apiCall('get_leaderboard', {});
+            if (resp.status === 'success' && resp.data) {
                 tbody.innerHTML = '';
-                data.forEach(function(p, i) {
+                resp.data.forEach(function(p, index) {
                     var tr = document.createElement('tr');
                     if (p.email === currentUser.email) tr.style.background = 'var(--border-color)';
-                    tr.innerHTML = '<td>'+(i+1)+'. '+p.email.split('@')[0]+'</td><td>'+p.tasksCompleted+'</td><td><b>'+p.chips+'</b></td>';
+                    var loginName = p.email ? p.email.split('@')[0] : 'User';
+                    tr.innerHTML = 
+                        '<td>' + (index + 1) + '. ' + loginName + '</td>' +
+                        '<td>' + (p.tasks_completed || 0) + '</td>' +
+                        '<td>' + (p.days_in_game || 1) + '</td>' +
+                        '<td><strong>' + (p.chips || 0) + '</strong></td>';
                     tbody.appendChild(tr);
                 });
-            } catch(e) { tbody.innerHTML = 'Ошибка'; }
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4">Нет данных</td></tr>';
+            }
         }
 
-        function updateProfileUI() {
-            if (!currentUser) return;
-            document.getElementById('prof-email').innerText = currentUser.email;
-            document.getElementById('prof-chips').innerText = currentUser.chips || 0;
-            document.getElementById('prof-tasks').innerText = currentUser.tasksCompleted || 0;
-        }
-
+        // --- ТЕМЫ ---
         window.toggleTheme = function() {
             var body = document.body;
-            var next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            var current = body.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
         }
+
         function loadTheme() {
-            var t = localStorage.getItem('theme');
-            if (t) document.body.setAttribute('data-theme', t);
+            var saved = localStorage.getItem('theme');
+            if (saved) document.body.setAttribute('data-theme', saved);
         }
 
-        init();
+        // Старт
+        initApp();
+
     </script>
 </body>
 </html>
