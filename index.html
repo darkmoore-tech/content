@@ -356,437 +356,388 @@
     </div>
 
     <script>
-        // --- КОНФИГУРАЦИЯ ---
-        // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ НА GOOGLE APPS SCRIPT
-        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxyjPbflV1ucAMkIzz_2-zfFw5JxHeVNZKRx_fDzqG7E7mhOGXy7DmdmZVNB9j9T06/exec';
+    // --- КОНФИГУРАЦИЯ ---
+    // ВСТАВЬТЕ СЮДА ВАШ НОВЫЙ URL ИЗ GOOGLE APPS SCRIPT
+    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytjTQeAlKCMTIoxbZIZn4h8NY3hfRUgaZJo_SKVq4Fhxu0t-KbsI9z21HP8-CXWz8Z/exec';
 
-        var currentUser = null;
-        var userProfile = null;
-        var currentRotation = 0;
-        var spinInterval = null;
+    var currentUser = null;
+    var currentRotation = 0;
+    var spinTimerInterval = null;
+    
+    // 5 Цветов
+    var segments = ['red', 'orange', 'yellow', 'lime', 'green'];
+    var colors = {
+        'red': '#ef4444',
+        'orange': '#f97316',
+        'yellow': '#eab308',
+        'lime': '#84cc16',   // Между желтым и зеленым
+        'green': '#22c55e'
+    };
+    var labels = {
+        'red': 'Сложно (50+)',
+        'orange': 'Средне-сложно (40)',
+        'yellow': 'Средне (30)',
+        'lime': 'Средне-легко (20)',
+        'green': 'Легко (10)'
+    };
+
+    // --- ИНИЦИАЛИЗАЦИЯ ---
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTheme();
+        drawWheel();
+        checkSession();
+    });
+
+    function checkSession() {
+        var savedUser = localStorage.getItem('gw_user');
+        if (savedUser) {
+            currentUser = JSON.parse(savedUser);
+            showApp();
+            checkCooldown();
+        } else {
+            showAuth();
+        }
+    }
+
+    // --- АВТОРИЗАЦИЯ ---
+    window.toggleAuthMode = function() {
+        var isLogin = document.getElementById('auth-title').innerText === 'Вход';
+        document.getElementById('auth-title').innerText = isLogin ? 'Регистрация' : 'Вход';
+        document.getElementById('auth-action-btn').innerText = isLogin ? 'Зарегистрироваться' : 'Войти';
+        document.getElementById('auth-switch-text').innerText = isLogin ? 'Есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
+    }
+
+    window.handleAuth = function() {
+        var email = document.getElementById('email').value;
+        var password = document.getElementById('password').value;
+        var isLogin = document.getElementById('auth-title').innerText === 'Вход';
+        var btn = document.getElementById('auth-action-btn');
         
-        // 5 Цветов и настройки
-        var segments = [
-            { color: '#ef4444', name: 'Сложное', reward: 50, label: 'Красный' },
-            { color: '#f97316', name: 'Средне-сложное', reward: 40, label: 'Оранжевый' },
-            { color: '#eab308', name: 'Среднее', reward: 30, label: 'Желтый' },
-            { color: '#84cc16', name: 'Средне-лёгкое', reward: 20, label: 'Лайм' },
-            { color: '#22c55e', name: 'Лёгкое', reward: 10, label: 'Зеленый' }
-        ];
+        btn.disabled = true;
+        btn.innerText = 'Загрузка...';
 
-        var rerollCount = 0; // Сколько раз перекрутили в текущей сессии
-        var lastSpinTime = null;
-
-        // --- ИНИЦИАЛИЗАЦИЯ ---
-        async function initApp() {
-            checkSession();
-            drawWheel();
-            loadTheme();
-        }
-
-        function checkSession() {
-            var user = localStorage.getItem('gw_user');
-            if (user) {
-                currentUser = JSON.parse(user);
-                loadProfileData();
-                showApp();
-            } else {
-                showAuth();
-            }
-        }
-
-        // --- АВТОРИЗАЦИЯ (Google Sheets API) ---
-        window.toggleAuthMode = function() {
-            var isLogin = document.getElementById('auth-title').innerText === 'Вход';
-            document.getElementById('auth-title').innerText = isLogin ? 'Регистрация' : 'Вход';
-            document.getElementById('auth-action-btn').innerText = isLogin ? 'Зарегистрироваться' : 'Войти';
-            document.getElementById('auth-switch-text').innerText = isLogin ? 'Есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
-            document.getElementById('auth-error').style.display = 'none';
-        }
-
-        window.handleAuth = async function() {
-            var email = document.getElementById('email').value;
-            var password = document.getElementById('password').value;
-            var isLogin = document.getElementById('auth-title').innerText === 'Вход';
-            var errorDisplay = document.getElementById('auth-error');
-            var btn = document.getElementById('auth-action-btn');
-
-            if (!email || !password) {
-                errorDisplay.innerText = 'Заполните все поля';
-                errorDisplay.style.display = 'block';
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = 'Загрузка...';
-
-            try {
-                var action = isLogin ? 'login' : 'register';
-                var response = await apiCall(action, { email: email, password: password });
-
-                if (response.status === 'success') {
-                    currentUser = response.data;
+        apiCall({
+            action: isLogin ? 'login' : 'register',
+            email: email,
+            password: password
+        }).then(function(res) {
+            btn.disabled = false;
+            btn.innerText = isLogin ? 'Войти' : 'Зарегистрироваться';
+            
+            if (res.success) {
+                if (!isLogin) {
+                    alert('Регистрация успешна! Теперь войдите.');
+                    toggleAuthMode();
+                } else {
+                    currentUser = res.user;
                     localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                    loadProfileData();
                     showApp();
-                } else {
-                    throw new Error(response.message || 'Ошибка авторизации');
-                }
-            } catch (e) {
-                errorDisplay.innerText = e.message;
-                errorDisplay.style.display = 'block';
-                btn.disabled = false;
-                btn.innerText = isLogin ? 'Войти' : 'Зарегистрироваться';
-            }
-        }
-
-        window.logout = function() {
-            localStorage.removeItem('gw_user');
-            location.reload();
-        }
-
-        // --- API CALL HELPER ---
-        async function apiCall(action, data) {
-            var payload = Object.assign({ action: action }, data);
-            var response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-            var result = await response.json();
-            return result;
-        }
-
-        // --- НАВИГАЦИЯ ---
-        function showAuth() {
-            document.getElementById('auth-container').style.display = 'flex';
-            document.getElementById('app-container').style.display = 'none';
-        }
-
-        function showApp() {
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('app-container').style.display = 'flex';
-            showPage('roulette');
-            checkSpinStatus();
-        }
-
-        window.showPage = function(pageId) {
-            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-            document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
-            
-            document.getElementById('page-' + pageId).classList.add('active');
-            
-            var btns = document.querySelectorAll('.nav-btn');
-            if(pageId === 'roulette') { btns[0].classList.add('active'); checkSpinStatus(); }
-            if(pageId === 'tasks') { btns[1].classList.add('active'); loadTasks(); }
-            if(pageId === 'leaderboard') { btns[2].classList.add('active'); loadLeaderboard(); }
-            if(pageId === 'profile') { btns[3].classList.add('active'); updateProfileUI(); }
-        }
-
-        // --- РУЛЕТКА ЛОГИКА ---
-        function drawWheel() {
-            var canvas = document.getElementById('wheel');
-            var ctx = canvas.getContext('2d');
-            var arcSize = (2 * Math.PI) / segments.length;
-
-            segments.forEach(function(seg, i) {
-                var angle = i * arcSize;
-                ctx.beginPath();
-                ctx.fillStyle = seg.color;
-                ctx.moveTo(150, 150);
-                ctx.arc(150, 150, 150, angle, angle + arcSize);
-                ctx.lineTo(150, 150);
-                ctx.fill();
-            });
-        }
-
-        function checkSpinStatus() {
-            if (!currentUser) return;
-            
-            // Проверяем время последнего спина из профиля
-            if (currentUser.last_spin) {
-                var last = new Date(currentUser.last_spin).getTime();
-                var now = new Date().getTime();
-                var diff = now - last;
-                var dayMs = 24 * 60 * 60 * 1000;
-
-                if (diff < dayMs) {
-                    startTimer(last + dayMs);
-                } else {
-                    enableSpinButton();
+                    checkCooldown();
                 }
             } else {
-                enableSpinButton();
+                alert(res.message || 'Ошибка');
             }
+        }).catch(function(err) {
+            btn.disabled = false;
+            alert('Ошибка соединения: ' + err);
+        });
+    }
+
+    window.logout = function() {
+        localStorage.removeItem('gw_user');
+        location.reload();
+    }
+
+    // --- НАВИГАЦИЯ ---
+    function showAuth() {
+        document.getElementById('auth-container').style.display = 'flex';
+        document.getElementById('app-container').style.display = 'none';
+    }
+
+    function showApp() {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('app-container').style.display = 'flex';
+        updateProfileUI();
+    }
+
+    window.showPage = function(pageId) {
+        document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+        document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.getElementById('page-' + pageId).classList.add('active');
+        
+        if(pageId === 'tasks') loadTasks();
+        if(pageId === 'leaderboard') loadLeaderboard();
+        if(pageId === 'profile') updateProfileUI();
+    }
+
+    // --- РУЛЕТКА ---
+    function drawWheel() {
+        var canvas = document.getElementById('wheel');
+        var ctx = canvas.getContext('2d');
+        var arcSize = (2 * Math.PI) / segments.length;
+
+        segments.forEach(function(color, i) {
+            var angle = i * arcSize;
+            ctx.beginPath();
+            ctx.fillStyle = colors[color];
+            ctx.moveTo(150, 150);
+            ctx.arc(150, 150, 150, angle, angle + arcSize);
+            ctx.lineTo(150, 150);
+            ctx.fill();
+        });
+    }
+
+    function checkCooldown() {
+        var btn = document.getElementById('spin-btn');
+        var timerDisplay = document.getElementById('timer-display');
+        
+        if (!currentUser.lastSpinTime) {
+            btn.disabled = false;
+            btn.innerText = 'Крутить рулетку';
+            timerDisplay.style.display = 'none';
+            return;
         }
 
-        function startTimer(endTime) {
-            var timerDisplay = document.getElementById('timer-display');
-            var timerVal = document.getElementById('timer-val');
-            var btn = document.getElementById('spin-btn');
-            
+        var now = new Date().getTime();
+        var diff = now - currentUser.lastSpinTime;
+        var cooldown = 24 * 60 * 60 * 1000;
+
+        if (diff < cooldown) {
             btn.disabled = true;
             timerDisplay.style.display = 'block';
-
-            if (spinInterval) clearInterval(spinInterval);
-
-            spinInterval = setInterval(function() {
-                var now = new Date().getTime();
-                var distance = endTime - now;
-
-                if (distance < 0) {
-                    clearInterval(spinInterval);
-                    timerDisplay.style.display = 'none';
-                    enableSpinButton();
-                    return;
-                }
-
-                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                timerVal.innerText = 
-                    (hours < 10 ? "0" + hours : hours) + ":" +
-                    (minutes < 10 ? "0" + minutes : minutes) + ":" +
-                    (seconds < 10 ? "0" + seconds : seconds);
-            }, 1000);
-        }
-
-        function enableSpinButton() {
-            var btn = document.getElementById('spin-btn');
-            var timerDisplay = document.getElementById('timer-display');
+            startTimer(cooldown - diff);
+        } else {
             btn.disabled = false;
+            btn.innerText = 'Крутить рулетку';
             timerDisplay.style.display = 'none';
-            if (spinInterval) clearInterval(spinInterval);
+            // Разрешаем крутить снова, время обновится на сервере при спине
         }
+    }
 
-        window.spinWheel = function() {
-            var btn = document.getElementById('spin-btn');
-            btn.disabled = true;
-
-            var randomSpin = Math.floor(Math.random() * 360) + 1800;
-            currentRotation += randomSpin;
+    function startTimer(ms) {
+        var timerDisplay = document.getElementById('timer-display');
+        clearInterval(spinTimerInterval);
+        
+        spinTimerInterval = setInterval(function() {
+            ms -= 1000;
+            if (ms <= 0) {
+                clearInterval(spinTimerInterval);
+                document.getElementById('spin-btn').disabled = false;
+                document.getElementById('spin-btn').innerText = 'Крутить рулетку';
+                timerDisplay.style.display = 'none';
+                // Обновляем локально, что кулдаун прошел
+                if(currentUser) currentUser.lastSpinTime = 0; 
+                return;
+            }
             
-            var canvas = document.getElementById('wheel');
-            canvas.style.transform = 'rotate(-' + currentRotation + 'deg)';
+            var hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((ms % (1000 * 60)) / 1000);
+            
+            timerDisplay.innerText = 
+                'Следующая попытка через: ' + 
+                (hours < 10 ? '0'+hours : hours) + ':' + 
+                (minutes < 10 ? '0'+minutes : minutes) + ':' + 
+                (seconds < 10 ? '0'+seconds : seconds);
+        }, 1000);
+    }
 
-            setTimeout(function() {
-                calculateResult();
-            }, 4000);
+    window.spinWheel = function(isReroll) {
+        var btn = document.getElementById('spin-btn');
+        
+        // Проверка перед отправкой запроса
+        if (!isReroll) {
+            // Обычный спин
+             btn.disabled = true;
+        } else {
+            // Перекрут
+            var cost = currentUser.rerollBaseCost || 50;
+            if (currentUser.chips < cost) {
+                alert('Недостаточно фишек!');
+                return;
+            }
+            if (!confirm('Перекрутить за ' + cost + ' фишек?')) return;
         }
 
-        function calculateResult() {
+        // Анимация вращения
+        var randomSpin = Math.floor(Math.random() * 360) + 1800;
+        currentRotation += randomSpin;
+        document.getElementById('wheel').style.transform = 'rotate(-' + currentRotation + 'deg)';
+
+        setTimeout(function() {
+            // Вычисляем цвет
             var actualRotation = currentRotation % 360;
             var segmentAngle = 360 / segments.length;
-            // Индекс определяется с учетом поворота против часовой стрелки
             var index = Math.floor(actualRotation / segmentAngle);
-            // Корректировка индекса из-за того, что 0 градусов справа, а стрелка сверху
-            // В данной реализации canvas рисуется стандартно, стрелка сверху. 
-            // При вращении на X градусов, сегмент под стрелкой меняется.
-            // Упрощенная логика: берем случайный сегмент для надежности, так как визуал уже отыграл
-            var winningIndex = Math.floor(Math.random() * segments.length);
-            var segment = segments[winningIndex];
+            var winningColor = segments[index];
 
-            showResultModal(segment);
-        }
-
-        // --- МОДАЛЬНОЕ ОКНО И ПЕРЕКРУТ ---
-        var currentSegment = null;
-
-        function showResultModal(segment) {
-            currentSegment = segment;
-            rerollCount = 0; // Сбрасываем счетчик перекрутов для нового базового спина
-            
-            document.getElementById('modal-badge').style.backgroundColor = segment.color;
-            document.getElementById('modal-badge').innerText = segment.name;
-            document.getElementById('modal-title').innerText = "Задание: " + segment.name;
-            document.getElementById('modal-desc').innerText = "Описание задания будет загружено из базы..."; // Заглушка, реально надо грузить из Tasks
-            document.getElementById('modal-reward').innerText = "Награда: " + segment.reward + " фишек";
-            
-            updateRerollButton();
-            
-            document.getElementById('result-modal').style.display = 'flex';
-            
-            // Сохраняем результат в базу (основной спин)
-            saveSpinResult(segment, 0);
-        }
-
-        function updateRerollButton() {
-            var btn = document.getElementById('reroll-btn');
-            var msg = document.getElementById('reroll-msg');
-            var costSpan = document.getElementById('reroll-cost');
-            
-            // Стоимость: 1->50, 2->100, 3->200
-            var costs = [50, 100, 200];
-            
-            if (rerollCount >= 3) {
-                btn.disabled = true;
-                btn.innerText = "Лимит перекрутов исчерпан";
-                msg.innerText = "";
-                return;
-            }
-
-            var cost = costs[rerollCount];
-            costSpan.innerText = cost;
-            
-            if (userProfile.chips < cost) {
-                btn.disabled = true;
-                btn.innerText = "Недостаточно фишек";
-                msg.innerText = "Нужно еще " + (cost - userProfile.chips) + " фишек";
-            } else {
-                btn.disabled = false;
-                btn.innerText = "Перекрутить (" + cost + " фишек)";
-                msg.innerText = "Осталось перекрутов: " + (3 - rerollCount);
-            }
-        }
-
-        window.rerollWheel = function() {
-            var costs = [50, 100, 200];
-            var cost = costs[rerollCount];
-
-            if (userProfile.chips < cost) {
-                alert("Недостаточно фишек!");
-                return;
-            }
-
-            // Списываем фишки
-            updateUserChips(-cost);
-            
-            // Закрываем модалку временно
-            document.getElementById('result-modal').style.display = 'none';
-            
-            // Крутим снова
-            var btn = document.getElementById('spin-btn'); // Используем основную кнопку для анимации или новую логику
-            // Для простоты просто вызываем анимацию снова
-            var canvas = document.getElementById('wheel');
-            var randomSpin = Math.floor(Math.random() * 360) + 1800;
-            currentRotation += randomSpin;
-            canvas.style.transform = 'rotate(-' + currentRotation + 'deg)';
-
-            setTimeout(function() {
-                calculateResult(); // Показываем новый результат
-                rerollCount++;
-            }, 4000);
-        };
-
-        function saveSpinResult(segment, isReroll) {
-            // Отправляем в Google Sheets запись о спине
-            // action='spin', email, color, reward, is_reroll
-            apiCall('spin', {
+            // Запрос к серверу
+            apiCall({
+                action: 'spin',
                 email: currentUser.email,
-                color: segment.label,
-                reward: segment.reward,
-                is_reroll: isReroll ? 1 : 0
-            }).then(function(resp) {
-                if (resp.status === 'success') {
-                    // Обновляем локальное время
-                    if (!isReroll) {
-                        currentUser.last_spin = new Date().toISOString();
+                isReroll: isReroll || false,
+                chips: currentUser.chips
+            }).then(function(res) {
+                if (res.success) {
+                    // Обновляем данные пользователя
+                    currentUser.lastSpinTime = new Date().getTime();
+                    if (res.type === 'reroll') {
+                        currentUser.chips = res.newChips;
+                        currentUser.rerollsLeft = res.rerollsLeft;
+                        currentUser.rerollBaseCost = res.nextCost;
                         localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                        checkSpinStatus();
+                        updateProfileUI();
+                    } else {
+                        // Первый спин за сутки
+                        currentUser.rerollsLeft = 3;
+                        currentUser.rerollBaseCost = 50;
+                        localStorage.setItem('gw_user', JSON.stringify(currentUser));
                     }
+                    
+                    showResultModal(winningColor, isReroll);
+                    checkCooldown();
+                } else {
+                    alert(res.message);
+                    btn.disabled = false;
                 }
             });
-            
-            // Также нужно добавить задание в историю (упрощенно)
-            // В реальном проекте тут нужен запрос на создание задачи из листа Tasks
+
+        }, 4000);
+    }
+
+    function showResultModal(color, isReroll) {
+        // Получаем случайное задание из локального списка или просим у сервера
+        // Для простоты берем рандомное название, а полное задание грузим при сохранении
+        var taskTitle = "Задание: " + labels[color];
+        var taskDesc = "Описание задачи уровня " + color + ". Подробности во вкладке Задания.";
+        var reward = color === 'red' ? 50 : (color === 'orange' ? 40 : (color === 'yellow' ? 30 : (color === 'lime' ? 20 : 10)));
+
+        // Сохраняем задание в БД
+        apiCall({
+            action: 'saveTask',
+            email: currentUser.email,
+            title: taskTitle,
+            desc: taskDesc,
+            color: color,
+            reward: reward
+        });
+
+        // Показываем модалку
+        var modal = document.getElementById('result-modal');
+        document.getElementById('res-badge').style.backgroundColor = colors[color];
+        document.getElementById('res-badge').innerText = labels[color];
+        document.getElementById('res-title').innerText = taskTitle;
+        document.getElementById('res-desc').innerText = taskDesc;
+        document.getElementById('res-reward').innerText = 'Награда: ' + reward + ' фишек';
+        
+        // Кнопка перекрута
+        var rerollBtn = document.getElementById('reroll-btn');
+        var rerollCount = currentUser.rerollsLeft || 0;
+        var cost = currentUser.rerollBaseCost || 50;
+        
+        if (rerollCount > 0) {
+            rerollBtn.style.display = 'inline-block';
+            rerollBtn.innerText = 'Перекрутить (' + rerollCount + ' ост.) за ' + cost + ' 💰';
+            rerollBtn.onclick = function() {
+                modal.style.display = 'none';
+                spinWheel(true);
+            };
+        } else {
+            rerollBtn.style.display = 'none';
         }
 
-        window.closeModal = function() {
-            document.getElementById('result-modal').style.display = 'none';
-        }
+        modal.style.display = 'flex';
+    }
 
-        // --- ПРОФИЛЬ И ДАННЫЕ ---
-        async function loadProfileData() {
-            var resp = await apiCall('get_profile', { email: currentUser.email });
-            if (resp.status === 'success') {
-                userProfile = resp.data;
-                // Синхронизируем last_spin
-                currentUser.last_spin = userProfile.last_spin;
-                localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                updateProfileUI();
-            }
-        }
+    window.closeModal = function() {
+        document.getElementById('result-modal').style.display = 'none';
+        showPage('tasks'); // Переключаем на задания
+        loadTasks();
+    }
 
-        function updateProfileUI() {
-            if (!userProfile) return;
-            document.getElementById('prof-email').innerText = userProfile.email;
-            document.getElementById('prof-chips').innerText = userProfile.chips || 0;
-            document.getElementById('prof-tasks').innerText = userProfile.tasks_completed || 0;
-            document.getElementById('prof-days').innerText = userProfile.days_in_game || 1;
-        }
-
-        async function updateUserChips(amount) {
-            var newChips = (userProfile.chips || 0) + amount;
-            var resp = await apiCall('update_chips', { 
-                email: currentUser.email, 
-                chips: newChips 
-            });
-            if (resp.status === 'success') {
-                userProfile.chips = newChips;
-                updateProfileUI();
-            } else {
-                alert("Ошибка обновления фишек");
-            }
-        }
-
-        window.resetSpinTimer = function() {
-            if(confirm("Сбросить таймер рулетки?")) {
-                currentUser.last_spin = null;
-                localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                enableSpinButton();
-                alert("Таймер сброшен!");
-            }
-        }
-
-        // --- ЗАДАНИЯ И ТАБЛИЦА (Остались без изменений, адаптированы под новый API) ---
-        window.loadTasks = async function() {
-            var list = document.getElementById('tasks-list');
-            list.innerHTML = '<p>Загрузка...</p>';
-            // Здесь должен быть вызов apiCall('get_tasks', ...)
-            // Для краткости оставим заглушку, так как логика API зависит от вашего скрипта
-            list.innerHTML = '<p>Раздел заданий в разработке для новой версии API.</p>';
-        }
-
-        window.loadLeaderboard = async function() {
-            var tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
-            
-            var resp = await apiCall('get_leaderboard', {});
-            if (resp.status === 'success' && resp.data) {
-                tbody.innerHTML = '';
-                resp.data.forEach(function(p, index) {
-                    var tr = document.createElement('tr');
-                    if (p.email === currentUser.email) tr.style.background = 'var(--border-color)';
-                    var loginName = p.email ? p.email.split('@')[0] : 'User';
-                    tr.innerHTML = 
-                        '<td>' + (index + 1) + '. ' + loginName + '</td>' +
-                        '<td>' + (p.tasks_completed || 0) + '</td>' +
-                        '<td>' + (p.days_in_game || 1) + '</td>' +
-                        '<td><strong>' + (p.chips || 0) + '</strong></td>';
-                    tbody.appendChild(tr);
+    // --- ЗАДАНИЯ И ПРОФИЛЬ (Упрощенно) ---
+    window.loadTasks = function() {
+        var list = document.getElementById('tasks-list');
+        list.innerHTML = '<p>Загрузка...</p>';
+        // Здесь нужен запрос к History листу. 
+        // Для краткости примера оставим заглушку, логика аналогична прошлой версии
+        apiCall({action: 'getTasks', email: currentUser.email}).then(function(res){
+            if(res.tasks && res.tasks.length > 0) {
+                list.innerHTML = '';
+                res.tasks.forEach(function(t) {
+                    // Рендер карточки
+                    var div = document.createElement('div');
+                    div.className = 'card';
+                    div.innerHTML = '<b>'+t.title+'</b><br>'+t.desc+'<br>Статус: '+t.status;
+                    list.appendChild(div);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="4">Нет данных</td></tr>';
+                list.innerHTML = '<p>Заданий пока нет.</p>';
             }
+        });
+    }
+
+    function updateProfileUI() {
+        if(!currentUser) return;
+        document.getElementById('prof-email').innerText = currentUser.email;
+        document.getElementById('prof-chips').innerText = currentUser.chips || 0;
+        document.getElementById('prof-tasks').innerText = currentUser.tasksCompleted || 0;
+        document.getElementById('prof-days').innerText = currentUser.daysInGame || 1;
+        
+        // Тестовая кнопка сброса (удалите в продакшене)
+        var resetBtn = document.getElementById('reset-cooldown-btn');
+        if(resetBtn) {
+            resetBtn.onclick = function() {
+                currentUser.lastSpinTime = 0;
+                localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                checkCooldown();
+                alert('Таймер сброшен');
+            };
         }
+    }
+    
+    function loadLeaderboard() {
+        // Заглушка
+        document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
+    }
 
-        // --- ТЕМЫ ---
-        window.toggleTheme = function() {
-            var body = document.body;
-            var current = body.getAttribute('data-theme');
-            var next = current === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', next);
-            localStorage.setItem('theme', next);
-        }
+    // --- UTILS ---
+    function apiCall(data) {
+        return fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }).then(function(r) { return r.json(); });
+    }
 
-        function loadTheme() {
-            var saved = localStorage.getItem('theme');
-            if (saved) document.body.setAttribute('data-theme', saved);
-        }
+    function loadTheme() {
+        var saved = localStorage.getItem('theme');
+        if (saved) document.body.setAttribute('data-theme', saved);
+    }
+    window.toggleTheme = function() {
+        var body = document.body;
+        var next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+</script>
+    <!-- Модальное окно результата -->
+<div id="result-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:100; justify-content:center; align-items:center;">
+    <div class="card" style="max-width:400px; width:90%; text-align:center; position:relative;">
+        <button onclick="closeModal()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+        <div id="res-badge" class="badge" style="font-size:1em; margin-bottom:15px;"></div>
+        <h2 id="res-title"></h2>
+        <p id="res-desc" style="color:var(--text-color);"></p>
+        <p id="res-reward" style="font-weight:bold; color:var(--primary);"></p>
+        
+        <button id="reroll-btn" class="action-btn" style="background:#f59e0b; margin-top:15px;"></button>
+        <button onclick="closeModal()" class="action-btn" style="margin-top:10px; background:var(--border-color); color:var(--text-color)">Принять задание</button>
+    </div>
+</div>
 
-        // Старт
-        initApp();
-
-    </script>
+<!-- Кнопка сброса для теста (в профиле) -->
+<div id="page-profile" style="display:none;"> 
+    <!-- Существующий контент профиля -->
+    <button id="reset-cooldown-btn" style="margin-top:20px; font-size:10px; opacity:0.5;">[TEST] Сбросить таймер</button>
+</div>
 </body>
 </html>
