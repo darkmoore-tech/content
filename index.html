@@ -35,158 +35,37 @@
             overflow: hidden;
         }
 
-        /* Auth Styles */
-        #auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .auth-box {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-color);
-            color: var(--text-color);
-            box-sizing: border-box;
-        }
+        /* Auth & Layout Styles */
+        #auth-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .auth-box { background: var(--card-bg); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
         
-        /* App Layout */
-        #app-container {
-            display: none;
-            display: flex;
-            height: 100vh;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            transition: background 0.3s;
-        }
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            padding: 12px;
-            text-align: left;
-            cursor: pointer;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        .nav-btn:hover, .nav-btn.active {
-            background-color: var(--primary);
-            color: white;
-        }
-        .theme-toggle {
-            margin-top: auto;
-            border: 1px solid var(--border-color);
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            position: relative;
-        }
-        .page {
-            display: none;
-            animation: fadeIn 0.3s;
-        }
+        #app-container { display: none; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; }
+        .nav-btn { background: none; border: none; color: var(--text-color); padding: 12px; text-align: left; cursor: pointer; border-radius: 6px; margin-bottom: 5px; font-size: 16px; }
+        .nav-btn:hover, .nav-btn.active { background-color: var(--primary); color: white; }
+        .theme-toggle { margin-top: auto; border: 1px solid var(--border-color); }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
+        .page { display: none; animation: fadeIn 0.3s; }
         .page.active { display: block; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* Wheel */
-        .wheel-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-        }
-        .pointer {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid var(--text-color);
-            z-index: 10;
-        }
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 20px auto; }
+        canvas { width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 10px 20px rgba(0,0,0,0.2); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); }
+        .pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--text-color); z-index: 10; }
 
         /* Buttons & Cards */
-        button.action-btn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 10px;
-        }
+        button.action-btn { padding: 12px 24px; font-size: 16px; background-color: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
         button.action-btn:hover { background-color: var(--primary-hover); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        button.reroll-btn {
-            background-color: #f59e0b;
-            margin-top: 15px;
-        }
-        button.reroll-btn:hover { background-color: #d97706; }
-
-        .card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        /* Tables */
+        .card { background: var(--card-bg); padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { color: var(--primary); }
-
-        /* Badges */
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            color: white;
-            font-size: 0.8em;
-            display: inline-block;
-        }
+        .badge { padding: 4px 8px; border-radius: 12px; color: white; font-size: 0.8em; display: inline-block; }
         .status-pending { background-color: #f59e0b; }
         .status-approved { background-color: #22c55e; }
-        .status-rejected { background-color: #ef4444; }
 
         /* Timer Display */
         #timer-display {
@@ -198,52 +77,33 @@
             display: none;
         }
 
-        /* Modal */
+        /* MODAL WINDOW */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            display: none; justify-content: center; align-items: center; z-index: 1000;
         }
         .modal-content {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            position: relative;
+            background: var(--card-bg); padding: 30px; border-radius: 15px;
+            width: 90%; max-width: 400px; text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        .close-modal {
-            position: absolute;
-            top: 10px; right: 15px;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-color);
+            position: relative;
         }
         .modal-title { font-size: 1.5em; margin-bottom: 10px; color: var(--primary); }
-        .modal-desc { margin-bottom: 20px; color: var(--text-color); }
+        .modal-desc { margin-bottom: 20px; color: var(--text-color); line-height: 1.5; }
         .modal-reward { font-size: 1.2em; font-weight: bold; color: #22c55e; margin-bottom: 20px; }
+        .modal-actions { display: flex; gap: 10px; flex-direction: column; }
+        .btn-reroll { background-color: #f59e0b; }
+        .btn-reroll:hover { background-color: #d97706; }
+        .btn-accept { background-color: #22c55e; }
+        .btn-accept:hover { background-color: #16a34a; }
+        .reroll-cost { font-size: 0.9em; color: #888; margin-top: 5px; }
 
-        /* Admin Reset Button */
-        .admin-reset {
-            margin-top: 30px;
-            font-size: 0.8em;
-            color: #888;
-            text-decoration: underline;
-            cursor: pointer;
-            display: block;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
 
-    <!-- AUTH SCREEN -->
+    <!-- AUTH -->
     <div id="auth-container">
         <div class="auth-box">
             <h2 id="auth-title">Вход</h2>
@@ -257,7 +117,7 @@
         </div>
     </div>
 
-    <!-- APP SCREEN -->
+    <!-- APP -->
     <div id="app-container" style="display: none;">
         <div class="sidebar">
             <h3 style="margin-top: 0;">GameWork</h3>
@@ -266,12 +126,11 @@
             <button class="nav-btn" onclick="showPage('leaderboard')">🏆 Таблица</button>
             <button class="nav-btn" onclick="showPage('profile')">👤 Профиль</button>
             <button class="nav-btn" onclick="logout()">🚪 Выход</button>
-            
             <button class="nav-btn theme-toggle" onclick="toggleTheme()">🌓 Тема</button>
         </div>
 
         <div class="main-content">
-            <!-- ROULETTE PAGE -->
+            <!-- ROULETTE -->
             <div id="page-roulette" class="page active">
                 <h1>Испытай удачу!</h1>
                 <div class="wheel-container">
@@ -280,464 +139,416 @@
                 </div>
                 <div style="text-align: center;">
                     <button class="action-btn" style="width: auto; padding: 15px 40px;" id="spin-btn" onclick="spinWheel()">Крутить рулетку</button>
-                    <div id="timer-display">Следующая попытка через: <span id="timer-val">00:00:00</span></div>
+                    <div id="timer-display">Следующая попытка через: <span id="time-left">00:00:00</span></div>
                 </div>
             </div>
 
-            <!-- TASKS PAGE -->
+            <!-- TASKS -->
             <div id="page-tasks" class="page">
                 <h1>Мои Задания</h1>
-                <div id="tasks-list">
-                    <p>Загрузка...</p>
-                </div>
+                <div id="tasks-list"><p>Загрузка...</p></div>
             </div>
 
-            <!-- LEADERBOARD PAGE -->
+            <!-- LEADERBOARD -->
             <div id="page-leaderboard" class="page">
                 <h1>Турнирная таблица</h1>
                 <div class="card">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Логин</th>
-                                <th>Заданий</th>
-                                <th>Дней в игре</th>
-                                <th>Фишки</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboard-body">
-                        </tbody>
+                        <thead><tr><th>Логин</th><th>Фишки</th><th>Заданий</th></tr></thead>
+                        <tbody id="leaderboard-body"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- PROFILE PAGE -->
+            <!-- PROFILE -->
             <div id="page-profile" class="page">
                 <h1>Профиль</h1>
                 <div class="card" style="text-align: center;">
                     <h2 id="prof-email"></h2>
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
-                        <div>
-                            <h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3>
-                            <small>Фишки</small>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; color: var(--primary);" id="prof-tasks">0</h3>
-                            <small>Выполнено</small>
-                        </div>
-                        <div>
-                            <h3 style="margin:0; color: var(--primary);" id="prof-days">1</h3>
-                            <small>Дней в игре</small>
-                        </div>
+                        <div><h3 style="margin:0; color: var(--primary);" id="prof-chips">0</h3><small>Фишки</small></div>
+                        <div><h3 style="margin:0; color: var(--primary);" id="prof-tasks">0</h3><small>Выполнено</small></div>
                     </div>
-                    
-                    <!-- Кнопка сброса таймера (для тестов) -->
-                    <div class="admin-reset" onclick="resetSpinTimer()">⚠️ Сбросить таймер рулетки (Тест)</div>
+                    <button class="action-btn" style="background:#ef4444; margin-top:20px;" onclick="debugResetTimer()">⚠ Сброс таймера (Тест)</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL FOR RESULT -->
+    <!-- MODAL -->
     <div id="result-modal" class="modal-overlay">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <div id="modal-badge" class="badge" style="margin-bottom: 10px;"></div>
-            <div class="modal-title" id="modal-title"></div>
-            <div class="modal-desc" id="modal-desc"></div>
-            <div class="modal-reward" id="modal-reward"></div>
+            <h2 class="modal-title" id="m-title">Название</h2>
+            <p class="modal-desc" id="m-desc">Описание</p>
+            <div class="modal-reward" id="m-reward">+0 фишек</div>
             
-            <button class="action-btn" onclick="closeModal()">Принять задание</button>
-            <button class="action-btn reroll-btn" id="reroll-btn" onclick="rerollWheel()">
-                Перекрутить (<span id="reroll-cost">50</span> фишек)
-            </button>
-            <div id="reroll-msg" style="font-size: 0.8em; color: #888; margin-top: 5px;"></div>
+            <div class="modal-actions">
+                <button class="action-btn btn-accept" onclick="acceptCurrentTask()">✅ Принять задание</button>
+                <button class="action-btn btn-reroll" id="btn-reroll" onclick="rerollWheel()">🔄 Перекрутить (<span id="reroll-cost">50</span> 💰)</button>
+                <small class="reroll-cost">Осталось перекрутов: <span id="rerolls-left">3</span></small>
+            </div>
         </div>
     </div>
 
     <script>
-    // --- КОНФИГУРАЦИЯ ---
-    // ВСТАВЬТЕ СЮДА ВАШ НОВЫЙ URL ИЗ GOOGLE APPS SCRIPT
-    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytjTQeAlKCMTIoxbZIZn4h8NY3hfRUgaZJo_SKVq4Fhxu0t-KbsI9z21HP8-CXWz8Z/exec';
+        // ВСТАВЬТЕ СЮДА ВАШ URL ИЗ GOOGLE APPS SCRIPT
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8lIOz9F7n7eyVGFxhDoqxdKFFcrblfn4mgwh7EG0jdcgIoqFkXNyyRcQ10Wbpu6Xx/exec';
 
-    var currentUser = null;
-    var currentRotation = 0;
-    var spinTimerInterval = null;
-    
-    // 5 Цветов
-    var segments = ['red', 'orange', 'yellow', 'lime', 'green'];
-    var colors = {
-        'red': '#ef4444',
-        'orange': '#f97316',
-        'yellow': '#eab308',
-        'lime': '#84cc16',   // Между желтым и зеленым
-        'green': '#22c55e'
-    };
-    var labels = {
-        'red': 'Сложно (50+)',
-        'orange': 'Средне-сложно (40)',
-        'yellow': 'Средне (30)',
-        'lime': 'Средне-легко (20)',
-        'green': 'Легко (10)'
-    };
-
-    // --- ИНИЦИАЛИЗАЦИЯ ---
-    document.addEventListener('DOMContentLoaded', function() {
-        loadTheme();
-        drawWheel();
-        checkSession();
-    });
-
-    function checkSession() {
-        var savedUser = localStorage.getItem('gw_user');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            showApp();
-            checkCooldown();
-        } else {
-            showAuth();
-        }
-    }
-
-    // --- АВТОРИЗАЦИЯ ---
-    window.toggleAuthMode = function() {
-        var isLogin = document.getElementById('auth-title').innerText === 'Вход';
-        document.getElementById('auth-title').innerText = isLogin ? 'Регистрация' : 'Вход';
-        document.getElementById('auth-action-btn').innerText = isLogin ? 'Зарегистрироваться' : 'Войти';
-        document.getElementById('auth-switch-text').innerText = isLogin ? 'Есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
-    }
-
-    window.handleAuth = function() {
-        var email = document.getElementById('email').value;
-        var password = document.getElementById('password').value;
-        var isLogin = document.getElementById('auth-title').innerText === 'Вход';
-        var btn = document.getElementById('auth-action-btn');
+        var currentUser = null;
+        var currentRotation = 0;
+        var timerInterval = null;
+        var nextSpinTimeGlobal = 0;
+        var rerollsUsedGlobal = 0;
         
-        btn.disabled = true;
-        btn.innerText = 'Загрузка...';
+        // Данные текущего выпавшего задания (временные, до принятия)
+        var pendingTask = null;
 
-        apiCall({
-            action: isLogin ? 'login' : 'register',
-            email: email,
-            password: password
-        }).then(function(res) {
-            btn.disabled = false;
-            btn.innerText = isLogin ? 'Войти' : 'Зарегистрироваться';
-            
-            if (res.success) {
-                if (!isLogin) {
-                    alert('Регистрация успешна! Теперь войдите.');
-                    toggleAuthMode();
-                } else {
-                    currentUser = res.user;
-                    localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                    showApp();
-                    checkCooldown();
-                }
+        var colorsMap = {
+            'красный': '#ef4444',
+            'оранжевый': '#f97316',
+            'желтый': '#eab308',
+            'лайм': '#84cc16',
+            'зеленый': '#22c55e'
+        };
+        var segments = ['красный', 'оранжевый', 'желтый', 'лайм', 'зеленый'];
+
+        function initApp() {
+            var savedUser = localStorage.getItem('gw_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                showApp();
+                checkTimer();
             } else {
-                alert(res.message || 'Ошибка');
+                showAuth();
             }
-        }).catch(function(err) {
-            btn.disabled = false;
-            alert('Ошибка соединения: ' + err);
-        });
-    }
-
-    window.logout = function() {
-        localStorage.removeItem('gw_user');
-        location.reload();
-    }
-
-    // --- НАВИГАЦИЯ ---
-    function showAuth() {
-        document.getElementById('auth-container').style.display = 'flex';
-        document.getElementById('app-container').style.display = 'none';
-    }
-
-    function showApp() {
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('app-container').style.display = 'flex';
-        updateProfileUI();
-    }
-
-    window.showPage = function(pageId) {
-        document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-        document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.getElementById('page-' + pageId).classList.add('active');
-        
-        if(pageId === 'tasks') loadTasks();
-        if(pageId === 'leaderboard') loadLeaderboard();
-        if(pageId === 'profile') updateProfileUI();
-    }
-
-    // --- РУЛЕТКА ---
-    function drawWheel() {
-        var canvas = document.getElementById('wheel');
-        var ctx = canvas.getContext('2d');
-        var arcSize = (2 * Math.PI) / segments.length;
-
-        segments.forEach(function(color, i) {
-            var angle = i * arcSize;
-            ctx.beginPath();
-            ctx.fillStyle = colors[color];
-            ctx.moveTo(150, 150);
-            ctx.arc(150, 150, 150, angle, angle + arcSize);
-            ctx.lineTo(150, 150);
-            ctx.fill();
-        });
-    }
-
-    function checkCooldown() {
-        var btn = document.getElementById('spin-btn');
-        var timerDisplay = document.getElementById('timer-display');
-        
-        if (!currentUser.lastSpinTime) {
-            btn.disabled = false;
-            btn.innerText = 'Крутить рулетку';
-            timerDisplay.style.display = 'none';
-            return;
+            drawWheel();
+            loadTheme();
         }
 
-        var now = new Date().getTime();
-        var diff = now - currentUser.lastSpinTime;
-        var cooldown = 24 * 60 * 60 * 1000;
-
-        if (diff < cooldown) {
-            btn.disabled = true;
-            timerDisplay.style.display = 'block';
-            startTimer(cooldown - diff);
-        } else {
-            btn.disabled = false;
-            btn.innerText = 'Крутить рулетку';
-            timerDisplay.style.display = 'none';
-            // Разрешаем крутить снова, время обновится на сервере при спине
-        }
-    }
-
-    function startTimer(ms) {
-        var timerDisplay = document.getElementById('timer-display');
-        clearInterval(spinTimerInterval);
-        
-        spinTimerInterval = setInterval(function() {
-            ms -= 1000;
-            if (ms <= 0) {
-                clearInterval(spinTimerInterval);
-                document.getElementById('spin-btn').disabled = false;
-                document.getElementById('spin-btn').innerText = 'Крутить рулетку';
-                timerDisplay.style.display = 'none';
-                // Обновляем локально, что кулдаун прошел
-                if(currentUser) currentUser.lastSpinTime = 0; 
-                return;
-            }
-            
-            var hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-            var seconds = Math.floor((ms % (1000 * 60)) / 1000);
-            
-            timerDisplay.innerText = 
-                'Следующая попытка через: ' + 
-                (hours < 10 ? '0'+hours : hours) + ':' + 
-                (minutes < 10 ? '0'+minutes : minutes) + ':' + 
-                (seconds < 10 ? '0'+seconds : seconds);
-        }, 1000);
-    }
-
-    window.spinWheel = function(isReroll) {
-        var btn = document.getElementById('spin-btn');
-        
-        // Проверка перед отправкой запроса
-        if (!isReroll) {
-            // Обычный спин
-             btn.disabled = true;
-        } else {
-            // Перекрут
-            var cost = currentUser.rerollBaseCost || 50;
-            if (currentUser.chips < cost) {
-                alert('Недостаточно фишек!');
-                return;
-            }
-            if (!confirm('Перекрутить за ' + cost + ' фишек?')) return;
+        // --- AUTH ---
+        window.toggleAuthMode = function() {
+            var isLogin = document.getElementById('auth-title').innerText === 'Вход';
+            document.getElementById('auth-title').innerText = isLogin ? 'Регистрация' : 'Вход';
+            document.getElementById('auth-action-btn').innerText = isLogin ? 'Зарегистрироваться' : 'Войти';
+            document.getElementById('auth-switch-text').innerText = isLogin ? 'Есть аккаунт? Войти' : 'Нет аккаунта? Зарегистрироваться';
         }
 
-        // Анимация вращения
-        var randomSpin = Math.floor(Math.random() * 360) + 1800;
-        currentRotation += randomSpin;
-        document.getElementById('wheel').style.transform = 'rotate(-' + currentRotation + 'deg)';
+        window.handleAuth = function() {
+            var email = document.getElementById('email').value;
+            var password = document.getElementById('password').value;
+            var isLogin = document.getElementById('auth-title').innerText === 'Вход';
+            var action = isLogin ? 'login' : 'register';
 
-        setTimeout(function() {
-            // Вычисляем цвет
-            var actualRotation = currentRotation % 360;
-            var segmentAngle = 360 / segments.length;
-            var index = Math.floor(actualRotation / segmentAngle);
-            var winningColor = segments[index];
-
-            // Запрос к серверу
-            apiCall({
-                action: 'spin',
-                email: currentUser.email,
-                isReroll: isReroll || false,
-                chips: currentUser.chips
-            }).then(function(res) {
-                if (res.success) {
-                    // Обновляем данные пользователя
-                    currentUser.lastSpinTime = new Date().getTime();
-                    if (res.type === 'reroll') {
-                        currentUser.chips = res.newChips;
-                        currentUser.rerollsLeft = res.rerollsLeft;
-                        currentUser.rerollBaseCost = res.nextCost;
-                        localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                        updateProfileUI();
+            apiCall({ action: action, email: email, password: password })
+                .then(function(res) {
+                    if (res.success) {
+                        if (isLogin) {
+                            currentUser = { email: email, chips: res.user.chips, tasks: res.user.tasks };
+                            localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                            showApp();
+                            checkTimer(); // Проверка таймера сразу при входе
+                        } else {
+                            alert('Регистрация успешна! Теперь войдите.');
+                            toggleAuthMode();
+                        }
                     } else {
-                        // Первый спин за сутки
-                        currentUser.rerollsLeft = 3;
-                        currentUser.rerollBaseCost = 50;
-                        localStorage.setItem('gw_user', JSON.stringify(currentUser));
+                        alert(res.message);
                     }
+                });
+        }
+
+        window.logout = function() {
+            localStorage.removeItem('gw_user');
+            location.reload();
+        }
+
+        // --- API CALL ---
+        function apiCall(data) {
+            return fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            }).then(function(r) { return r.json(); });
+        }
+
+        // --- NAVIGATION ---
+        function showAuth() {
+            document.getElementById('auth-container').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+        }
+        function showApp() {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+            showPage('roulette');
+        }
+        window.showPage = function(pageId) {
+            document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+            document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            if(pageId === 'tasks') loadTasks();
+            if(pageId === 'leaderboard') loadLeaderboard();
+            if(pageId === 'profile') loadProfile();
+        }
+
+        // --- WHEEL LOGIC ---
+        function drawWheel() {
+            var canvas = document.getElementById('wheel');
+            var ctx = canvas.getContext('2d');
+            var arcSize = (2 * Math.PI) / segments.length;
+            segments.forEach(function(color, i) {
+                ctx.beginPath();
+                ctx.fillStyle = colorsMap[color];
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 150, i * arcSize, (i + 1) * arcSize);
+                ctx.fill();
+            });
+        }
+
+        function checkTimer() {
+            // Получаем время из профиля при загрузке
+            apiCall({ action: 'getProfile', email: currentUser.email }).then(function(res) {
+                if (res.success) {
+                    var serverNextTime = res.profile.nextSpinTime ? new Date(res.profile.nextSpinTime).getTime() : 0;
+                    var localNextTime = localStorage.getItem('gw_nextSpinTime');
                     
-                    showResultModal(winningColor, isReroll);
-                    checkCooldown();
-                } else {
-                    alert(res.message);
-                    btn.disabled = false;
+                    // Используем то время, которое больше (защита от подмены часов, хотя для простой игры можно и локальное)
+                    // Но для надежности берем серверное, если оно есть и в будущем
+                    if (serverNextTime > Date.now()) {
+                        nextSpinTimeGlobal = serverNextTime;
+                        localStorage.setItem('gw_nextSpinTime', nextSpinTimeGlobal);
+                        rerollsUsedGlobal = res.profile.rerollsUsed || 0;
+                        startTimer();
+                    } else {
+                        // Время вышло
+                        nextSpinTimeGlobal = 0;
+                        localStorage.removeItem('gw_nextSpinTime');
+                        rerollsUsedGlobal = 0;
+                        stopTimer();
+                    }
+                    updateSpinButton();
                 }
             });
-
-        }, 4000);
-    }
-
-    function showResultModal(color, isReroll) {
-        // Получаем случайное задание из локального списка или просим у сервера
-        // Для простоты берем рандомное название, а полное задание грузим при сохранении
-        var taskTitle = "Задание: " + labels[color];
-        var taskDesc = "Описание задачи уровня " + color + ". Подробности во вкладке Задания.";
-        var reward = color === 'red' ? 50 : (color === 'orange' ? 40 : (color === 'yellow' ? 30 : (color === 'lime' ? 20 : 10)));
-
-        // Сохраняем задание в БД
-        apiCall({
-            action: 'saveTask',
-            email: currentUser.email,
-            title: taskTitle,
-            desc: taskDesc,
-            color: color,
-            reward: reward
-        });
-
-        // Показываем модалку
-        var modal = document.getElementById('result-modal');
-        document.getElementById('res-badge').style.backgroundColor = colors[color];
-        document.getElementById('res-badge').innerText = labels[color];
-        document.getElementById('res-title').innerText = taskTitle;
-        document.getElementById('res-desc').innerText = taskDesc;
-        document.getElementById('res-reward').innerText = 'Награда: ' + reward + ' фишек';
-        
-        // Кнопка перекрута
-        var rerollBtn = document.getElementById('reroll-btn');
-        var rerollCount = currentUser.rerollsLeft || 0;
-        var cost = currentUser.rerollBaseCost || 50;
-        
-        if (rerollCount > 0) {
-            rerollBtn.style.display = 'inline-block';
-            rerollBtn.innerText = 'Перекрутить (' + rerollCount + ' ост.) за ' + cost + ' 💰';
-            rerollBtn.onclick = function() {
-                modal.style.display = 'none';
-                spinWheel(true);
-            };
-        } else {
-            rerollBtn.style.display = 'none';
         }
 
-        modal.style.display = 'flex';
-    }
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            updateTimerDisplay();
+            timerInterval = setInterval(function() {
+                var now = Date.now();
+                if (now >= nextSpinTimeGlobal) {
+                    stopTimer();
+                    nextSpinTimeGlobal = 0;
+                    localStorage.removeItem('gw_nextSpinTime');
+                    rerollsUsedGlobal = 0;
+                    updateSpinButton();
+                } else {
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
 
-    window.closeModal = function() {
-        document.getElementById('result-modal').style.display = 'none';
-        showPage('tasks'); // Переключаем на задания
-        loadTasks();
-    }
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('timer-display').style.display = 'none';
+        }
 
-    // --- ЗАДАНИЯ И ПРОФИЛЬ (Упрощенно) ---
-    window.loadTasks = function() {
-        var list = document.getElementById('tasks-list');
-        list.innerHTML = '<p>Загрузка...</p>';
-        // Здесь нужен запрос к History листу. 
-        // Для краткости примера оставим заглушку, логика аналогична прошлой версии
-        apiCall({action: 'getTasks', email: currentUser.email}).then(function(res){
-            if(res.tasks && res.tasks.length > 0) {
+        function updateTimerDisplay() {
+            var now = Date.now();
+            var diff = nextSpinTimeGlobal - now;
+            if (diff <= 0) return;
+
+            var h = Math.floor(diff / (1000 * 60 * 60));
+            var m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            var s = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('time-left').innerText = 
+                (h < 10 ? '0'+h : h) + ':' + (m < 10 ? '0'+m : m) + ':' + (s < 10 ? '0'+s : s);
+            document.getElementById('timer-display').style.display = 'block';
+        }
+
+        function updateSpinButton() {
+            var btn = document.getElementById('spin-btn');
+            if (nextSpinTimeGlobal > Date.now()) {
+                btn.disabled = true;
+                btn.innerText = "Ждите окончания таймера";
+                startTimer();
+            } else {
+                btn.disabled = false;
+                btn.innerText = "Крутить рулетку";
+                stopTimer();
+            }
+        }
+
+        window.spinWheel = function() {
+            if (nextSpinTimeGlobal > Date.now()) return;
+
+            var btn = document.getElementById('spin-btn');
+            btn.disabled = true;
+
+            var randomSpin = Math.floor(Math.random() * 360) + 1800;
+            currentRotation += randomSpin;
+            document.getElementById('wheel').style.transform = 'rotate(-' + currentRotation + 'deg)';
+
+            setTimeout(function() {
+                var actualRotation = currentRotation % 360;
+                var segmentAngle = 360 / segments.length;
+                var index = Math.floor(actualRotation / segmentAngle);
+                var color = segments[index];
+
+                // Запрос к серверу
+                apiCall({ 
+                    action: 'spinWheel', 
+                    email: currentUser.email, 
+                    isReroll: false 
+                }).then(function(res) {
+                    if (res.success) {
+                        pendingTask = res.task;
+                        nextSpinTimeGlobal = res.nextSpinTime;
+                        rerollsUsedGlobal = res.rerollsUsed;
+                        localStorage.setItem('gw_nextSpinTime', nextSpinTimeGlobal);
+                        
+                        showModal(pendingTask, rerollsUsedGlobal);
+                        updateSpinButton();
+                    } else {
+                        alert(res.message);
+                        btn.disabled = false;
+                    }
+                });
+            }, 4000);
+        }
+
+        window.rerollWheel = function() {
+            var cost = 50 * Math.pow(2, rerollsUsedGlobal);
+            if (!confirm("Перекрутить за " + cost + " фишек?")) return;
+
+            apiCall({ 
+                action: 'spinWheel', 
+                email: currentUser.email, 
+                isReroll: true 
+            }).then(function(res) {
+                if (res.success) {
+                    pendingTask = res.task;
+                    rerollsUsedGlobal = res.rerollsUsed;
+                    // Время не меняется при перекруте, оно уже установлено
+                    showModal(pendingTask, rerollsUsedGlobal);
+                } else {
+                    alert(res.message);
+                }
+            });
+        }
+
+        window.acceptCurrentTask = function() {
+            if (!pendingTask) return;
+            
+            apiCall({
+                action: 'acceptTask',
+                email: currentUser.email,
+                task: pendingTask
+            }).then(function(res) {
+                if (res.success) {
+                    document.getElementById('result-modal').style.display = 'none';
+                    alert('Задание принято и добавлено в список!');
+                    pendingTask = null;
+                    showPage('tasks');
+                } else {
+                    alert('Ошибка сохранения: ' + res.message);
+                }
+            });
+        }
+
+        function showModal(task, rerollsCount) {
+            document.getElementById('m-title').innerText = task.title;
+            document.getElementById('m-desc').innerText = task.desc;
+            document.getElementById('m-reward').innerText = '+' + task.reward + ' фишек';
+            
+            var left = 3 - rerollsCount;
+            document.getElementById('rerolls-left').innerText = left;
+            
+            var nextCost = 50 * Math.pow(2, rerollsCount);
+            document.getElementById('reroll-cost').innerText = nextCost;
+
+            var rerollBtn = document.getElementById('btn-reroll');
+            if (left <= 0) {
+                rerollBtn.disabled = true;
+                rerollBtn.innerText = "Лимит исчерпан";
+            } else {
+                rerollBtn.disabled = false;
+                rerollBtn.innerHTML = '🔄 Перекрутить (<span id="reroll-cost">' + nextCost + '</span> 💰)';
+            }
+
+            document.getElementById('result-modal').style.display = 'flex';
+        }
+
+        // --- OTHER PAGES ---
+        window.loadTasks = function() {
+            apiCall({ action: 'getTasks', email: currentUser.email }).then(function(res) {
+                var list = document.getElementById('tasks-list');
+                if (!res.success || res.tasks.length === 0) {
+                    list.innerHTML = '<p>Заданий пока нет.</p>';
+                    return;
+                }
                 list.innerHTML = '';
                 res.tasks.forEach(function(t) {
-                    // Рендер карточки
                     var div = document.createElement('div');
                     div.className = 'card';
-                    div.innerHTML = '<b>'+t.title+'</b><br>'+t.desc+'<br>Статус: '+t.status;
+                    div.style.borderLeft = '5px solid ' + colorsMap[t.color];
+                    div.innerHTML = '<strong>' + t.title + '</strong><p>' + t.desc + '</p><span class="badge status-' + t.status + '">' + t.status + '</span>';
                     list.appendChild(div);
                 });
-            } else {
-                list.innerHTML = '<p>Заданий пока нет.</p>';
-            }
-        });
-    }
-
-    function updateProfileUI() {
-        if(!currentUser) return;
-        document.getElementById('prof-email').innerText = currentUser.email;
-        document.getElementById('prof-chips').innerText = currentUser.chips || 0;
-        document.getElementById('prof-tasks').innerText = currentUser.tasksCompleted || 0;
-        document.getElementById('prof-days').innerText = currentUser.daysInGame || 1;
-        
-        // Тестовая кнопка сброса (удалите в продакшене)
-        var resetBtn = document.getElementById('reset-cooldown-btn');
-        if(resetBtn) {
-            resetBtn.onclick = function() {
-                currentUser.lastSpinTime = 0;
-                localStorage.setItem('gw_user', JSON.stringify(currentUser));
-                checkCooldown();
-                alert('Таймер сброшен');
-            };
+            });
         }
-    }
-    
-    function loadLeaderboard() {
-        // Заглушка
-        document.getElementById('leaderboard-body').innerHTML = '<tr><td colspan="4">Загрузка...</td></tr>';
-    }
 
-    // --- UTILS ---
-    function apiCall(data) {
-        return fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(data)
-        }).then(function(r) { return r.json(); });
-    }
+        window.loadProfile = function() {
+            apiCall({ action: 'getProfile', email: currentUser.email }).then(function(res) {
+                if (res.success) {
+                    document.getElementById('prof-email').innerText = currentUser.email;
+                    document.getElementById('prof-chips').innerText = res.profile.chips;
+                    document.getElementById('prof-tasks').innerText = res.profile.tasksCompleted || 0;
+                }
+            });
+        }
 
-    function loadTheme() {
-        var saved = localStorage.getItem('theme');
-        if (saved) document.body.setAttribute('data-theme', saved);
-    }
-    window.toggleTheme = function() {
-        var body = document.body;
-        var next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        body.setAttribute('data-theme', next);
-        localStorage.setItem('theme', next);
-    }
-</script>
-    <!-- Модальное окно результата -->
-<div id="result-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:100; justify-content:center; align-items:center;">
-    <div class="card" style="max-width:400px; width:90%; text-align:center; position:relative;">
-        <button onclick="closeModal()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
-        <div id="res-badge" class="badge" style="font-size:1em; margin-bottom:15px;"></div>
-        <h2 id="res-title"></h2>
-        <p id="res-desc" style="color:var(--text-color);"></p>
-        <p id="res-reward" style="font-weight:bold; color:var(--primary);"></p>
-        
-        <button id="reroll-btn" class="action-btn" style="background:#f59e0b; margin-top:15px;"></button>
-        <button onclick="closeModal()" class="action-btn" style="margin-top:10px; background:var(--border-color); color:var(--text-color)">Принять задание</button>
-    </div>
-</div>
+        window.loadLeaderboard = function() {
+            apiCall({ action: 'getLeaderboard' }).then(function(res) {
+                var tbody = document.getElementById('leaderboard-body');
+                tbody.innerHTML = '';
+                if (res.success) {
+                    res.leaderboard.forEach(function(p, i) {
+                        var tr = document.createElement('tr');
+                        if (p.email === currentUser.email) tr.style.background = 'var(--border-color)';
+                        tr.innerHTML = '<td>'+(i+1)+'. '+p.email.split('@')[0]+'</td><td>'+p.chips+'</td><td>'+p.tasks+'</td>';
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+        }
 
-<!-- Кнопка сброса для теста (в профиле) -->
-<div id="page-profile" style="display:none;"> 
-    <!-- Существующий контент профиля -->
-    <button id="reset-cooldown-btn" style="margin-top:20px; font-size:10px; opacity:0.5;">[TEST] Сбросить таймер</button>
-</div>
+        window.debugResetTimer = function() {
+            if(confirm("Сбросить таймер и счетчик перекрутов?")) {
+                apiCall({ action: 'resetTimer', email: currentUser.email }).then(function(res) {
+                    if(res.success) {
+                        localStorage.removeItem('gw_nextSpinTime');
+                        nextSpinTimeGlobal = 0;
+                        rerollsUsedGlobal = 0;
+                        updateSpinButton();
+                        alert("Таймер сброшен!");
+                    }
+                });
+            }
+        }
+
+        window.toggleTheme = function() {
+            var body = document.body;
+            var next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
+        function loadTheme() {
+            var t = localStorage.getItem('theme');
+            if (t) document.body.setAttribute('data-theme', t);
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
 </body>
 </html>
